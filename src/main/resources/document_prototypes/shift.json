@@ -1,5 +1,4 @@
 {
-  "shift": {
     "department": {
       "department_name": "",
       "is_active": 0
@@ -50,5 +49,4 @@
         ]
       }
     ]
-  }
 }
