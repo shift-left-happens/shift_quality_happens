@@ -220,3 +220,44 @@ CREATE INDEX idx_leave_employee ON leaverequest(employee_id);
 
 ALTER TABLE shiftassignment
 ADD CONSTRAINT uq_shift_employee UNIQUE (shift_id, employee_id);
+
+CREATE TABLE user_role (
+       `user_role_id` INT NOT NULL,
+       `user_role_name` VARCHAR(45) NOT NULL,
+       PRIMARY KEY (`user_role_id`),
+       UNIQUE INDEX `user_role_name_UNIQUE` (`user_role_name` ASC) VISIBLE);
+
+INSERT INTO user_role (`user_role_id`,`user_role_name`)
+VALUES
+    (1, 'Administrator'), (2, 'Employee'), (3, 'Manager')
+ALTER TABLE employee
+    ADD COLUMN `password` VARCHAR(255) NOT NULL AFTER `email`,
+CHANGE COLUMN `email` `email` VARCHAR(255) NOT NULL ,
+ADD UNIQUE INDEX `email_UNIQUE` (`email` ASC) VISIBLE;
+
+ALTER TABLE employee
+    ADD COLUMN fk_user_role_id INT NULL AFTER password;
+
+ALTER TABLE employee
+    CHANGE COLUMN `password` `login_password` VARCHAR(255) NOT NULL ;
+
+UPDATE employee
+SET login_password = SHA2(CONCAT(UUID(), RAND()), 256) WHERE employee_id < 101;
+
+UPDATE employee
+SET fk_user_role_id =
+        CASE
+            WHEN MOD(employee_id, 30) = 0 THEN 3   -- Manager
+            ELSE 2                                  -- Employee
+            END
+WHERE employee_id < 101
+
+ALTER TABLE employee
+    MODIFY fk_user_role_id INT NOT NULL;
+
+ALTER TABLE employee
+    ADD CONSTRAINT fk_employee_user_role
+        FOREIGN KEY (fk_user_role_id)
+            REFERENCES user_role(user_role_id)
+            ON UPDATE CASCADE
+            ON DELETE RESTRICT;
