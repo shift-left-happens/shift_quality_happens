@@ -1,0 +1,24 @@
+name: Claude PR Review
+on:
+  pull_request:
+    types: [opened, synchronize] # Runs when a PR is created or updated
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read       # Required to read the code
+      pull-requests: write # Required to post review comments
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # Essential so Claude can see the full history/diff
+
+      - name: Run Claude PR Review
+        uses: anthropics/claude-code-action@v1 # Use @v1 for the latest stable version
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }} # Automatically provided by GitHub
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }} # The secret you added in GitHub
+          prompt: |
+            Review this PR for logic errors, security vulnerabilities, and 
+            performance issues. Provide specific, actionable feedback.
