@@ -1,24 +1,24 @@
 name: Claude PR Review
 on:
   pull_request:
-    types: [opened, synchronize] # Runs when a PR is created or updated
+    types: [opened, synchronize]
 
 jobs:
   review:
     runs-on: ubuntu-latest
     permissions:
-      contents: read       # Required to read the code
-      pull-requests: write # Required to post review comments
+      contents: write
+      pull-requests: write
+      id-token: write # Fixes the OIDC error
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # Essential so Claude can see the full history/diff
+          fetch-depth: 0
 
       - name: Run Claude PR Review
-        uses: anthropics/claude-code-action@v1 # Use @v1 for the latest stable version
+        uses: anthropics/claude-code-action@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }} # Automatically provided by GitHub
-          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }} # The secret you added in GitHub
-          prompt: |
-            Review this PR for logic errors, security vulnerabilities, and 
-            performance issues. Provide specific, actionable feedback.
+          # Use underscores here to fix the "Unexpected input" warnings
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: "Review this PR for logic and security."
