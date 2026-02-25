@@ -1,11 +1,10 @@
-USE railway;
 CREATE TABLE department (
     department_id INT AUTO_INCREMENT PRIMARY KEY,
     department_name VARCHAR(255) NOT NULL,
     is_active BOOLEAN DEFAULT TRUE
 ) ENGINE=InnoDB;
 
-CREATE TABLE worklocation (
+CREATE TABLE work_location (
     work_location_id INT AUTO_INCREMENT PRIMARY KEY,
     location_name VARCHAR(255) NOT NULL,
     address_line_1 VARCHAR(255),
@@ -27,7 +26,7 @@ CREATE TABLE employee (
     primary_work_location_id INT,
     CONSTRAINT fk_employee_location
         FOREIGN KEY (primary_work_location_id)
-        REFERENCES worklocation(work_location_id)
+        REFERENCES work_location(work_location_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE employee_contract (
@@ -45,14 +44,14 @@ CREATE TABLE employee_contract (
     CONSTRAINT fk_contract_department
         FOREIGN KEY (department_id) REFERENCES department(department_id)
 ) ENGINE=InnoDB;
-CREATE TABLE jobrole (
+CREATE TABLE job_role (
     job_role_id INT AUTO_INCREMENT PRIMARY KEY,
     role_name VARCHAR(255) NOT NULL,
     job_role_description TEXT,
     is_certification_required BOOLEAN DEFAULT FALSE
 ) ENGINE=InnoDB;
 
-CREATE TABLE employeejobrole (
+CREATE TABLE employee_job_role (
     employee_id INT NOT NULL,
     job_role_id INT NOT NULL,
     assigned_date DATE,
@@ -62,7 +61,7 @@ CREATE TABLE employeejobrole (
     CONSTRAINT fk_ejr_employee
         FOREIGN KEY (employee_id) REFERENCES employee(employee_id),
     CONSTRAINT fk_ejr_role
-        FOREIGN KEY (job_role_id) REFERENCES jobrole(job_role_id)
+        FOREIGN KEY (job_role_id) REFERENCES job_role(job_role_id)
 ) ENGINE=InnoDB;
 CREATE TABLE shift (
     shift_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -75,10 +74,10 @@ CREATE TABLE shift (
     CONSTRAINT fk_shift_department
         FOREIGN KEY (department_id) REFERENCES department(department_id),
     CONSTRAINT fk_shift_location
-        FOREIGN KEY (work_location_id) REFERENCES worklocation(work_location_id)
+        FOREIGN KEY (work_location_id) REFERENCES work_location(work_location_id)
 ) ENGINE=InnoDB;
 
-CREATE TABLE shiftrequiredjobrole (
+CREATE TABLE shift_requiredjob_role (
     shift_id INT NOT NULL,
     job_role_id INT NOT NULL,
     required_employee_count INT DEFAULT 1,
@@ -86,9 +85,9 @@ CREATE TABLE shiftrequiredjobrole (
     CONSTRAINT fk_srjr_shift
         FOREIGN KEY (shift_id) REFERENCES shift(shift_id),
     CONSTRAINT fk_srjr_role
-        FOREIGN KEY (job_role_id) REFERENCES jobrole(job_role_id)
+        FOREIGN KEY (job_role_id) REFERENCES job_role(job_role_id)
 ) ENGINE=InnoDB;
-CREATE TABLE shiftassignment (
+CREATE TABLE shift_assignment (
     shift_assignment_id INT AUTO_INCREMENT PRIMARY KEY,
     shift_id INT NOT NULL,
     employee_id INT NOT NULL,
@@ -102,21 +101,21 @@ CREATE TABLE shiftassignment (
         FOREIGN KEY (employee_id) REFERENCES employee(employee_id)
 ) ENGINE=InnoDB;
 
-CREATE TABLE shiftapproval (
+CREATE TABLE shift_approval (
     shift_approval_id INT AUTO_INCREMENT PRIMARY KEY,
     shift_assignment_id INT NOT NULL,
     approver_employee_id INT NOT NULL,
     decision VARCHAR(50),
     approval_comment TEXT,
     decision_datetime DATETIME,
-    CONSTRAINT fk_shiftapproval_assignment
+    CONSTRAINT fk_shift_approval_assignment
         FOREIGN KEY (shift_assignment_id)
-        REFERENCES shiftassignment(shift_assignment_id),
-    CONSTRAINT fk_shiftapproval_employee
+        REFERENCES shift_assignment(shift_assignment_id),
+    CONSTRAINT fk_shift_approval_employee
         FOREIGN KEY (approver_employee_id)
         REFERENCES employee(employee_id)
 ) ENGINE=InnoDB;
-CREATE TABLE shiftswap (
+CREATE TABLE shift_swap (
     shift_swap_id INT AUTO_INCREMENT PRIMARY KEY,
     original_shift_assignment_id INT NOT NULL,
     employee_from_id INT NOT NULL,
@@ -124,9 +123,9 @@ CREATE TABLE shiftswap (
     swap_status VARCHAR(50),
     request_datetime DATETIME,
     reason TEXT,
-    CONSTRAINT fk_shiftswap_assignment
+    CONSTRAINT fk_shift_swap_assignment
         FOREIGN KEY (original_shift_assignment_id)
-        REFERENCES shiftassignment(shift_assignment_id),
+        REFERENCES shift_assignment(shift_assignment_id),
 	CONSTRAINT fk_swap_employee_from
         FOREIGN KEY (employee_from_id) REFERENCES employee(employee_id),
 
@@ -134,21 +133,21 @@ CREATE TABLE shiftswap (
         FOREIGN KEY (employee_to_id) REFERENCES employee(employee_id)
 ) ENGINE=InnoDB;
 
-CREATE TABLE shiftswapapproval (
+CREATE TABLE shift_swap_approval (
     shift_swap_approval_id INT AUTO_INCREMENT PRIMARY KEY,
     shift_swap_id INT NOT NULL,
     approver_employee_id INT NOT NULL,
     decision VARCHAR(50),
     shift_swap_comment TEXT,
     decision_datetime DATETIME,
-    CONSTRAINT fk_shiftswapapproval_swap
-        FOREIGN KEY (shift_swap_id) REFERENCES shiftswap(shift_swap_id),
-    CONSTRAINT fk_shiftswapapproval_employee
+    CONSTRAINT fk_shift_swap_approval_swap
+        FOREIGN KEY (shift_swap_id) REFERENCES shift_swap(shift_swap_id),
+    CONSTRAINT fk_shift_swap_approval_employee
         FOREIGN KEY (approver_employee_id)
         REFERENCES employee(employee_id)
 ) ENGINE=InnoDB;
 
-CREATE TABLE leavetype (
+CREATE TABLE leave_type (
     leave_type_id INT AUTO_INCREMENT PRIMARY KEY,
     leave_type_name VARCHAR(255),
     leave_type_description TEXT,
@@ -156,7 +155,7 @@ CREATE TABLE leavetype (
     is_paid_leave BOOLEAN DEFAULT TRUE
 ) ENGINE=InnoDB;
 
-CREATE TABLE leaverequest (
+CREATE TABLE leave_request (
     leave_request_id INT AUTO_INCREMENT PRIMARY KEY,
     employee_id INT NOT NULL,
     leave_type_id INT NOT NULL,
@@ -165,28 +164,28 @@ CREATE TABLE leaverequest (
     request_status VARCHAR(50),
     reason TEXT,
     requested_datetime DATETIME,
-    CONSTRAINT fk_leaverequest_employee
+    CONSTRAINT fk_leave_request_employee
         FOREIGN KEY (employee_id) REFERENCES employee(employee_id),
-    CONSTRAINT fk_leaverequest_type
-        FOREIGN KEY (leave_type_id) REFERENCES leavetype(leave_type_id)
+    CONSTRAINT fk_leave_request_type
+        FOREIGN KEY (leave_type_id) REFERENCES leave_type(leave_type_id)
 ) ENGINE=InnoDB;
 
-CREATE TABLE leaveapproval (
+CREATE TABLE leave_approval (
     leave_approval_id INT AUTO_INCREMENT PRIMARY KEY,
     leave_request_id INT NOT NULL,
     approver_employee_id INT NOT NULL,
     decision VARCHAR(50),
     leave_comment TEXT,
     decision_datetime DATETIME,
-    CONSTRAINT fk_leaveapproval_request
+    CONSTRAINT fk_leave_approval_request
         FOREIGN KEY (leave_request_id)
-        REFERENCES leaverequest(leave_request_id),
-    CONSTRAINT fk_leaveapproval_employee
+        REFERENCES leave_request(leave_request_id),
+    CONSTRAINT fk_leave_approval_employee
         FOREIGN KEY (approver_employee_id)
         REFERENCES employee(employee_id)
 ) ENGINE=InnoDB;
 
-CREATE TABLE leaveledger (
+CREATE TABLE leave_ledger (
     leave_ledger_id INT AUTO_INCREMENT PRIMARY KEY,
     employee_id INT NOT NULL,
     leave_type_id INT NOT NULL,
@@ -195,12 +194,13 @@ CREATE TABLE leaveledger (
     reference_entity_type VARCHAR(100),
     reference_entity_id INT,
     transaction_datetime DATETIME,
-    CONSTRAINT fk_leaveledger_employee
+    INDEX idx_leave_ledger_emp_type (employee_id, leave_type_id),
+    CONSTRAINT fk_leave_ledger_employee
         FOREIGN KEY (employee_id) REFERENCES employee(employee_id),
-    CONSTRAINT fk_leaveledger_type
-        FOREIGN KEY (leave_type_id) REFERENCES leavetype(leave_type_id)
+    CONSTRAINT fk_leave_ledger_type
+        FOREIGN KEY (leave_type_id) REFERENCES leave_type(leave_type_id)
 ) ENGINE=InnoDB;
-CREATE TABLE auditlog (
+CREATE TABLE audit_log (
     audit_log_id INT AUTO_INCREMENT PRIMARY KEY,
     entity_type VARCHAR(100),
     entity_id INT,
@@ -216,7 +216,7 @@ CREATE TABLE auditlog (
 
 CREATE INDEX idx_employee_email ON employee(email);
 CREATE INDEX idx_shift_datetime ON shift(start_datetime, end_datetime);
-CREATE INDEX idx_leave_employee ON leaverequest(employee_id);
+CREATE INDEX idx_leave_employee ON leave_request(employee_id);
 
-ALTER TABLE shiftassignment
+ALTER TABLE shift_assignment
 ADD CONSTRAINT uq_shift_employee UNIQUE (shift_id, employee_id);
