@@ -80,23 +80,23 @@ FROM employee;
 -- JOB ROLES (REALISTIC SMALL SET)
 -- =========================================
 INSERT INTO job_role (role_name,job_role_description,is_certification_required) VALUES
-                                                                                   ('Nurse','Registered nurse',1),
-                                                                                   ('Doctor','Medical doctor',1),
-                                                                                   ('Shift Supervisor','Oversees shift operations',0),
-                                                                                   ('Care Assistant','Supports patient care',0),
-                                                                                   ('Receptionist','Front desk operations',0),
-                                                                                   ('Security Officer','Site security',1),
-                                                                                   ('Cleaner','Facility cleaning',0),
-                                                                                   ('Lab Technician','Handles lab samples',1),
-                                                                                   ('Pharmacist','Medication management',1),
-                                                                                   ('Driver','Transport duties',0),
-                                                                                   ('Warehouse Operator','Stock handling',0),
-                                                                                   ('IT Support','Technical support',0);
+    ('Nurse','Registered nurse',1),
+    ('Doctor','Medical doctor',1),
+    ('Shift Supervisor','Oversees shift operations',0),
+    ('Care Assistant','Supports patient care',0),
+    ('Receptionist','Front desk operations',0),
+    ('Security Officer','Site security',1),
+    ('Cleaner','Facility cleaning',0),
+    ('Lab Technician','Handles lab samples',1),
+    ('Pharmacist','Medication management',1),
+    ('Driver','Transport duties',0),
+    ('Warehouse Operator','Stock handling',0),
+    ('IT Support','Technical support',0);
 
 -- =========================================
 -- EMPLOYEE JOB ROLES (~150 rows)
 -- =========================================
-INSERT INTO employee_job_role
+INSERT INTO employee_job_role (employee_id, job_role_id, assigned_date, expiry_date, proficiency_level)
 SELECT
     e.employee_id,
     1 + MOD(e.employee_id,12),
@@ -127,7 +127,7 @@ FROM seq;
 -- =========================================
 -- SHIFT REQUIRED ROLES (~100)
 -- =========================================
-INSERT INTO shift_requiredjob_role
+INSERT INTO shift_required_job_role (shift_id, job_role_id, required_employee_count)
 SELECT
     shift_id,
     1+MOD(shift_id,12),

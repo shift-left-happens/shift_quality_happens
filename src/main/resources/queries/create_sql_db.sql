@@ -52,12 +52,13 @@ CREATE TABLE job_role (
 ) ENGINE=InnoDB;
 
 CREATE TABLE employee_job_role (
+    employee_job_role_id INT AUTO_INCREMENT PRIMARY KEY,
     employee_id INT NOT NULL,
     job_role_id INT NOT NULL,
     assigned_date DATE,
     expiry_date DATE,
     proficiency_level VARCHAR(50),
-    PRIMARY KEY (employee_id, job_role_id),
+    UNIQUE KEY unq_emp_job (employee_id, job_role_id),
     CONSTRAINT fk_ejr_employee
         FOREIGN KEY (employee_id) REFERENCES employee(employee_id),
     CONSTRAINT fk_ejr_role
@@ -77,11 +78,12 @@ CREATE TABLE shift (
         FOREIGN KEY (work_location_id) REFERENCES work_location(work_location_id)
 ) ENGINE=InnoDB;
 
-CREATE TABLE shift_requiredjob_role (
+CREATE TABLE shift_required_job_role (
+    shift_required_job_role_id INT AUTO_INCREMENT PRIMARY KEY,
     shift_id INT NOT NULL,
     job_role_id INT NOT NULL,
     required_employee_count INT DEFAULT 1,
-    PRIMARY KEY (shift_id, job_role_id),
+    UNIQUE KEY unq_shift_jr (shift_id, job_role_id),
     CONSTRAINT fk_srjr_shift
         FOREIGN KEY (shift_id) REFERENCES shift(shift_id),
     CONSTRAINT fk_srjr_role
