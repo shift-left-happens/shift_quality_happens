@@ -1,8 +1,5 @@
-USE railway;
-START TRANSACTION;
-SET FOREIGN_KEY_CHECKS = 0;
 SET @entities_to_generate = 100;
-
+START TRANSACTION;
 -- =========================================
 -- NUMBER GENERATOR (1 → 100)
 -- =========================================
@@ -26,7 +23,7 @@ FROM seq;
 -- =========================================
 -- WORK LOCATIONS (100)
 -- =========================================
-INSERT INTO worklocation (location_name,address_line_1,address_line_2,city,country,timezone,is_active)
+INSERT INTO work_location (location_name,address_line_1,address_line_2,city,country,timezone,is_active)
 WITH RECURSIVE seq AS (
     SELECT 1 n UNION ALL SELECT n+1 FROM seq WHERE n < @entities_to_generate
 )
@@ -82,24 +79,24 @@ FROM employee;
 -- =========================================
 -- JOB ROLES (REALISTIC SMALL SET)
 -- =========================================
-INSERT INTO jobrole (role_name,job_role_description,is_certification_required) VALUES
-                                                                                   ('Nurse','Registered nurse',1),
-                                                                                   ('Doctor','Medical doctor',1),
-                                                                                   ('Shift Supervisor','Oversees shift operations',0),
-                                                                                   ('Care Assistant','Supports patient care',0),
-                                                                                   ('Receptionist','Front desk operations',0),
-                                                                                   ('Security Officer','Site security',1),
-                                                                                   ('Cleaner','Facility cleaning',0),
-                                                                                   ('Lab Technician','Handles lab samples',1),
-                                                                                   ('Pharmacist','Medication management',1),
-                                                                                   ('Driver','Transport duties',0),
-                                                                                   ('Warehouse Operator','Stock handling',0),
-                                                                                   ('IT Support','Technical support',0);
+INSERT INTO job_role (role_name,job_role_description,is_certification_required) VALUES
+    ('Nurse','Registered nurse',1),
+    ('Doctor','Medical doctor',1),
+    ('Shift Supervisor','Oversees shift operations',0),
+    ('Care Assistant','Supports patient care',0),
+    ('Receptionist','Front desk operations',0),
+    ('Security Officer','Site security',1),
+    ('Cleaner','Facility cleaning',0),
+    ('Lab Technician','Handles lab samples',1),
+    ('Pharmacist','Medication management',1),
+    ('Driver','Transport duties',0),
+    ('Warehouse Operator','Stock handling',0),
+    ('IT Support','Technical support',0);
 
 -- =========================================
 -- EMPLOYEE JOB ROLES (~150 rows)
 -- =========================================
-INSERT INTO employeejobrole
+INSERT INTO employee_job_role (employee_id, job_role_id, assigned_date, expiry_date, proficiency_level)
 SELECT
     e.employee_id,
     1 + MOD(e.employee_id,12),
@@ -130,7 +127,7 @@ FROM seq;
 -- =========================================
 -- SHIFT REQUIRED ROLES (~100)
 -- =========================================
-INSERT INTO shiftrequiredjobrole
+INSERT INTO shift_required_job_role (shift_id, job_role_id, required_employee_count)
 SELECT
     shift_id,
     1+MOD(shift_id,12),
@@ -140,7 +137,7 @@ FROM shift;
 -- =========================================
 -- SHIFT ASSIGNMENTS (100) UNIQUE PAIRS
 -- =========================================
-INSERT INTO shiftassignment (
+INSERT INTO shift_assignment (
     shift_id, employee_id,
     assignment_status, assigned_datetime,
     check_in_datetime, check_out_datetime
@@ -157,7 +154,7 @@ FROM shift s;
 -- =========================================
 -- SHIFT APPROVALS (~70 mixed decisions)
 -- =========================================
-INSERT INTO shiftapproval (
+INSERT INTO shift_approval (
     shift_assignment_id, approver_employee_id,
     decision, approval_comment, decision_datetime
 )
@@ -167,13 +164,13 @@ SELECT
     ELT(1+MOD(shift_assignment_id,3),'APPROVED','REJECTED','PENDING'),
     'Auto decision',
     NOW()
-FROM shiftassignment
+FROM shift_assignment
 WHERE shift_assignment_id <= 70;
 
 -- =========================================
 -- SHIFT SWAPS (~50)
 -- =========================================
-INSERT INTO shiftswap (
+INSERT INTO shift_swap (
     original_shift_assignment_id,
     employee_from_id,
     employee_to_id,
@@ -188,13 +185,13 @@ SELECT
     ELT(1 + MOD(sa.shift_assignment_id, 3), 'REQUESTED','APPROVED','DECLINED') AS swap_status,
     NOW() - INTERVAL MOD(sa.shift_assignment_id, 5) DAY AS request_datetime,
     'Personal reason' AS reason
-FROM shiftassignment sa
+FROM shift_assignment sa
 WHERE sa.shift_assignment_id <= 50;
 
 -- =========================================
 -- SHIFT SWAP APPROVALS (~40)
 -- =========================================
-INSERT INTO shiftswapapproval (
+INSERT INTO shift_swap_approval (
     shift_swap_id, approver_employee_id,
     decision, shift_swap_comment, decision_datetime
 )
@@ -204,13 +201,13 @@ SELECT
     ELT(1+MOD(shift_swap_id,3),'APPROVED','REJECTED','PENDING'),
     'Swap review',
     NOW()
-FROM shiftswap
+FROM shift_swap
 WHERE shift_swap_id <= 40;
 
 -- =========================================
 -- LEAVE TYPES (REALISTIC SMALL SET)
 -- =========================================
-INSERT INTO leavetype (
+INSERT INTO leave_type (
     leave_type_name, leave_type_description,
     requires_approval, is_paid_leave
 ) VALUES
@@ -226,7 +223,7 @@ INSERT INTO leavetype (
 -- =========================================
 -- LEAVE REQUESTS (100)
 -- =========================================
-INSERT INTO leaverequest (
+INSERT INTO leave_request (
     employee_id, leave_type_id,
     start_date, end_date,
     request_status, reason, requested_datetime
@@ -244,7 +241,7 @@ FROM employee;
 -- =========================================
 -- LEAVE APPROVALS (~70)
 -- =========================================
-INSERT INTO leaveapproval (
+INSERT INTO leave_approval (
     leave_request_id,
     approver_employee_id,
     decision,
@@ -257,13 +254,13 @@ SELECT
     ELT(1+MOD(leave_request_id,3),'APPROVED','REJECTED','PENDING'),
     'Reviewed',
     NOW()
-FROM leaverequest
+FROM leave_request
 WHERE leave_request_id <= 70;
 
 -- =========================================
 -- LEAVE LEDGER (100)
 -- =========================================
-INSERT INTO leaveledger (
+INSERT INTO leave_ledger (
     employee_id, leave_type_id,
     change_amount_days,
     transaction_type,
@@ -284,7 +281,7 @@ FROM employee;
 -- =========================================
 -- AUDIT LOG (100)
 -- =========================================
-INSERT INTO auditlog (
+INSERT INTO audit_log (
     entity_type, entity_id, action_type,
     performed_by_employee_id,
     action_datetime,
@@ -300,6 +297,4 @@ SELECT
     '{}',
     '{}'
 FROM employee;
-
-SET FOREIGN_KEY_CHECKS = 1;
 COMMIT;
