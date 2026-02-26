@@ -9,21 +9,21 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "worklocation")
+@Table(name = "work_location")
 public class WorkLocation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "work_location_id")
-    private Integer work_location_id;
+    private Integer workLocationId;
 
     @Column(name = "location_name")
-    private String location_name;
+    private String locationName;
 
     @Column(name = "address_line_1")
-    private String address_line_1;
+    private String addressLine1;
 
     @Column(name = "address_line_2")
-    private String address_line_2;
+    private String addressLine2;
 
     @Column(name = "city")
     private String city;
@@ -35,5 +35,5 @@ public class WorkLocation {
     private String timezone;
 
     @Column(name = "is_active")
-    private Boolean is_active;
+    private Boolean isActive;
 }

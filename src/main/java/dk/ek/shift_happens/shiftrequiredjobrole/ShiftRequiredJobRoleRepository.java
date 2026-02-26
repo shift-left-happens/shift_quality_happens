@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface ShiftRequiredJobRoleRepository extends JpaRepository<ShiftRequiredJobRole, ShiftRequiredJobRoleId> {
+public interface ShiftRequiredJobRoleRepository extends JpaRepository<ShiftRequiredJobRole, Integer> {
     List<ShiftRequiredJobRole> findAll();
 }

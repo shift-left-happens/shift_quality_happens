@@ -12,31 +12,31 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "leaveledger")
+@Table(name = "leave_ledger")
 public class LeaveLedger {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "leave_ledger_id")
-    private Integer leave_ledger_id;
+    private Integer leaveLedgerId;
 
     @Column(name = "employee_id", nullable = false)
-    private Integer employee_id;
+    private Integer employeeId;
 
     @Column(name = "leave_type_id", nullable = false)
-    private Integer leave_type_id;
+    private Integer leaveTypeId;
 
     @Column(name = "change_amount_days")
-    private BigDecimal change_amount_days;
+    private BigDecimal changeAmountDays;
 
     @Column(name = "transaction_type")
-    private String transaction_type;
+    private String transactionType;
 
     @Column(name = "reference_entity_type")
-    private String reference_entity_type;
+    private String referenceEntityType;
 
     @Column(name = "reference_entity_id")
-    private Integer reference_entity_id;
+    private Integer referenceEntityId;
 
     @Column(name = "transaction_datetime")
-    private LocalDateTime transaction_datetime;
+    private LocalDateTime transactionDatetime;
 }

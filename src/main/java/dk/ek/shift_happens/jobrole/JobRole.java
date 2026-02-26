@@ -9,19 +9,19 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "jobrole")
+@Table(name = "job_role")
 public class JobRole {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "job_role_id")
-    private Integer job_role_id;
+    private Integer jobRoleId;
 
     @Column(name = "role_name", nullable = false)
-    private String role_name;
+    private String roleName;
 
     @Column(name = "job_role_description")
-    private String job_role_description;
+    private String jobRoleDescription;
 
     @Column(name = "is_certification_required")
-    private Boolean is_certification_required;
+    private Boolean isCertificationRequired;
 }

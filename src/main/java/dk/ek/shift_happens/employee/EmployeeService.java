@@ -26,16 +26,16 @@ public class EmployeeService {
 
     public Optional<Employee> patch(Integer id, Employee patch) {
         return this.employeeRepository.findById(id).map(existing -> {
-            if (patch.getEmployee_number() != null) existing.setEmployee_number(patch.getEmployee_number());
-            if (patch.getFirst_name() != null) existing.setFirst_name(patch.getFirst_name());
-            if (patch.getLast_name() != null) existing.setLast_name(patch.getLast_name());
+            if (patch.getEmployeeNumber() != null) existing.setEmployeeNumber(patch.getEmployeeNumber());
+            if (patch.getFirstName() != null) existing.setFirstName(patch.getFirstName());
+            if (patch.getLastName() != null) existing.setLastName(patch.getLastName());
             if (patch.getEmail() != null) existing.setEmail(patch.getEmail());
-            if (patch.getLogin_password() != null) existing.setLogin_password(patch.getLogin_password());
-            if (patch.getFk_user_role_id() != null) existing.setFk_user_role_id(patch.getFk_user_role_id());
-            if (patch.getPhone_number() != null) existing.setPhone_number(patch.getPhone_number());
-            if (patch.getHire_date() != null) existing.setHire_date(patch.getHire_date());
-            if (patch.getEmployment_status() != null) existing.setEmployment_status(patch.getEmployment_status());
-            if (patch.getPrimary_work_location_id() != null) existing.setPrimary_work_location_id(patch.getPrimary_work_location_id());
+            if (patch.getLoginPassword() != null) existing.setLoginPassword(patch.getLoginPassword());
+            if (patch.getFkUserRoleId() != null) existing.setFkUserRoleId(patch.getFkUserRoleId());
+            if (patch.getPhoneNumber() != null) existing.setPhoneNumber(patch.getPhoneNumber());
+            if (patch.getHireDate() != null) existing.setHireDate(patch.getHireDate());
+            if (patch.getEmploymentStatus() != null) existing.setEmploymentStatus(patch.getEmploymentStatus());
+            if (patch.getPrimaryWorkLocationId() != null) existing.setPrimaryWorkLocationId(patch.getPrimaryWorkLocationId());
             return this.employeeRepository.save(existing);
         });
     }

@@ -11,23 +11,25 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "employeejobrole")
-@IdClass(EmployeeJobRoleId.class)
+@Table(name = "employee_job_role")
 public class EmployeeJobRole {
     @Id
-    @Column(name = "employee_id")
-    private Integer employee_id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "employee_job_role_id")
+    private Integer employeeJobRoleId;
 
-    @Id
-    @Column(name = "job_role_id")
-    private Integer job_role_id;
+    @Column(name = "employee_id", nullable = false)
+    private Integer employeeId;
+
+    @Column(name = "job_role_id", nullable = false)
+    private Integer jobRoleId;
 
     @Column(name = "assigned_date")
-    private LocalDate assigned_date;
+    private LocalDate assignedDate;
 
     @Column(name = "expiry_date")
-    private LocalDate expiry_date;
+    private LocalDate expiryDate;
 
     @Column(name = "proficiency_level")
-    private String proficiency_level;
+    private String proficiencyLevel;
 }
