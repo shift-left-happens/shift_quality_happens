@@ -1,0 +1,34 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: shift-happens-db
+    command: --event-scheduler=ON
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: shift_happens
+    ports:
+      - "3307:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./docker/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: shift-happens-app
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:mysql://db:3306/shift_happens
+      DB_USERNAME: root
+      DB_PASSWORD: rootpassword
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:
