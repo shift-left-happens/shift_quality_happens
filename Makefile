@@ -1,3 +1,7 @@
+# Load .env variables
+include .env
+export
+
 # Shift Happens - Docker commands
 
 ## Start everything (DB + app)
@@ -31,4 +35,4 @@ db-logs:
 
 ## Connect to MySQL CLI inside the container
 db-shell:
-	docker exec -it shift-happens-db mysql -u root -prootpassword shift_happens
+	docker exec -it shift-happens-db mysql -u root -p$(MYSQL_ROOT_PASSWORD) $(MYSQL_DATABASE)
