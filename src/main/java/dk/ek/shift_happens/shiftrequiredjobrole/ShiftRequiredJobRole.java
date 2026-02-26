@@ -9,17 +9,19 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "shiftrequiredjobrole")
-@IdClass(ShiftRequiredJobRoleId.class)
+@Table(name = "shift_required_job_role")
 public class ShiftRequiredJobRole {
     @Id
-    @Column(name = "shift_id")
-    private Integer shift_id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "shift_required_job_role_id")
+    private Integer shiftRequiredJobRoleId;
 
-    @Id
-    @Column(name = "job_role_id")
-    private Integer job_role_id;
+    @Column(name = "shift_id", nullable = false)
+    private Integer shiftId;
+
+    @Column(name = "job_role_id", nullable = false)
+    private Integer jobRoleId;
 
     @Column(name = "required_employee_count")
-    private Integer required_employee_count;
+    private Integer requiredEmployeeCount;
 }

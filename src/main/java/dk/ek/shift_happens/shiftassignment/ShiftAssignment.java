@@ -11,28 +11,28 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "shiftassignment")
+@Table(name = "shift_assignment")
 public class ShiftAssignment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "shift_assignment_id")
-    private Integer shift_assignment_id;
+    private Integer shiftAssignmentId;
 
     @Column(name = "shift_id", nullable = false)
-    private Integer shift_id;
+    private Integer shiftId;
 
     @Column(name = "employee_id", nullable = false)
-    private Integer employee_id;
+    private Integer employeeId;
 
     @Column(name = "assignment_status")
-    private String assignment_status;
+    private String assignmentStatus;
 
     @Column(name = "assigned_datetime")
-    private LocalDateTime assigned_datetime;
+    private LocalDateTime assignedDatetime;
 
     @Column(name = "check_in_datetime")
-    private LocalDateTime check_in_datetime;
+    private LocalDateTime checkInDatetime;
 
     @Column(name = "check_out_datetime")
-    private LocalDateTime check_out_datetime;
+    private LocalDateTime checkOutDatetime;
 }

@@ -1,6 +1,5 @@
 package dk.ek.shift_happens.department;
 
-import dk.ek.shift_happens.department.Department;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
