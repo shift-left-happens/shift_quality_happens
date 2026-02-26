@@ -35,7 +35,6 @@ build/
 ### Environment ###
 .env
 
-
 /docker-compose.yml
 src/main/resources/queries/lokal_create_DB.sql
 src/main/resources/queries/lokal_insert_data.sql

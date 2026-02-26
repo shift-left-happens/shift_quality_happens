@@ -9,15 +9,15 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "department") // use exact table name and schema
+@Table(name = "department")
 public class Department {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "department_id")
-    private Integer department_id;
+    private Integer departmentId;
     @Column(name = "department_name")
-    private String department_name;
+    private String departmentName;
     @Column(name = "is_active")
-    private Boolean is_active;
+    private Boolean isActive;
 }
