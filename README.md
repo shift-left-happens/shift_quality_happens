@@ -15,7 +15,15 @@ git clone https://github.com/Luke3520/shift_happens.git
 cd shift-happens
 ```
 
-### 2. Start the application
+### 2. Configure environment
+
+```bash
+cp .env.example .env
+```
+
+Fill in your credentials in `.env`. The Docker defaults work out of the box.
+
+### 3. Start the application
 
 ```bash
 make up
@@ -29,7 +37,7 @@ This single command will:
 
 The database is exposed on **localhost:3307** (to avoid conflicts with any local MySQL on 3306).
 
-### 3. Verify it works
+### 4. Verify it works
 
 Once the logs show `Started ShiftHappensApplication`, the API is ready:
 
@@ -37,7 +45,7 @@ Once the logs show `Started ShiftHappensApplication`, the API is ready:
 curl http://localhost:8080/employees
 ```
 
-### 4. Stop the application
+### 5. Stop the application
 
 ```bash
 make down
@@ -76,9 +84,9 @@ make db-shell
 |---------|-------|
 | Host | `127.0.0.1` |
 | Port | `3307` |
-| User | `root` |
-| Password | `rootpassword` |
-| Database | `shift_happens` |
+| User | See `DB_USERNAME` in `.env` |
+| Password | See `MYSQL_ROOT_PASSWORD` in `.env` |
+| Database | See `MYSQL_DATABASE` in `.env` |
 
 ## Project Structure
 
@@ -97,6 +105,7 @@ shift-happens/
 │   └── resources/
 │       ├── application.properties
 │       └── queries/            # Original SQL scripts (reference)
+├── .env.example              # Template for environment variables
 ├── docker-compose.yml
 ├── Dockerfile
 ├── Makefile
