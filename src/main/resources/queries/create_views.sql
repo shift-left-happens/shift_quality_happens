@@ -24,11 +24,11 @@ SELECT
     sa.assigned_datetime,
     sa.check_in_datetime,
     sa.check_out_datetime
-FROM shiftassignment sa
+FROM shift_assignment sa
 JOIN employee e ON e.employee_id = sa.employee_id
 JOIN shift s ON s.shift_id = sa.shift_id
 JOIN department d ON d.department_id = s.department_id
-JOIN worklocation wl ON wl.work_location_id = s.work_location_id;
+JOIN work_location wl ON wl.work_location_id = s.work_location_id;
 
 DROP VIEW IF EXISTS vw_open_shifts;
 CREATE VIEW vw_open_shifts AS
@@ -45,9 +45,9 @@ SELECT
     COALESCE(srjr.required_employee_count, 0) - COUNT(sa.shift_assignment_id) AS remaining_slots
 FROM shift s
 JOIN department d ON d.department_id = s.department_id
-JOIN worklocation wl ON wl.work_location_id = s.work_location_id
-LEFT JOIN shiftrequiredjobrole srjr ON srjr.shift_id = s.shift_id
-LEFT JOIN shiftassignment sa ON sa.shift_id = s.shift_id
+JOIN work_location wl ON wl.work_location_id = s.work_location_id
+LEFT JOIN shift_required_job_role srjr ON srjr.shift_id = s.shift_id
+LEFT JOIN shift_assignment sa ON sa.shift_id = s.shift_id
 GROUP BY
     s.shift_id,
     s.shift_name,
@@ -87,9 +87,9 @@ SELECT
     approver.employee_number AS approver_number,
     approver.first_name AS approver_first_name,
     approver.last_name AS approver_last_name
-FROM leaverequest lr
+FROM leave_request lr
 JOIN employee e ON e.employee_id = lr.employee_id
-JOIN leavetype lt ON lt.leave_type_id = lr.leave_type_id
-LEFT JOIN leaveapproval la ON la.leave_request_id = lr.leave_request_id
+JOIN leave_type lt ON lt.leave_type_id = lr.leave_type_id
+LEFT JOIN leave_approval la ON la.leave_request_id = lr.leave_request_id
 LEFT JOIN employee approver ON approver.employee_id = la.approver_employee_id;
  
