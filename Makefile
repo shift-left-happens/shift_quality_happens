@@ -31,4 +31,4 @@ db-logs:
 
 ## Connect to MySQL CLI inside the container
 db-shell:
-	docker exec -it shift-happens-db mysql -u root -prootpassword railway
+	docker exec -it shift-happens-db mysql -u root -prootpassword shift_happens
