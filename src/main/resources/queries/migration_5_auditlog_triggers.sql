@@ -137,6 +137,8 @@ END$$
 
 DELIMITER ;
 
+/* TEST above triggers */
+
 INSERT INTO employee (employee_number, first_name, last_name, email, login_password, fk_user_role_id,
                       phone_number, hire_date, employment_status, primary_work_location_id)
 VALUES ('EMP00999', 'First999', 'Last999', 'employee999@shift.dk',
