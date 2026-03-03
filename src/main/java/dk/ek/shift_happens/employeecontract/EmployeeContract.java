@@ -17,29 +17,29 @@ public class EmployeeContract {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "contract_id")
-    private Integer contract_id;
+    private Integer contractId;
 
     @Column(name = "employee_id", nullable = false)
-    private Integer employee_id;
+    private Integer employeeId;
 
     @Column(name = "department_id", nullable = false)
-    private Integer department_id;
+    private Integer departmentId;
 
     @Column(name = "contract_type")
-    private String contract_type;
+    private String contractType;
 
     @Column(name = "start_date")
-    private LocalDate start_date;
+    private LocalDate startDate;
 
     @Column(name = "end_date")
-    private LocalDate end_date;
+    private LocalDate endDate;
 
     @Column(name = "weekly_hours")
-    private Integer weekly_hours;
+    private Integer weeklyHours;
 
     @Column(name = "salary_amount")
-    private BigDecimal salary_amount;
+    private BigDecimal salaryAmount;
 
     @Column(name = "is_active")
-    private Boolean is_active;
+    private Boolean isActive;
 }

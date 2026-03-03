@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface EmployeeJobRoleRepository extends JpaRepository<EmployeeJobRole, EmployeeJobRoleId> {
+public interface EmployeeJobRoleRepository extends JpaRepository<EmployeeJobRole, Integer> {
     List<EmployeeJobRole> findAll();
 }

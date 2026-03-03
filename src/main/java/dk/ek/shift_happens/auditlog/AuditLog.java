@@ -11,31 +11,31 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "auditlog")
+@Table(name = "audit_log")
 public class AuditLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "audit_log_id")
-    private Integer audit_log_id;
+    private Integer auditLogId;
 
     @Column(name = "entity_type")
-    private String entity_type;
+    private String entityType;
 
     @Column(name = "entity_id")
-    private Integer entity_id;
+    private Integer entityId;
 
     @Column(name = "action_type")
-    private String action_type;
+    private String actionType;
 
     @Column(name = "performed_by_employee_id")
-    private Integer performed_by_employee_id;
+    private Integer performedByEmployeeId;
 
     @Column(name = "action_datetime")
-    private LocalDateTime action_datetime;
+    private LocalDateTime actionDatetime;
 
     @Column(name = "old_value_snapshot")
-    private String old_value_snapshot;
+    private String oldValueSnapshot;
 
     @Column(name = "new_value_snapshot")
-    private String new_value_snapshot;
+    private String newValueSnapshot;
 }

@@ -12,31 +12,31 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "leaverequest")
+@Table(name = "leave_request")
 public class LeaveRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "leave_request_id")
-    private Integer leave_request_id;
+    private Integer leaveRequestId;
 
     @Column(name = "employee_id", nullable = false)
-    private Integer employee_id;
+    private Integer employeeId;
 
     @Column(name = "leave_type_id", nullable = false)
-    private Integer leave_type_id;
+    private Integer leaveTypeId;
 
     @Column(name = "start_date")
-    private LocalDate start_date;
+    private LocalDate startDate;
 
     @Column(name = "end_date")
-    private LocalDate end_date;
+    private LocalDate endDate;
 
     @Column(name = "request_status")
-    private String request_status;
+    private String requestStatus;
 
     @Column(name = "reason")
     private String reason;
 
     @Column(name = "requested_datetime")
-    private LocalDateTime requested_datetime;
+    private LocalDateTime requestedDatetime;
 }
