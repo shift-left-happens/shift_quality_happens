@@ -1,15 +1,16 @@
 USE
-shift_happens;
+    shift_happens;
 DELIMITER $$
 
 CREATE TRIGGER trg_leaveapproval_before_insert
-    BEFORE INSERT ON leave_approval
+    BEFORE INSERT
+    ON leave_approval
     FOR EACH ROW
 BEGIN
     DECLARE v_employee_id INT;
     DECLARE v_leave_type_id INT;
-    DECLARE v_days_requested DECIMAL(6,2);
-    DECLARE v_leave_balance DECIMAL(6,2);
+    DECLARE v_days_requested DECIMAL(6, 2);
+    DECLARE v_leave_balance DECIMAL(6, 2);
     DECLARE v_is_manager INT;
     DECLARE v_request_status VARCHAR(20);
 
@@ -24,7 +25,9 @@ BEGIN
         v_request_status
     FROM leave_request
     WHERE leave_request_id = NEW.leave_request_id
-    LIMIT 1 FOR UPDATE;
+    LIMIT 1
+    FOR
+    UPDATE;
 
     IF v_employee_id IS NULL THEN
         SIGNAL SQLSTATE '45000'
@@ -72,24 +75,20 @@ BEGIN
         WHERE leave_request_id = NEW.leave_request_id
         LIMIT 1;
 
-        INSERT INTO leave_ledger (
-            employee_id,
-            leave_type_id,
-            change_amount_days,
-            transaction_type,
-            reference_entity_type,
-            reference_entity_id,
-            transaction_datetime
-        )
-        VALUES (
-                   v_employee_id,
-                   v_leave_type_id,
-                   -v_days_requested,
-                   'USAGE',
-                   'LeaveRequest',
-                   NEW.leave_request_id,
-                   NOW()
-               );
+        INSERT INTO leave_ledger (employee_id,
+                                  leave_type_id,
+                                  change_amount_days,
+                                  transaction_type,
+                                  reference_entity_type,
+                                  reference_entity_id,
+                                  transaction_datetime)
+        VALUES (v_employee_id,
+                v_leave_type_id,
+                -v_days_requested,
+                'USAGE',
+                'LeaveRequest',
+                NEW.leave_request_id,
+                NOW());
 
     END IF;
 
@@ -100,35 +99,43 @@ DELIMITER ;
 /*Test the leave approval trigger works*/
 
 /*Find random employee with role 2 (regular employee)*/
-SET @random_employee = (SELECT employee.employee_id FROM employee WHERE fk_user_role_id = 2 ORDER BY RAND() LIMIT 1);
+SET @random_employee = (SELECT employee.employee_id
+                        FROM employee
+                        WHERE fk_user_role_id = 2
+                        ORDER BY RAND()
+                        LIMIT 1);
 /*Find random employee with role 3 (Manager, the required role for approvals)*/
-SET @random_manager = (SELECT employee.employee_id FROM employee WHERE fk_user_role_id = 3 ORDER BY RAND() LIMIT 1);
+SET @random_manager = (SELECT employee.employee_id
+                       FROM employee
+                       WHERE fk_user_role_id = 3
+                       ORDER BY RAND()
+                       LIMIT 1);
 /*Add additional vacation time for a test employee from above manager*/
-INSERT INTO `leave_ledger` (`employee_id`, `leave_type_id`, `change_amount_days`, `transaction_type`, `reference_entity_type`, reference_entity_id, `transaction_datetime`) VALUES (@random_employee, 1, 10, 'ACCRUAL', 'Employee', @random_manager, '2026-02-24 11:00:00');
+INSERT INTO `leave_ledger` (`employee_id`, `leave_type_id`, `change_amount_days`, `transaction_type`,
+                            `reference_entity_type`, reference_entity_id, `transaction_datetime`)
+VALUES (@random_employee, 1, 10, 'ACCRUAL', 'Employee', @random_manager, '2026-02-24 11:00:00');
 /*set default datetime for new entries to simplify INSERTs*/
 ALTER TABLE `leave_request`
     MODIFY requested_datetime DATETIME DEFAULT CURRENT_TIMESTAMP;
 /*Add leave request*/
-INSERT INTO `leave_request` (`employee_id`, `leave_type_id`, `start_date`, `end_date`, `request_status`, `reason`) VALUES (@random_employee, 1, '2026-05-05', '2026-05-08', 'PENDING', 'Vacation');
+INSERT INTO `leave_request` (`employee_id`, `leave_type_id`, `start_date`, `end_date`, `request_status`, `reason`)
+VALUES (@random_employee, 1, '2026-05-05', '2026-05-08', 'PENDING', 'Vacation');
 SET @new_leave_request_id = LAST_INSERT_ID();
 
-INSERT INTO leave_approval (
-    leave_request_id,
-    approver_employee_id,
-    decision,
-    decision_datetime
-)
-VALUES (
-           @new_leave_request_id,              /* the leave_request_id of employee 96*/
-           @random_manager,              /* NOT a manager*/
-           'APPROVED',
-           NOW()
-       );
+INSERT INTO leave_approval (leave_request_id,
+                            approver_employee_id,
+                            decision,
+                            decision_datetime)
+VALUES (@new_leave_request_id, /* the leave_request_id of employee 96*/
+        @random_manager, /* NOT a manager*/
+        'APPROVED',
+        NOW());
 
 
 /*Prevent deletion of leave ledger entries*/
 CREATE TRIGGER trg_no_delete_leave_ledger
-    BEFORE DELETE ON leave_ledger
+    BEFORE DELETE
+    ON leave_ledger
     FOR EACH ROW
 BEGIN
     SIGNAL SQLSTATE '45000'
@@ -142,7 +149,8 @@ ROLLBACK;
 
 /*Days cannot be 0*/
 CREATE TRIGGER trg_validate_ledger_amount
-    BEFORE INSERT ON leave_ledger
+    BEFORE INSERT
+    ON leave_ledger
     FOR EACH ROW
 BEGIN
     IF NEW.change_amount_days = 0 THEN
@@ -165,7 +173,8 @@ ROLLBACK;
 */
 
 CREATE TRIGGER trg_prevent_employee_change
-    BEFORE UPDATE ON leave_request
+    BEFORE UPDATE
+    ON leave_request
     FOR EACH ROW
 BEGIN
     IF OLD.employee_id <> NEW.employee_id THEN
@@ -204,7 +213,8 @@ ROLLBACK;
 DELIMITER $$
 DROP TRIGGER IF EXISTS trg_validate_employee_ins;
 CREATE TRIGGER trg_validate_employee_ins
-    BEFORE INSERT ON employee
+    BEFORE INSERT
+    ON employee
     FOR EACH ROW
 BEGIN
     IF LENGTH(NEW.login_password) < 8 THEN
@@ -214,7 +224,8 @@ BEGIN
 end $$
 DROP TRIGGER IF EXISTS trg_validate_employee_update;
 CREATE TRIGGER trg_validate_employee_update
-    BEFORE UPDATE ON employee
+    BEFORE UPDATE
+    ON employee
     FOR EACH ROW
 BEGIN
     IF LENGTH(NEW.login_password) < 8 THEN
@@ -225,7 +236,8 @@ end $$
 
 DROP TRIGGER IF EXISTS trg_validate_contract_ins;
 CREATE TRIGGER trg_validate_contract_ins
-    BEFORE INSERT ON employee_contract
+    BEFORE INSERT
+    ON employee_contract
     FOR EACH ROW
 BEGIN
     IF NEW.salary_amount <= 0 THEN
@@ -244,7 +256,8 @@ end $$
 
 DROP TRIGGER IF EXISTS trg_validate_contract_update;
 CREATE TRIGGER trg_validate_contract_update
-    BEFORE UPDATE ON employee_contract
+    BEFORE UPDATE
+    ON employee_contract
     FOR EACH ROW
 BEGIN
     IF NEW.salary_amount <= 0 THEN
@@ -264,16 +277,16 @@ end $$
 DROP TRIGGER IF EXISTS trg_no_contract_overlap_ins;
 
 CREATE TRIGGER trg_no_contract_overlap_ins
-    BEFORE INSERT ON employee_contract
+    BEFORE INSERT
+    ON employee_contract
     FOR EACH ROW
 BEGIN
-    IF NEW.is_active = 1 AND EXISTS (
-        SELECT 1
-        FROM employee_contract ec
-        WHERE ec.employee_id = NEW.employee_id
-          AND ec.is_active = 1
-          AND NEW.start_date <= IFNULL(ec.end_date, '9999-12-31') -- New contract starts before an existing active contract ended
-          AND ec.start_date <= IFNULL(NEW.end_date, '9999-12-31') -- Existing contract starts before new contract ends
+    IF NEW.is_active = 1 AND EXISTS (SELECT 1
+                                     FROM employee_contract ec
+                                     WHERE ec.employee_id = NEW.employee_id
+                                       AND ec.is_active = 1
+                                       AND NEW.start_date <= IFNULL(ec.end_date, '9999-12-31') -- New contract starts before an existing active contract ended
+                                       AND ec.start_date <= IFNULL(NEW.end_date, '9999-12-31') -- Existing contract starts before new contract ends
     ) THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Contract period overlaps with an existing active contract.';
@@ -283,23 +296,21 @@ END $$
 DROP TRIGGER IF EXISTS trg_no_contract_overlap_upd;
 
 CREATE TRIGGER trg_no_contract_overlap_upd
-    BEFORE UPDATE ON employee_contract
+    BEFORE UPDATE
+    ON employee_contract
     FOR EACH ROW
 BEGIN
-    IF NEW.is_active = 1 AND EXISTS (
-        SELECT 1
-        FROM employee_contract ec
-        WHERE ec.employee_id = NEW.employee_id
-          AND ec.contract_id != OLD.contract_id
-          AND ec.is_active = 1
-          AND NEW.start_date <= IFNULL(ec.end_date, '9999-12-31')
-          AND ec.start_date <= IFNULL(NEW.end_date, '9999-12-31')
-    ) THEN
+    IF NEW.is_active = 1 AND EXISTS (SELECT 1
+                                     FROM employee_contract ec
+                                     WHERE ec.employee_id = NEW.employee_id
+                                       AND ec.contract_id != OLD.contract_id
+                                       AND ec.is_active = 1
+                                       AND NEW.start_date <= IFNULL(ec.end_date, '9999-12-31')
+                                       AND ec.start_date <= IFNULL(NEW.end_date, '9999-12-31')) THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Contract period overlaps with an existing active contract.';
     END IF;
 END $$
-
 
 
 /*
@@ -316,41 +327,37 @@ DELIMITER $$
 
 -- 1️⃣ Audit INSERT
 CREATE TRIGGER trg_employee_insert
-    AFTER INSERT ON employee
+    AFTER INSERT
+    ON employee
     FOR EACH ROW
 BEGIN
-    INSERT INTO audit_log (
-        entity_type,
-        entity_id,
-        action_type,
-        performed_by_employee_id,
-        action_datetime,
-        old_value_snapshot,
-        new_value_snapshot
-    )
-    VALUES (
-               'EMPLOYEE',
-               NEW.employee_id,
-               'INSERT',
-               NULL,
-               NOW(),
-               NULL,
-               JSON_OBJECT(
-                       'employee_id', NEW.employee_id,
-                       'employee_number', NEW.employee_number,
-                       'first_name', NEW.first_name,
-                       'last_name', NEW.last_name,
-                       'email', NEW.email,
-                       'phone_number', NEW.phone_number,
-                       'hire_date', NEW.hire_date,
-                       'employment_status', NEW.employment_status,
-                       'primary_work_location_id', NEW.primary_work_location_id,
-                       'login_password', '*****', -- hidden password
-                       'fk_user_role_id', NEW.fk_user_role_id
-               )
-           );
+    INSERT INTO audit_log (entity_type,
+                           entity_id,
+                           action_type,
+                           performed_by_employee_id,
+                           action_datetime,
+                           old_value_snapshot,
+                           new_value_snapshot)
+    VALUES ('EMPLOYEE',
+            NEW.employee_id,
+            'INSERT',
+            NULL,
+            NOW(),
+            NULL,
+            JSON_OBJECT(
+                    'employee_id', NEW.employee_id,
+                    'employee_number', NEW.employee_number,
+                    'first_name', NEW.first_name,
+                    'last_name', NEW.last_name,
+                    'email', NEW.email,
+                    'phone_number', NEW.phone_number,
+                    'hire_date', NEW.hire_date,
+                    'employment_status', NEW.employment_status,
+                    'primary_work_location_id', NEW.primary_work_location_id,
+                    'login_password', '*****', -- hidden password
+                    'fk_user_role_id', NEW.fk_user_role_id
+            ));
 END$$
-
 
 
 -- Audit UPDATEs
@@ -358,89 +365,83 @@ END$$
 DROP TRIGGER IF EXISTS trg_employee_update;
 
 CREATE TRIGGER trg_employee_update
-    BEFORE UPDATE ON employee
+    BEFORE UPDATE
+    ON employee
     FOR EACH ROW
 BEGIN
-    INSERT INTO audit_log (
-        entity_type,
-        entity_id,
-        action_type,
-        performed_by_employee_id,
-        action_datetime,
-        old_value_snapshot,
-        new_value_snapshot
-    )
-    VALUES (
-               'EMPLOYEE',
-               OLD.employee_id,
-               'UPDATE',
-               NULL,
-               NOW(),
-               JSON_OBJECT(
-                       'employee_id', OLD.employee_id,
-                       'employee_number', OLD.employee_number,
-                       'first_name', OLD.first_name,
-                       'last_name', OLD.last_name,
-                       'email', OLD.email,
-                       'phone_number', OLD.phone_number,
-                       'hire_date', OLD.hire_date,
-                       'employment_status', OLD.employment_status,
-                       'primary_work_location_id', OLD.primary_work_location_id,
-                       'login_password', '*****', -- Password hidden
-                       'fk_user_role_id', OLD.fk_user_role_id
-               ),
-               JSON_OBJECT(
-                       'employee_id', NEW.employee_id,
-                       'employee_number', NEW.employee_number,
-                       'first_name', NEW.first_name,
-                       'last_name', NEW.last_name,
-                       'email', NEW.email,
-                       'phone_number', NEW.phone_number,
-                       'hire_date', NEW.hire_date,
-                       'employment_status', NEW.employment_status,
-                       'primary_work_location_id', NEW.primary_work_location_id,
-                       'login_password', '*****', -- Password hidden
-                       'fk_user_role_id', NEW.fk_user_role_id
-               )
-           );
+    INSERT INTO audit_log (entity_type,
+                           entity_id,
+                           action_type,
+                           performed_by_employee_id,
+                           action_datetime,
+                           old_value_snapshot,
+                           new_value_snapshot)
+    VALUES ('EMPLOYEE',
+            OLD.employee_id,
+            'UPDATE',
+            NULL,
+            NOW(),
+            JSON_OBJECT(
+                    'employee_id', OLD.employee_id,
+                    'employee_number', OLD.employee_number,
+                    'first_name', OLD.first_name,
+                    'last_name', OLD.last_name,
+                    'email', OLD.email,
+                    'phone_number', OLD.phone_number,
+                    'hire_date', OLD.hire_date,
+                    'employment_status', OLD.employment_status,
+                    'primary_work_location_id', OLD.primary_work_location_id,
+                    'login_password', '*****', -- Password hidden
+                    'fk_user_role_id', OLD.fk_user_role_id
+            ),
+            JSON_OBJECT(
+                    'employee_id', NEW.employee_id,
+                    'employee_number', NEW.employee_number,
+                    'first_name', NEW.first_name,
+                    'last_name', NEW.last_name,
+                    'email', NEW.email,
+                    'phone_number', NEW.phone_number,
+                    'hire_date', NEW.hire_date,
+                    'employment_status', NEW.employment_status,
+                    'primary_work_location_id', NEW.primary_work_location_id,
+                    'login_password', '*****', -- Password hidden
+                    'fk_user_role_id', NEW.fk_user_role_id
+            ));
 END$$
 
 DROP TRIGGER IF EXISTS trg_employee_delete;
 -- 3️⃣ Audit DELETEs
 CREATE TRIGGER trg_employee_delete
-    BEFORE DELETE ON employee
+    BEFORE DELETE
+    ON employee
     FOR EACH ROW
 BEGIN
-    INSERT INTO audit_log (
-        entity_type,
-        entity_id,
-        action_type,
-        performed_by_employee_id,
-        action_datetime,
-        old_value_snapshot,
-        new_value_snapshot
-    )
-    VALUES (
-               'EMPLOYEE',
-               OLD.employee_id,
-               'DELETE',
-               NULL,
-               NOW(),
-               JSON_OBJECT(
-                       'employee_id', OLD.employee_id,
-                       'employee_number', OLD.employee_number,
-                       'first_name', OLD.first_name,
-                       'last_name', OLD.last_name,
-                       'email', OLD.email,
-                       'phone_number', OLD.phone_number,
-                       'hire_date', OLD.hire_date,
-                       'employment_status', OLD.employment_status,
-                       'primary_work_location_id', OLD.primary_work_location_id,
-                       'login_password', '*****', -- Password hidden
-                       'fk_user_role_id', OLD.fk_user_role_id
-               ),
-               NULL
-           );
+    INSERT INTO audit_log (entity_type,
+                           entity_id,
+                           action_type,
+                           performed_by_employee_id,
+                           action_datetime,
+                           old_value_snapshot,
+                           new_value_snapshot)
+    VALUES ('EMPLOYEE',
+            OLD.employee_id,
+            'DELETE',
+            NULL,
+            NOW(),
+            JSON_OBJECT(
+                    'employee_id', OLD.employee_id,
+                    'employee_number', OLD.employee_number,
+                    'first_name', OLD.first_name,
+                    'last_name', OLD.last_name,
+                    'email', OLD.email,
+                    'phone_number', OLD.phone_number,
+                    'hire_date', OLD.hire_date,
+                    'employment_status', OLD.employment_status,
+                    'primary_work_location_id', OLD.primary_work_location_id,
+                    'login_password', '*****', -- Password hidden
+                    'fk_user_role_id', OLD.fk_user_role_id
+            ),
+            NULL);
 END$$
 
 DELIMITER ;
@@ -455,6 +456,12 @@ VALUES ('EMP00999', 'First999', 'Last999', 'employee999@shift.dk',
 
 SET @new_employee_id = LAST_INSERT_ID();
 
-UPDATE employee SET employment_status = 'INACTIVE' WHERE employee_id = @new_employee_id LIMIT 1;
+UPDATE employee
+SET employment_status = 'INACTIVE'
+WHERE employee_id = @new_employee_id
+LIMIT 1;
 
-DELETE FROM employee WHERE employee_id = @new_employee_id LIMIT 1;
+DELETE
+FROM employee
+WHERE employee_id = @new_employee_id
+LIMIT 1;
