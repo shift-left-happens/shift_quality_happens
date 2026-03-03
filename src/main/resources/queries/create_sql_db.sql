@@ -7,23 +7,23 @@ CREATE TABLE department (
 CREATE TABLE work_location (
     work_location_id INT AUTO_INCREMENT PRIMARY KEY,
     location_name VARCHAR(255) NOT NULL,
-    address_line_1 VARCHAR(255),
+    address_line_1 VARCHAR(255) NOT NULL,
     address_line_2 VARCHAR(255),
-    city VARCHAR(100),
-    country VARCHAR(100),
+    city VARCHAR(100) NOT NULL,
+    country VARCHAR(100) NOT NULL,
     timezone VARCHAR(50),
     is_active BOOLEAN DEFAULT TRUE
 ) ENGINE=InnoDB;
 CREATE TABLE employee (
     employee_id INT AUTO_INCREMENT PRIMARY KEY,
     employee_number VARCHAR(50) UNIQUE,
-    first_name VARCHAR(100),
-    last_name VARCHAR(100),
-    email VARCHAR(255),
-    phone_number VARCHAR(50),
-    hire_date DATE,
-    employment_status VARCHAR(50),
-    primary_work_location_id INT,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(50) NOT NULL,
+    hire_date DATE NOT NULL,
+    employment_status VARCHAR(50) NOT NULL,
+    primary_work_location_id INT NOT NULL,
     CONSTRAINT fk_employee_location
         FOREIGN KEY (primary_work_location_id)
         REFERENCES work_location(work_location_id)
@@ -33,12 +33,13 @@ CREATE TABLE employee_contract (
     contract_id INT AUTO_INCREMENT PRIMARY KEY,
     employee_id INT NOT NULL,
     department_id INT NOT NULL,
-    contract_type VARCHAR(50),
-    start_date DATE,
+    contract_type VARCHAR(50) NOT NULL,
+    start_date DATE NOT NULL,
     end_date DATE,
-    weekly_hours INT,
-    salary_amount DECIMAL(12,2),
-    is_active BOOLEAN DEFAULT TRUE,
+    weekly_hours INT NOT NULL,
+    salary_amount DECIMAL(12,2) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    INDEX idx_dep_type_ac (department_id, contract_type, is_active),
     CONSTRAINT fk_contract_employee
         FOREIGN KEY (employee_id) REFERENCES employee(employee_id),
     CONSTRAINT fk_contract_department
@@ -55,7 +56,7 @@ CREATE TABLE employee_job_role (
     employee_job_role_id INT AUTO_INCREMENT PRIMARY KEY,
     employee_id INT NOT NULL,
     job_role_id INT NOT NULL,
-    assigned_date DATE,
+    assigned_date DATE NOT NULL,
     expiry_date DATE,
     proficiency_level VARCHAR(50),
     UNIQUE KEY unq_emp_job (employee_id, job_role_id),
@@ -69,9 +70,10 @@ CREATE TABLE shift (
     department_id INT NOT NULL,
     work_location_id INT NOT NULL,
     shift_name VARCHAR(255),
-    start_datetime DATETIME,
-    end_datetime DATETIME,
-    shift_status VARCHAR(50),
+    start_datetime DATETIME NOT NULL,
+    end_datetime DATETIME NOT NULL,
+    shift_status VARCHAR(50) NOT NULL,
+    INDEX idx_dep_loc(department_id, work_location_id),
     CONSTRAINT fk_shift_department
         FOREIGN KEY (department_id) REFERENCES department(department_id),
     CONSTRAINT fk_shift_location
@@ -154,7 +156,8 @@ CREATE TABLE leave_type (
     leave_type_name VARCHAR(255),
     leave_type_description TEXT,
     requires_approval BOOLEAN DEFAULT TRUE,
-    is_paid_leave BOOLEAN DEFAULT TRUE
+    is_paid_leave BOOLEAN DEFAULT TRUE,
+    INDEX idx_paid_approval (leave_type_id, requires_approval, is_paid_leave)
 ) ENGINE=InnoDB;
 
 CREATE TABLE leave_request (
@@ -166,6 +169,7 @@ CREATE TABLE leave_request (
     request_status VARCHAR(50),
     reason TEXT,
     requested_datetime DATETIME,
+    INDEX idx_leave_ledger_emp_type (employee_id, leave_type_id),
     CONSTRAINT fk_leave_request_employee
         FOREIGN KEY (employee_id) REFERENCES employee(employee_id),
     CONSTRAINT fk_leave_request_type
