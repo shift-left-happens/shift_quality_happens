@@ -1,7 +1,15 @@
 USE shift_happens;
-START TRANSACTION;
-SET FOREIGN_KEY_CHECKS = 0;
 SET @entities_to_generate = 100;
+START TRANSACTION;
+-- =========================================
+-- NUMBER GENERATOR (1 → 100)
+-- =========================================
+WITH RECURSIVE seq AS (
+    SELECT 1 AS n
+    UNION ALL
+    SELECT n+1 FROM seq WHERE n < @entities_to_generate
+)
+SELECT n INTO @dummy FROM seq LIMIT 1;
 
 -- =========================================
 -- DEPARTMENTS (100)
@@ -31,19 +39,11 @@ SELECT
 FROM seq;
 
 -- =========================================
--- USER ROLES
--- =========================================
-INSERT INTO user_role (user_role_id, user_role_name)
-VALUES (1, 'Administrator'), (2, 'Employee'), (3, 'Manager');
-
--- =========================================
 -- EMPLOYEES (100)
--- Every 30th employee is a Manager, rest are Employee
 -- =========================================
 INSERT INTO employee (
-    employee_number, first_name, last_name, email, login_password,
-    phone_number, hire_date, employment_status,
-    fk_user_role_id, primary_work_location_id
+    employee_number,first_name,last_name,email,phone_number,
+    hire_date,employment_status,primary_work_location_id
 )
 WITH RECURSIVE seq AS (
     SELECT 1 n UNION ALL SELECT n+1 FROM seq WHERE n < @entities_to_generate
@@ -53,11 +53,9 @@ SELECT
     CONCAT('First',n),
     CONCAT('Last',n),
     CONCAT('employee',n,'@shift.dk'),
-    SHA2(CONCAT(UUID(), RAND()), 256),
     CONCAT('+45 50',LPAD(n,6,'0')),
     DATE_SUB(CURDATE(), INTERVAL FLOOR(RAND()*3000) DAY),
     ELT(1+MOD(n,3),'ACTIVE','ACTIVE','INACTIVE'),
-    CASE WHEN MOD(n,30) = 0 THEN 3 ELSE 2 END,
     1+MOD(n,100)
 FROM seq;
 
@@ -83,21 +81,21 @@ FROM employee;
 -- JOB ROLES (REALISTIC SMALL SET)
 -- =========================================
 INSERT INTO job_role (role_name,job_role_description,is_certification_required) VALUES
-    ('Nurse','Registered nurse',1),
-    ('Doctor','Medical doctor',1),
-    ('Shift Supervisor','Oversees shift operations',0),
-    ('Care Assistant','Supports patient care',0),
-    ('Receptionist','Front desk operations',0),
-    ('Security Officer','Site security',1),
-    ('Cleaner','Facility cleaning',0),
-    ('Lab Technician','Handles lab samples',1),
-    ('Pharmacist','Medication management',1),
-    ('Driver','Transport duties',0),
-    ('Warehouse Operator','Stock handling',0),
-    ('IT Support','Technical support',0);
+                                                                                    ('Nurse','Registered nurse',1),
+                                                                                    ('Doctor','Medical doctor',1),
+                                                                                    ('Shift Supervisor','Oversees shift operations',0),
+                                                                                    ('Care Assistant','Supports patient care',0),
+                                                                                    ('Receptionist','Front desk operations',0),
+                                                                                    ('Security Officer','Site security',1),
+                                                                                    ('Cleaner','Facility cleaning',0),
+                                                                                    ('Lab Technician','Handles lab samples',1),
+                                                                                    ('Pharmacist','Medication management',1),
+                                                                                    ('Driver','Transport duties',0),
+                                                                                    ('Warehouse Operator','Stock handling',0),
+                                                                                    ('IT Support','Technical support',0);
 
 -- =========================================
--- EMPLOYEE JOB ROLES
+-- EMPLOYEE JOB ROLES (~150 rows)
 -- =========================================
 INSERT INTO employee_job_role (employee_id, job_role_id, assigned_date, expiry_date, proficiency_level)
 SELECT
@@ -128,7 +126,7 @@ SELECT
 FROM seq;
 
 -- =========================================
--- SHIFT REQUIRED ROLES
+-- SHIFT REQUIRED ROLES (~100)
 -- =========================================
 INSERT INTO shift_required_job_role (shift_id, job_role_id, required_employee_count)
 SELECT
@@ -155,7 +153,7 @@ SELECT
 FROM shift s;
 
 -- =========================================
--- SHIFT APPROVALS (~70)
+-- SHIFT APPROVALS (~70 mixed decisions)
 -- =========================================
 INSERT INTO shift_approval (
     shift_assignment_id, approver_employee_id,
@@ -183,11 +181,11 @@ INSERT INTO shift_swap (
 )
 SELECT
     sa.shift_assignment_id,
-    sa.employee_id,
-    1 + MOD(sa.employee_id + 5, @entities_to_generate),
-    ELT(1 + MOD(sa.shift_assignment_id, 3), 'REQUESTED','APPROVED','DECLINED'),
-    NOW() - INTERVAL MOD(sa.shift_assignment_id, 5) DAY,
-    'Personal reason'
+    sa.employee_id AS employee_from_id,
+    1 + MOD(sa.employee_id + 5, @entities_to_generate) AS employee_to_id,  -- simple offset to avoid same employee
+    ELT(1 + MOD(sa.shift_assignment_id, 3), 'REQUESTED','APPROVED','DECLINED') AS swap_status,
+    NOW() - INTERVAL MOD(sa.shift_assignment_id, 5) DAY AS request_datetime,
+    'Personal reason' AS reason
 FROM shift_assignment sa
 WHERE sa.shift_assignment_id <= 50;
 
@@ -208,20 +206,20 @@ FROM shift_swap
 WHERE shift_swap_id <= 40;
 
 -- =========================================
--- LEAVE TYPES
+-- LEAVE TYPES (REALISTIC SMALL SET)
 -- =========================================
 INSERT INTO leave_type (
     leave_type_name, leave_type_description,
     requires_approval, is_paid_leave
 ) VALUES
-    ('Vacation','Paid annual leave',1,1),
-    ('Sick Leave','Medical leave',1,1),
-    ('Maternity','Maternity leave',1,1),
-    ('Paternity','Paternity leave',1,1),
-    ('Unpaid Leave','Unpaid time off',1,0),
-    ('Bereavement','Family death leave',1,1),
-    ('Study Leave','Education leave',1,0),
-    ('Emergency Leave','Emergency personal leave',1,1);
+      ('Vacation','Paid annual leave',1,1),
+      ('Sick Leave','Medical leave',1,1),
+      ('Maternity','Maternity leave',1,1),
+      ('Paternity','Paternity leave',1,1),
+      ('Unpaid Leave','Unpaid time off',1,0),
+      ('Bereavement','Family death leave',1,1),
+      ('Study Leave','Education leave',1,0),
+      ('Emergency Leave','Emergency personal leave',1,1);
 
 -- =========================================
 -- LEAVE REQUESTS (100)
@@ -300,6 +298,4 @@ SELECT
     '{}',
     '{}'
 FROM employee;
-
-SET FOREIGN_KEY_CHECKS = 1;
 COMMIT;
