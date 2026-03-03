@@ -9,7 +9,7 @@ CREATE TABLE user_role (
 
 INSERT INTO user_role (`user_role_id`,`user_role_name`)
 VALUES
-    (1, 'Administrator'), (2, 'Employee'), (3, 'Manager')
+    (1, 'Administrator'), (2, 'Employee'), (3, 'Manager');
 
 /*Add user_role_id to employee table*/
 ALTER TABLE employee
