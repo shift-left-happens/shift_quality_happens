@@ -137,136 +137,136 @@ END$$
 DELIMITER ;
 
 
-DELIMITER $$
-
-DROP PROCEDURE IF EXISTS approve_leave_request $$
-
-CREATE PROCEDURE approve_leave_request(
-    IN p_leave_request_id INT,
-    IN p_approver_employee_id INT,
-    IN p_decision VARCHAR(20),
-    IN p_leave_comment TEXT
-)
-BEGIN
-    DECLARE v_employee_id INT;
-    DECLARE v_leave_type_id INT;
-    DECLARE v_days_requested DECIMAL(6,2);
-    DECLARE v_leave_balance DECIMAL(6,2);
-    DECLARE v_is_manager INT;
-    DECLARE v_request_status VARCHAR(20);
-
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-        BEGIN
-            ROLLBACK;
-            RESIGNAL;
-        END;
-
-    START TRANSACTION;
-
-    /* Fetch and lock leave request */
-    SELECT employee_id,
-           leave_type_id,
-           DATEDIFF(end_date, start_date) + 1,
-           request_status
-    INTO v_employee_id,
-        v_leave_type_id,
-        v_days_requested,
-        v_request_status
-    FROM leave_request
-    WHERE leave_request_id = p_leave_request_id
-    LIMIT 1
-    FOR UPDATE;
-
-    IF v_employee_id IS NULL THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Leave request does not exist';
-    END IF;
-
-    IF v_request_status <> 'PENDING' THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Leave request is not pending';
-    END IF;
-
-    /* Validate approver */
-    SELECT fk_user_role_id
-    INTO v_is_manager
-    FROM employee
-    WHERE employee_id = p_approver_employee_id
-    LIMIT 1;
-
-    IF v_is_manager IS NULL THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Approver does not exist';
-    END IF;
-
-    IF v_is_manager <> 3 THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Only managers can approve leave requests';
-    END IF;
-
-    /* Insert approval record */
-    INSERT INTO leave_approval (
-        leave_request_id,
-        approver_employee_id,
-        decision,
-        leave_comment,
-        decision_datetime
-    )
-    VALUES (
-               p_leave_request_id,
-               p_approver_employee_id,
-               p_decision,
-            p_leave_comment,
-               NOW()
-           );
-
-    /* If approved, process balance and update */
-    IF p_decision = 'APPROVED' THEN
-
-        SELECT COALESCE(SUM(change_amount_days), 0)
-        INTO v_leave_balance
-        FROM leave_ledger
-        WHERE employee_id = v_employee_id
-          AND leave_type_id = v_leave_type_id;
-
-        IF v_leave_balance < v_days_requested THEN
-            SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'Insufficient leave balance';
-        END IF;
-
-        UPDATE leave_request
-        SET request_status = 'APPROVED'
-        WHERE leave_request_id = p_leave_request_id;
-
-        INSERT INTO leave_ledger (
-            employee_id,
-            leave_type_id,
-            change_amount_days,
-            transaction_type,
-            reference_entity_type,
-            reference_entity_id,
-            transaction_datetime
-        )
-        VALUES (
-                   v_employee_id,
-                   v_leave_type_id,
-                   -v_days_requested,
-                   'USAGE',
-                   'LeaveRequest',
-                   p_leave_request_id,
-                   NOW()
-               );
-
-    END IF;
-
-    IF p_decision = 'REJECTED' THEN
-        UPDATE leave_request
-        SET request_status = 'REJECTED'
-        WHERE leave_request_id = p_leave_request_id;
-    END IF;
-
-    COMMIT;
-
-END $$
-
-DELIMITER ;
+# DELIMITER $$
+#
+# DROP PROCEDURE IF EXISTS approve_leave_request $$
+#
+# CREATE PROCEDURE approve_leave_request(
+#     IN p_leave_request_id INT,
+#     IN p_approver_employee_id INT,
+#     IN p_decision VARCHAR(20),
+#     IN p_leave_comment TEXT
+# )
+# BEGIN
+#     DECLARE v_employee_id INT;
+#     DECLARE v_leave_type_id INT;
+#     DECLARE v_days_requested DECIMAL(6,2);
+#     DECLARE v_leave_balance DECIMAL(6,2);
+#     DECLARE v_is_manager INT;
+#     DECLARE v_request_status VARCHAR(20);
+#
+#     DECLARE EXIT HANDLER FOR SQLEXCEPTION
+#         BEGIN
+#             ROLLBACK;
+#             RESIGNAL;
+#         END;
+#
+#     START TRANSACTION;
+#
+#     /* Fetch and lock leave request */
+#     SELECT employee_id,
+#            leave_type_id,
+#            DATEDIFF(end_date, start_date) + 1,
+#            request_status
+#     INTO v_employee_id,
+#         v_leave_type_id,
+#         v_days_requested,
+#         v_request_status
+#     FROM leave_request
+#     WHERE leave_request_id = p_leave_request_id
+#     LIMIT 1
+#     FOR UPDATE;
+#
+#     IF v_employee_id IS NULL THEN
+#         SIGNAL SQLSTATE '45000'
+#             SET MESSAGE_TEXT = 'Leave request does not exist';
+#     END IF;
+#
+#     IF v_request_status <> 'PENDING' THEN
+#         SIGNAL SQLSTATE '45000'
+#             SET MESSAGE_TEXT = 'Leave request is not pending';
+#     END IF;
+#
+#     /* Validate approver */
+#     SELECT fk_user_role_id
+#     INTO v_is_manager
+#     FROM employee
+#     WHERE employee_id = p_approver_employee_id
+#     LIMIT 1;
+#
+#     IF v_is_manager IS NULL THEN
+#         SIGNAL SQLSTATE '45000'
+#             SET MESSAGE_TEXT = 'Approver does not exist';
+#     END IF;
+#
+#     IF v_is_manager <> 3 THEN
+#         SIGNAL SQLSTATE '45000'
+#             SET MESSAGE_TEXT = 'Only managers can approve leave requests';
+#     END IF;
+#
+#     /* Insert approval record */
+#     INSERT INTO leave_approval (
+#         leave_request_id,
+#         approver_employee_id,
+#         decision,
+#         leave_comment,
+#         decision_datetime
+#     )
+#     VALUES (
+#                p_leave_request_id,
+#                p_approver_employee_id,
+#                p_decision,
+#             p_leave_comment,
+#                NOW()
+#            );
+#
+#     /* If approved, process balance and update */
+#     IF p_decision = 'APPROVED' THEN
+#
+#         SELECT COALESCE(SUM(change_amount_days), 0)
+#         INTO v_leave_balance
+#         FROM leave_ledger
+#         WHERE employee_id = v_employee_id
+#           AND leave_type_id = v_leave_type_id;
+#
+#         IF v_leave_balance < v_days_requested THEN
+#             SIGNAL SQLSTATE '45000'
+#                 SET MESSAGE_TEXT = 'Insufficient leave balance';
+#         END IF;
+#
+#         UPDATE leave_request
+#         SET request_status = 'APPROVED'
+#         WHERE leave_request_id = p_leave_request_id;
+#
+#         INSERT INTO leave_ledger (
+#             employee_id,
+#             leave_type_id,
+#             change_amount_days,
+#             transaction_type,
+#             reference_entity_type,
+#             reference_entity_id,
+#             transaction_datetime
+#         )
+#         VALUES (
+#                    v_employee_id,
+#                    v_leave_type_id,
+#                    -v_days_requested,
+#                    'USAGE',
+#                    'LeaveRequest',
+#                    p_leave_request_id,
+#                    NOW()
+#                );
+#
+#     END IF;
+#
+#     IF p_decision = 'REJECTED' THEN
+#         UPDATE leave_request
+#         SET request_status = 'REJECTED'
+#         WHERE leave_request_id = p_leave_request_id;
+#     END IF;
+#
+#     COMMIT;
+#
+# END $$
+#
+# DELIMITER ;
