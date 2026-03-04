@@ -1,5 +1,4 @@
-USE
-    shift_happens;
+USE shift_happens;
 DELIMITER $$
 
 CREATE TRIGGER trg_leaveapproval_before_insert
@@ -132,6 +131,8 @@ VALUES (@new_leave_request_id, /* the leave_request_id of employee 96*/
         NOW());
 
 
+DELIMITER $$
+
 /*Prevent deletion of leave ledger entries*/
 CREATE TRIGGER trg_no_delete_leave_ledger
     BEFORE DELETE
@@ -140,7 +141,8 @@ CREATE TRIGGER trg_no_delete_leave_ledger
 BEGIN
     SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Ledger entries cannot be deleted';
-END;
+END$$
+
 /* Test DELETE
 START TRANSACTION
 DELETE FROM leave_ledger ORDER BY leave_ledger_id DESC LIMIT 1;
@@ -157,7 +159,7 @@ BEGIN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Ledger change cannot be zero';
     END IF;
-END;
+END$$
 
 /* Test INSERT
 START TRANSACTION;
@@ -181,7 +183,9 @@ BEGIN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Employee cannot be changed';
     END IF;
-END;
+END$$
+
+DELIMITER ;
 
 /*
 -- Test the trigger
@@ -210,8 +214,10 @@ WHERE leave_request_id = @v_leave_request_id;
 ROLLBACK;
 */
 
+SELECT 1;
+
 DELIMITER $$
-DROP TRIGGER IF EXISTS trg_validate_employee_ins;
+DROP TRIGGER IF EXISTS trg_validate_employee_ins$$
 CREATE TRIGGER trg_validate_employee_ins
     BEFORE INSERT
     ON employee
@@ -222,7 +228,7 @@ BEGIN
             SET MESSAGE_TEXT = 'Password needs to be longer than 8 chars.';
     END IF;
 end $$
-DROP TRIGGER IF EXISTS trg_validate_employee_update;
+DROP TRIGGER IF EXISTS trg_validate_employee_update$$
 CREATE TRIGGER trg_validate_employee_update
     BEFORE UPDATE
     ON employee
@@ -234,7 +240,7 @@ BEGIN
     END IF;
 end $$
 
-DROP TRIGGER IF EXISTS trg_validate_contract_ins;
+DROP TRIGGER IF EXISTS trg_validate_contract_ins$$
 CREATE TRIGGER trg_validate_contract_ins
     BEFORE INSERT
     ON employee_contract
@@ -254,7 +260,7 @@ BEGIN
     END IF;
 end $$
 
-DROP TRIGGER IF EXISTS trg_validate_contract_update;
+DROP TRIGGER IF EXISTS trg_validate_contract_update$$
 CREATE TRIGGER trg_validate_contract_update
     BEFORE UPDATE
     ON employee_contract
@@ -274,7 +280,7 @@ BEGIN
     END IF;
 end $$
 
-DROP TRIGGER IF EXISTS trg_no_contract_overlap_ins;
+DROP TRIGGER IF EXISTS trg_no_contract_overlap_ins$$
 
 CREATE TRIGGER trg_no_contract_overlap_ins
     BEFORE INSERT
@@ -293,7 +299,7 @@ BEGIN
     END IF;
 END $$
 
-DROP TRIGGER IF EXISTS trg_no_contract_overlap_upd;
+DROP TRIGGER IF EXISTS trg_no_contract_overlap_upd$$
 
 CREATE TRIGGER trg_no_contract_overlap_upd
     BEFORE UPDATE
@@ -321,9 +327,7 @@ END $$
 * Logs for Employee table
 */
 
-DROP TRIGGER IF EXISTS trg_employee_insert;
-
-DELIMITER $$
+DROP TRIGGER IF EXISTS trg_employee_insert$$
 
 -- 1️⃣ Audit INSERT
 CREATE TRIGGER trg_employee_insert
@@ -362,7 +366,7 @@ END$$
 
 -- Audit UPDATEs
 -- 2️⃣ Audit UPDATE
-DROP TRIGGER IF EXISTS trg_employee_update;
+DROP TRIGGER IF EXISTS trg_employee_update$$
 
 CREATE TRIGGER trg_employee_update
     BEFORE UPDATE
@@ -409,7 +413,7 @@ BEGIN
             ));
 END$$
 
-DROP TRIGGER IF EXISTS trg_employee_delete;
+DROP TRIGGER IF EXISTS trg_employee_delete$$
 -- 3️⃣ Audit DELETEs
 CREATE TRIGGER trg_employee_delete
     BEFORE DELETE
