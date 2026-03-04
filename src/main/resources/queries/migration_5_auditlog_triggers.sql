@@ -6,6 +6,7 @@ DROP TRIGGER IF EXISTS trg_employee_insert;
 
 DELIMITER $$
 
+-- 1️⃣ Audit INSERT
 CREATE TRIGGER trg_employee_insert
     AFTER INSERT ON employee
     FOR EACH ROW
@@ -40,10 +41,14 @@ BEGIN
                        'fk_user_role_id', NEW.fk_user_role_id
                )
            );
-END $$
-DELIMITER ;
-DROP TRIGGER IF EXISTS trg_employee_update;
-DELIMITER $$
+END$$
+
+
+
+-- Audit UPDATEs
+-- 2️⃣ Audit UPDATE
+DROP TRIGGER IF EXISTS trg_employee_update $$
+
 CREATE TRIGGER trg_employee_update
     BEFORE UPDATE ON employee
     FOR EACH ROW
@@ -90,10 +95,10 @@ BEGIN
                        'fk_user_role_id', NEW.fk_user_role_id
                )
            );
-END $$
-DELIMITER ;
-DROP TRIGGER IF EXISTS trg_employee_delete;
-DELIMITER $$
+END$$
+
+DROP TRIGGER IF EXISTS trg_employee_delete $$
+-- 3️⃣ Audit DELETEs
 CREATE TRIGGER trg_employee_delete
     BEFORE DELETE ON employee
     FOR EACH ROW
@@ -128,9 +133,9 @@ BEGIN
                ),
                NULL
            );
-END $$
+END$$
 
-DELIMITER ;
+DELIMITER $$
 
 /* TEST above triggers */
 
