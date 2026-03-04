@@ -1,8 +1,5 @@
 SET @entities_to_generate = 100;
 START TRANSACTION;
--- =========================================
--- NUMBER GENERATOR (1 → 100)
--- =========================================
 WITH RECURSIVE seq AS (
     SELECT 1 AS n
     UNION ALL
@@ -10,9 +7,6 @@ WITH RECURSIVE seq AS (
 )
 SELECT n INTO @dummy FROM seq LIMIT 1;
 
--- =========================================
--- DEPARTMENTS (100)
--- =========================================
 INSERT INTO department (department_name, is_active)
 WITH RECURSIVE seq AS (
     SELECT 1 n UNION ALL SELECT n+1 FROM seq WHERE n < @entities_to_generate
@@ -20,9 +14,6 @@ WITH RECURSIVE seq AS (
 SELECT CONCAT('department ', n), IF(RAND()>0.05,1,0)
 FROM seq;
 
--- =========================================
--- WORK LOCATIONS (100)
--- =========================================
 INSERT INTO work_location (location_name,address_line_1,address_line_2,city,country,timezone,is_active)
 WITH RECURSIVE seq AS (
     SELECT 1 n UNION ALL SELECT n+1 FROM seq WHERE n < @entities_to_generate
@@ -37,9 +28,6 @@ SELECT
     1
 FROM seq;
 
--- =========================================
--- EMPLOYEES (100)
--- =========================================
 INSERT INTO employee (
     employee_number,first_name,last_name,email,phone_number,
     hire_date,employment_status,primary_work_location_id
@@ -58,9 +46,6 @@ SELECT
     1+MOD(n,100)
 FROM seq;
 
--- =========================================
--- CONTRACTS (100)
--- =========================================
 INSERT INTO employee_contract (
     employee_id, department_id, contract_type,
     start_date, end_date, weekly_hours, salary_amount, is_active
@@ -76,9 +61,6 @@ SELECT
     1
 FROM employee;
 
--- =========================================
--- JOB ROLES (REALISTIC SMALL SET)
--- =========================================
 INSERT INTO job_role (role_name,job_role_description,is_certification_required) VALUES
     ('Nurse','Registered nurse',1),
     ('Doctor','Medical doctor',1),
@@ -93,9 +75,6 @@ INSERT INTO job_role (role_name,job_role_description,is_certification_required) 
     ('Warehouse Operator','Stock handling',0),
     ('IT Support','Technical support',0);
 
--- =========================================
--- EMPLOYEE JOB ROLES (~150 rows)
--- =========================================
 INSERT INTO employee_job_role (employee_id, job_role_id, assigned_date, expiry_date, proficiency_level)
 SELECT
     e.employee_id,
@@ -105,9 +84,6 @@ SELECT
     ELT(1+MOD(e.employee_id,3),'BEGINNER','INTERMEDIATE','ADVANCED')
 FROM employee e;
 
--- =========================================
--- SHIFTS (100)
--- =========================================
 INSERT INTO shift (
     department_id, work_location_id,
     shift_name, start_datetime, end_datetime, shift_status
@@ -124,9 +100,6 @@ SELECT
     ELT(1+MOD(n,3),'PLANNED','COMPLETED','CANCELLED')
 FROM seq;
 
--- =========================================
--- SHIFT REQUIRED ROLES (~100)
--- =========================================
 INSERT INTO shift_required_job_role (shift_id, job_role_id, required_employee_count)
 SELECT
     shift_id,
@@ -134,9 +107,6 @@ SELECT
     1+MOD(shift_id,3)
 FROM shift;
 
--- =========================================
--- SHIFT ASSIGNMENTS (100) UNIQUE PAIRS
--- =========================================
 INSERT INTO shift_assignment (
     shift_id, employee_id,
     assignment_status, assigned_datetime,
@@ -151,9 +121,6 @@ SELECT
     NOW() - INTERVAL MOD(s.shift_id,10) DAY + INTERVAL 8 HOUR
 FROM shift s;
 
--- =========================================
--- SHIFT APPROVALS (~70 mixed decisions)
--- =========================================
 INSERT INTO shift_approval (
     shift_assignment_id, approver_employee_id,
     decision, approval_comment, decision_datetime
@@ -167,9 +134,6 @@ SELECT
 FROM shift_assignment
 WHERE shift_assignment_id <= 70;
 
--- =========================================
--- SHIFT SWAPS (~50)
--- =========================================
 INSERT INTO shift_swap (
     original_shift_assignment_id,
     employee_from_id,
@@ -188,9 +152,6 @@ SELECT
 FROM shift_assignment sa
 WHERE sa.shift_assignment_id <= 50;
 
--- =========================================
--- SHIFT SWAP APPROVALS (~40)
--- =========================================
 INSERT INTO shift_swap_approval (
     shift_swap_id, approver_employee_id,
     decision, shift_swap_comment, decision_datetime
@@ -204,9 +165,6 @@ SELECT
 FROM shift_swap
 WHERE shift_swap_id <= 40;
 
--- =========================================
--- LEAVE TYPES (REALISTIC SMALL SET)
--- =========================================
 INSERT INTO leave_type (
     leave_type_name, leave_type_description,
     requires_approval, is_paid_leave
@@ -220,9 +178,6 @@ INSERT INTO leave_type (
       ('Study Leave','Education leave',1,0),
       ('Emergency Leave','Emergency personal leave',1,1);
 
--- =========================================
--- LEAVE REQUESTS (100)
--- =========================================
 INSERT INTO leave_request (
     employee_id, leave_type_id,
     start_date, end_date,
@@ -238,9 +193,6 @@ SELECT
     NOW() - INTERVAL MOD(employee_id,5) DAY
 FROM employee;
 
--- =========================================
--- LEAVE APPROVALS (~70)
--- =========================================
 INSERT INTO leave_approval (
     leave_request_id,
     approver_employee_id,
@@ -257,9 +209,6 @@ SELECT
 FROM leave_request
 WHERE leave_request_id <= 70;
 
--- =========================================
--- LEAVE LEDGER (100)
--- =========================================
 INSERT INTO leave_ledger (
     employee_id, leave_type_id,
     change_amount_days,
@@ -278,9 +227,6 @@ SELECT
     NOW() - INTERVAL MOD(employee_id,30) DAY
 FROM employee;
 
--- =========================================
--- AUDIT LOG (100)
--- =========================================
 INSERT INTO audit_log (
     entity_type, entity_id, action_type,
     performed_by_employee_id,
