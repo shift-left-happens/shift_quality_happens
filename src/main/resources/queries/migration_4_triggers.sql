@@ -84,7 +84,7 @@ BEGIN
             SET MESSAGE_TEXT = 'Password needs to be longer than 8 chars.';
     END IF;
 end $$
-DROP TRIGGER IF EXISTS trg_validate_employee_update;
+DROP TRIGGER IF EXISTS trg_validate_employee_update $$
 CREATE TRIGGER trg_validate_employee_update
     BEFORE UPDATE ON employee
     FOR EACH ROW
@@ -95,7 +95,7 @@ BEGIN
     END IF;
 end $$
 
-DROP TRIGGER IF EXISTS trg_validate_contract_ins;
+DROP TRIGGER IF EXISTS trg_validate_contract_ins $$
 CREATE TRIGGER trg_validate_contract_ins
     BEFORE INSERT ON employee_contract
     FOR EACH ROW
@@ -114,7 +114,7 @@ BEGIN
     END IF;
 end $$
 
-DROP TRIGGER IF EXISTS trg_validate_contract_update;
+DROP TRIGGER IF EXISTS trg_validate_contract_update $$
 CREATE TRIGGER trg_validate_contract_update
     BEFORE UPDATE ON employee_contract
     FOR EACH ROW
@@ -133,7 +133,7 @@ BEGIN
     END IF;
 end $$
 
-DROP TRIGGER IF EXISTS trg_no_contract_overlap_ins;
+DROP TRIGGER IF EXISTS trg_no_contract_overlap_ins $$
 
 CREATE TRIGGER trg_no_contract_overlap_ins
     BEFORE INSERT ON employee_contract
@@ -152,7 +152,7 @@ BEGIN
     END IF;
 END $$
 
-DROP TRIGGER IF EXISTS trg_no_contract_overlap_upd;
+DROP TRIGGER IF EXISTS trg_no_contract_overlap_upd $$
 
 CREATE TRIGGER trg_no_contract_overlap_upd
     BEFORE UPDATE ON employee_contract

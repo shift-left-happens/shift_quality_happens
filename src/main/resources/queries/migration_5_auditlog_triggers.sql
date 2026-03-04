@@ -47,7 +47,7 @@ END$$
 
 -- Audit UPDATEs
 -- 2️⃣ Audit UPDATE
-DROP TRIGGER IF EXISTS trg_employee_update;
+DROP TRIGGER IF EXISTS trg_employee_update $$
 
 CREATE TRIGGER trg_employee_update
     BEFORE UPDATE ON employee
@@ -97,7 +97,7 @@ BEGIN
            );
 END$$
 
-DROP TRIGGER IF EXISTS trg_employee_delete;
+DROP TRIGGER IF EXISTS trg_employee_delete $$
 -- 3️⃣ Audit DELETEs
 CREATE TRIGGER trg_employee_delete
     BEFORE DELETE ON employee
@@ -135,7 +135,7 @@ BEGIN
            );
 END$$
 
-DELIMITER ;
+DELIMITER $$
 
 /* TEST above triggers */
 
