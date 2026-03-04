@@ -1,17 +1,22 @@
 /*Prevent deletion of leave ledger entries*/
+
+DELIMITER $$
+
 CREATE TRIGGER trg_no_delete_leave_ledger
     BEFORE DELETE ON leave_ledger
     FOR EACH ROW
 BEGIN
     SIGNAL SQLSTATE '45000'
     SET MESSAGE_TEXT = 'Ledger entries cannot be deleted';
-END;
+END $$
+
+DELIMITER ;
 /* Test DELETE
 START TRANSACTION
 DELETE FROM leave_ledger ORDER BY leave_ledger_id DESC LIMIT 1;
 ROLLBACK;
  */
-
+DELIMITER $$
 /*Days cannot be 0*/
 CREATE TRIGGER trg_validate_ledger_amount
     BEFORE INSERT ON leave_ledger
@@ -21,8 +26,8 @@ BEGIN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Ledger change cannot be zero';
     END IF;
-END;
-
+END $$
+DELIMITER ;
 /* Test INSERT
 START TRANSACTION;
 INSERT INTO leave_ledger (
@@ -35,7 +40,7 @@ INSERT INTO leave_ledger (
 VALUES (1, 1, 0, 'USAGE', NOW());
 ROLLBACK;
 */
-
+DELIMITER $$
 CREATE TRIGGER trg_prevent_employee_change
     BEFORE UPDATE ON leave_request
     FOR EACH ROW
@@ -44,8 +49,8 @@ BEGIN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Employee cannot be changed';
     END IF;
-END;
-
+END $$
+DELIMITER ;
 /*
 -- Test the trigger
 -- Start safe test transaction
@@ -83,8 +88,11 @@ BEGIN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Password needs to be longer than 8 chars.';
     END IF;
-end $$
+END $$
+
+DELIMITER ;
 DROP TRIGGER IF EXISTS trg_validate_employee_update;
+DELIMITER $$
 CREATE TRIGGER trg_validate_employee_update
     BEFORE UPDATE ON employee
     FOR EACH ROW
@@ -93,9 +101,10 @@ BEGIN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Password needs to be longer than 8 chars.';
     END IF;
-end $$
-
+END $$
+DELIMITER ;
 DROP TRIGGER IF EXISTS trg_validate_contract_ins;
+DELIMITER $$
 CREATE TRIGGER trg_validate_contract_ins
     BEFORE INSERT ON employee_contract
     FOR EACH ROW
@@ -112,9 +121,10 @@ BEGIN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'start_date cannot be after end_date';
     END IF;
-end $$
-
+END $$
+DELIMITER ;
 DROP TRIGGER IF EXISTS trg_validate_contract_update;
+DELIMITER $$
 CREATE TRIGGER trg_validate_contract_update
     BEFORE UPDATE ON employee_contract
     FOR EACH ROW
@@ -131,10 +141,10 @@ BEGIN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'start_date cannot be after end_date';
     END IF;
-end $$
-
+END $$
+DELIMITER ;
 DROP TRIGGER IF EXISTS trg_no_contract_overlap_ins;
-
+DELIMITER $$
 CREATE TRIGGER trg_no_contract_overlap_ins
     BEFORE INSERT ON employee_contract
     FOR EACH ROW
@@ -144,16 +154,16 @@ BEGIN
         FROM employee_contract ec
         WHERE ec.employee_id = NEW.employee_id
           AND ec.is_active = 1
-          AND NEW.start_date <= IFNULL(ec.end_date, '9999-12-31') -- New contract starts before an existing active contract ended
-          AND ec.start_date <= IFNULL(NEW.end_date, '9999-12-31') -- Existing contract starts before new contract ends
+          AND NEW.start_date <= IFNULL(ec.end_date, '9999-12-31')
+          AND ec.start_date <= IFNULL(NEW.end_date, '9999-12-31')
     ) THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Contract period overlaps with an existing active contract.';
     END IF;
 END $$
-
+DELIMITER ;
 DROP TRIGGER IF EXISTS trg_no_contract_overlap_upd;
-
+DELIMITER $$
 CREATE TRIGGER trg_no_contract_overlap_upd
     BEFORE UPDATE ON employee_contract
     FOR EACH ROW
@@ -171,3 +181,4 @@ BEGIN
             SET MESSAGE_TEXT = 'Contract period overlaps with an existing active contract.';
     END IF;
 END $$
+DELIMITER ;
