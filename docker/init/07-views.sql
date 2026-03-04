@@ -74,7 +74,39 @@ FROM leave_request lr
 WHERE lr.request_status = 'PENDING';
 
 -- =========================================
--- VIEW: Employee shift overview (JPA mapped)
+-- VIEW: Employee leave overview (full details)
+-- =========================================
+CREATE OR REPLACE VIEW vw_employee_leave_overview AS
+SELECT lr.leave_request_id,
+       e.employee_id,
+       e.employee_number,
+       e.first_name,
+       e.last_name,
+       e.email,
+       lt.leave_type_id,
+       lt.leave_type_name,
+       lt.is_paid_leave,
+       lt.requires_approval,
+       lr.start_date,
+       lr.end_date,
+       lr.request_status,
+       lr.reason,
+       lr.requested_datetime,
+       la.leave_approval_id,
+       la.decision          AS approval_decision,
+       la.leave_comment     AS approval_comment,
+       la.decision_datetime AS approval_datetime,
+       approver.employee_number AS approver_number,
+       approver.first_name      AS approver_first_name,
+       approver.last_name       AS approver_last_name
+FROM leave_request lr
+         JOIN employee e ON lr.employee_id = e.employee_id
+         JOIN leave_type lt ON lr.leave_type_id = lt.leave_type_id
+         LEFT JOIN leave_approval la ON lr.leave_request_id = la.leave_request_id
+         LEFT JOIN employee approver ON la.approver_employee_id = approver.employee_id;
+
+-- =========================================
+-- VIEW: Employee shift overview (full details)
 -- =========================================
 CREATE OR REPLACE VIEW vw_employee_shift_overview AS
 SELECT sa.shift_assignment_id,
@@ -99,35 +131,3 @@ FROM shift_assignment sa
          JOIN shift s ON sa.shift_id = s.shift_id
          JOIN department d ON s.department_id = d.department_id
          JOIN work_location wl ON s.work_location_id = wl.work_location_id;
-
--- =========================================
--- VIEW: Employee leave overview (JPA mapped)
--- =========================================
-CREATE OR REPLACE VIEW vw_employee_leave_overview AS
-SELECT lr.leave_request_id,
-       e.employee_id,
-       e.employee_number,
-       e.first_name,
-       e.last_name,
-       e.email,
-       lt.leave_type_id,
-       lt.leave_type_name,
-       lt.is_paid_leave,
-       lt.requires_approval,
-       lr.start_date,
-       lr.end_date,
-       lr.request_status,
-       lr.reason,
-       lr.requested_datetime,
-       la.leave_approval_id,
-       la.decision        AS approval_decision,
-       la.leave_comment   AS approval_comment,
-       la.decision_datetime AS approval_datetime,
-       approver.employee_number AS approver_number,
-       approver.first_name      AS approver_first_name,
-       approver.last_name       AS approver_last_name
-FROM leave_request lr
-         JOIN employee e ON lr.employee_id = e.employee_id
-         JOIN leave_type lt ON lr.leave_type_id = lt.leave_type_id
-         LEFT JOIN leave_approval la ON lr.leave_request_id = la.leave_request_id
-         LEFT JOIN employee approver ON la.approver_employee_id = approver.employee_id;
