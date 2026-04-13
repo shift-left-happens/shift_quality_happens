@@ -20,6 +20,7 @@ GRANT USAGE ON \`${MYSQL_DATABASE}\`.* TO app_crud_role;
 GRANT SHOW VIEW ON \`${MYSQL_DATABASE}\`.* TO app_crud_role;
 
 -- table permissions
+GRANT SELECT ON \`${MYSQL_DATABASE}\`.audit_log TO app_crud_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON \`${MYSQL_DATABASE}\`.employee TO app_crud_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON \`${MYSQL_DATABASE}\`.department TO app_crud_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON \`${MYSQL_DATABASE}\`.employee_contract TO app_crud_role;
@@ -37,6 +38,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON \`${MYSQL_DATABASE}\`.shift_swap TO app_
 GRANT SELECT, INSERT, UPDATE, DELETE ON \`${MYSQL_DATABASE}\`.shift_swap_approval TO app_crud_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON \`${MYSQL_DATABASE}\`.user_role TO app_crud_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON \`${MYSQL_DATABASE}\`.work_location TO app_crud_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON \`${MYSQL_DATABASE}\`.vw_employee_leave_overview TO app_crud_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON \`${MYSQL_DATABASE}\`.vw_employee_shift_overview TO app_crud_role;
 
 -- create user if not exists
 CREATE USER IF NOT EXISTS '${APP_DB_USER}'@'%' IDENTIFIED BY '${APP_DB_PASSWORD}';
