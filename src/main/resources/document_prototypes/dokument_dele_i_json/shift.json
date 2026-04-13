@@ -1,0 +1,38 @@
+{
+  "_id": 5001,
+  "department": {
+    "departmentId": 5,
+    "name": "Operations"
+  },
+  "workLocation": {
+    "workLocationId": 2,
+    "locationName": "Copenhagen Office"
+  },
+  "shiftName": "Morning Shift",
+  "startDateTime": "2026-03-20T08:00:00Z",
+  "endDateTime": "2026-03-20T16:00:00Z",
+  "status": "OPEN",
+
+  "requiredRoles": [
+    {
+      "jobRoleId": 1,
+      "roleName": "Nurse",
+      "requiredEmployeeCount": 2
+    }
+  ],
+
+  "assignments": [
+    {
+      "shiftAssignmentId": 901,
+      "employeeId": 77,
+      "employeeName": "John Doe",
+      "assignmentStatus": "ASSIGNED",
+      "assignedAt": "2026-03-15T10:00:00Z",
+      "checkInAt": null,
+      "checkOutAt": null
+    }
+  ],
+
+  "approvals": [],
+  "swapRequests": []
+}
