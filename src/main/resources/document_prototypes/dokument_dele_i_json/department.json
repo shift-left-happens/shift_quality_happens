@@ -1,0 +1,6 @@
+{
+  "_id": 5,
+  "name": "Operations",
+  "parentDepartmentId": 1,
+  "isActive": true
+}
