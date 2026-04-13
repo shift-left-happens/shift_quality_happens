@@ -36,3 +36,8 @@ db-logs:
 ## Connect to MySQL CLI inside the container
 db-shell:
 	docker exec -it shift-happens-db mysql -u root -p$(MYSQL_ROOT_PASSWORD) $(MYSQL_DATABASE)
+
+# Run mvn spring-boot:run inside the app container
+run-app:
+	./mvnw spring-boot:run
+	
