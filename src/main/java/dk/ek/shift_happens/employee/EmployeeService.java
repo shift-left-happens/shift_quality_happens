@@ -40,7 +40,7 @@ public class EmployeeService {
         });
     }
 
-    public delete(Integer id) {
+    public void delete(Integer id) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with id: " + id));
         employeeRepository.delete(employee);
