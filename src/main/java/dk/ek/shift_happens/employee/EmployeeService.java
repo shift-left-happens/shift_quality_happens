@@ -39,4 +39,10 @@ public class EmployeeService {
             return this.employeeRepository.save(existing);
         });
     }
+
+    public void delete(Integer id) {
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with id: " + id));
+        employeeRepository.delete(employee);
+    }
 }
