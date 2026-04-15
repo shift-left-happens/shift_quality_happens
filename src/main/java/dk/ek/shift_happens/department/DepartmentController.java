@@ -1,25 +1,42 @@
 package dk.ek.shift_happens.department;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Getter
-@Setter
 @RestController
-@RequestMapping( "/departments")
+@RequestMapping("/departments")
+@RequiredArgsConstructor
 public class DepartmentController {
 
-    private final DepartmentRepository DepartmentRepository;
+    private final DepartmentService departmentService;
 
-    public DepartmentController(DepartmentRepository departmentRepository) {
-        this.DepartmentRepository = departmentRepository;
-    }
     @GetMapping
-    public List<Department> getDepartments() {
-        return this.DepartmentRepository.findAll();
+    public List<Department> getAll() {
+        return departmentService.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public Department getById(@PathVariable Integer id) {
+        return departmentService.findById(id);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Department create(@RequestBody Department department) {
+        return departmentService.create(department);
+    }
+
+    @PatchMapping("/{id}")
+    public Department update(@PathVariable Integer id, @RequestBody Department department) {
+        return departmentService.update(id, department);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Integer id) {
+        departmentService.delete(id);
     }
 }
