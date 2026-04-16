@@ -6,15 +6,13 @@ export
 
 ## Start all 3 databases in the background, then run the Spring Boot app locally
 run-all:
-	docker compose up -d db mongodb neo4j
-	@echo "Waiting for MySQL to be healthy..."
-	@until [ "$$(docker inspect --format='{{.State.Health.Status}}' shift-happens-db)" = "healthy" ]; do sleep 2; done
+	docker compose up -d --wait db mongodb neo4j
 	@echo "MySQL is ready."
 	./mvnw spring-boot:run
 
 ## Start all 3 databases in the background only (no app)
 run-dbs:
-	docker compose up -d db mongodb neo4j
+	docker compose up -d --wait db mongodb neo4j
 
 ## Run the Spring Boot app locally (databases must already be running)
 run-app:
@@ -27,7 +25,7 @@ db:
 ## Nuke all volumes and restart databases fresh (re-runs all init scripts)
 reset:
 	docker compose down -v
-	docker compose up -d db mongodb neo4j
+	docker compose up -d --wait db mongodb neo4j
 
 ## Stop everything
 down:
