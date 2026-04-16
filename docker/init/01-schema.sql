@@ -19,6 +19,13 @@ CREATE TABLE work_location
     timezone         VARCHAR(50),
     is_active        BOOLEAN DEFAULT TRUE
 ) ENGINE = InnoDB;
+
+CREATE TABLE user_role
+(
+    user_role_id INT PRIMARY KEY,
+    user_role_name VARCHAR(100) NOT NULL
+) ENGINE = InnoDB;
+
 CREATE TABLE employee
 (
     employee_id              INT AUTO_INCREMENT PRIMARY KEY,
@@ -30,9 +37,15 @@ CREATE TABLE employee
     hire_date                DATE         NOT NULL,
     employment_status        VARCHAR(50)  NOT NULL,
     primary_work_location_id INT          NOT NULL,
+    fk_user_role_id          INT          ,
     CONSTRAINT fk_employee_location
         FOREIGN KEY (primary_work_location_id)
-            REFERENCES work_location (work_location_id)
+            REFERENCES work_location (work_location_id),
+    CONSTRAINT fk_employee_user_role
+        FOREIGN KEY (fk_user_role_id)
+            REFERENCES user_role (user_role_id)
+            ON UPDATE CASCADE
+            ON DELETE RESTRICT
 ) ENGINE = InnoDB;
 
 CREATE TABLE employee_contract
