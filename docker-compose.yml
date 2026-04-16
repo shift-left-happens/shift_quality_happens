@@ -28,6 +28,8 @@ services:
       DB_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE}
       DB_USERNAME: ${LOCAL_DB_USERNAME}
       DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      PASSWORD_PEPPER: ${PASSWORD_PEPPER}
     depends_on:
       db:
         condition: service_healthy
