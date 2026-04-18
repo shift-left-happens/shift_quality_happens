@@ -352,14 +352,14 @@ FROM employee;
 -- AUDIT LOG (100)
 -- =========================================
 INSERT INTO audit_log (entity_type, entity_id, action_type,
-                       performed_by_employee_id,
+                       db_user,
                        action_datetime,
                        old_value_snapshot,
                        new_value_snapshot)
 SELECT 'Employee',
        employee_id,
        ELT(1 + MOD(employee_id, 3), 'CREATE', 'UPDATE', 'DELETE'),
-       1 + MOD(employee_id + 3, 100),
+       USER(),
        NOW(),
        '{}',
        '{}'

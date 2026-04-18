@@ -240,17 +240,14 @@ CREATE TABLE leave_ledger
 ) ENGINE = InnoDB;
 CREATE TABLE audit_log
 (
-    audit_log_id             INT AUTO_INCREMENT PRIMARY KEY,
-    entity_type              VARCHAR(100),
-    entity_id                INT,
-    action_type              VARCHAR(100),
-    performed_by_employee_id INT,
-    action_datetime          DATETIME,
-    old_value_snapshot       TEXT,
-    new_value_snapshot       TEXT,
-    CONSTRAINT fk_audit_employee
-        FOREIGN KEY (performed_by_employee_id)
-            REFERENCES employee (employee_id)
+    audit_log_id       INT AUTO_INCREMENT PRIMARY KEY,
+    entity_type        VARCHAR(100),
+    entity_id          INT,
+    action_type        VARCHAR(100),
+    db_user            VARCHAR(100),
+    action_datetime    DATETIME,
+    old_value_snapshot TEXT,
+    new_value_snapshot TEXT
 ) ENGINE = InnoDB;
 
 CREATE INDEX idx_employee_email ON employee (email);

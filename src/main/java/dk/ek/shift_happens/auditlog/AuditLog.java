@@ -27,8 +27,8 @@ public class AuditLog {
     @Column(name = "action_type")
     private String actionType;
 
-    @Column(name = "performed_by_employee_id")
-    private Integer performedByEmployeeId;
+    @Column(name = "db_user")
+    private String dbUser;
 
     @Column(name = "action_datetime")
     private LocalDateTime actionDatetime;

@@ -15,7 +15,7 @@ BEGIN
         entity_type,
         entity_id,
         action_type,
-        performed_by_employee_id,
+        db_user,
         action_datetime,
         old_value_snapshot,
         new_value_snapshot
@@ -24,7 +24,7 @@ BEGIN
                'EMPLOYEE',
                NEW.employee_id,
                'INSERT',
-               NULL,
+               USER(),
                NOW(),
                NULL,
                JSON_OBJECT(
@@ -57,7 +57,7 @@ BEGIN
         entity_type,
         entity_id,
         action_type,
-        performed_by_employee_id,
+        db_user,
         action_datetime,
         old_value_snapshot,
         new_value_snapshot
@@ -66,7 +66,7 @@ BEGIN
                'EMPLOYEE',
                OLD.employee_id,
                'UPDATE',
-               NULL,
+               USER(),
                NOW(),
                JSON_OBJECT(
                        'employee_id', OLD.employee_id,
@@ -107,7 +107,7 @@ BEGIN
         entity_type,
         entity_id,
         action_type,
-        performed_by_employee_id,
+        db_user,
         action_datetime,
         old_value_snapshot,
         new_value_snapshot
@@ -116,7 +116,7 @@ BEGIN
                'EMPLOYEE',
                OLD.employee_id,
                'DELETE',
-               NULL,
+               USER(),
                NOW(),
                JSON_OBJECT(
                        'employee_id', OLD.employee_id,
