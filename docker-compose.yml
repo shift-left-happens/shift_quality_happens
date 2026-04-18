@@ -14,10 +14,10 @@ services:
       - db-data:/var/lib/mysql
       - ./docker/init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
+      test: ["CMD", "mysql", "-u${APP_DB_USER}", "-p${APP_DB_PASSWORD}", "-e", "SELECT 1 FROM ${MYSQL_DATABASE}.employee LIMIT 1;"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   app:
     build: .
@@ -26,8 +26,8 @@ services:
       - "8080:8080"
     environment:
       DB_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE}
-      DB_USERNAME: ${LOCAL_DB_USERNAME}
-      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      DB_USERNAME: ${APP_DB_USER}
+      DB_PASSWORD: ${APP_DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       PASSWORD_PEPPER: ${PASSWORD_PEPPER}
       MONGO_URI: mongodb://mongodb:27017/shift_happens
@@ -37,12 +37,19 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      mongodb:
+        condition: service_healthy
       neo4j:
         condition: service_healthy
 
   mongodb:
     image: mongo:7
     container_name: shift-happens-mongo
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - "27017:27017"
     volumes:
@@ -60,7 +67,7 @@ services:
       - neo4j-data:/data
       - ./src/main/resources/neo4_graf:/import
     healthcheck:
-      test: ["CMD-SHELL", "cypher-shell -u neo4j -p \"${NEO4J_PASSWORD}\" \"RETURN 1;\" || exit 1"]
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${NEO4J_PASSWORD}", "RETURN 1"]
       interval: 10s
       timeout: 10s
       retries: 10
