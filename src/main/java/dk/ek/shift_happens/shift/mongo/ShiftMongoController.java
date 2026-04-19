@@ -20,8 +20,31 @@ public class ShiftMongoController {
     }
 
     @GetMapping("/{id}")
-    public ShiftDocument getById(@PathVariable String id) {
+    public ShiftDocument getById(@PathVariable Integer id) {
         return shiftMongoRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    @PostMapping
+    public ShiftDocument create(@RequestBody ShiftDocument shift) {
+        return shiftMongoRepository.save(shift);
+    }
+
+    @PutMapping("/{id}")
+    public ShiftDocument update(@PathVariable Integer id, @RequestBody ShiftDocument shift) {
+        if (!shiftMongoRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        shift.setShiftId(id);
+        return shiftMongoRepository.save(shift);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Integer id) {
+        if (!shiftMongoRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        shiftMongoRepository.deleteById(id);
     }
 }

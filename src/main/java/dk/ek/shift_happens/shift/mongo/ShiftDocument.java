@@ -20,80 +20,84 @@ import java.util.List;
 public class ShiftDocument {
 
     @Id
-    private String id;
-
     private Integer shiftId;
     private String shiftName;
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
-    private String status;
+    private String shiftStatus;
 
-    private DepartmentRef department;
-    private WorkLocationRef workLocation;
-    private List<RequiredRoleRef> requiredRoles;
-    private List<AssignmentRef> assignments;
-    private List<ApprovalRef> approvals;
-    private List<SwapRequestRef> swapRequests;
+    private Department department;
+    private WorkLocation workLocation;
+    private List<RequiredJobRole> requiredJobRoles;
+    private List<ShiftAssignment> shiftAssignments;
 
     // --- embedded sub-documents ---
 
     @Getter @Setter @NoArgsConstructor
-    public static class DepartmentRef {
+    public static class Department {
         private Integer departmentId;
-        private String name;
+        private String departmentName;
     }
 
     @Getter @Setter @NoArgsConstructor
-    public static class WorkLocationRef {
+    public static class WorkLocation {
         private Integer workLocationId;
         private String locationName;
     }
 
     @Getter @Setter @NoArgsConstructor
-    public static class RequiredRoleRef {
+    public static class RequiredJobRole {
+        private Integer requiredEmployees;
+        private List<JobRole> jobRoles;
+    }
+
+    @Getter @Setter @NoArgsConstructor
+    public static class JobRole {
         private Integer jobRoleId;
         private String roleName;
-        private Integer requiredEmployeeCount;
     }
 
     @Getter @Setter @NoArgsConstructor
-    public static class AssignmentRef {
-        private Integer shiftAssignmentId;
-        private Integer employeeId;
-        private String employeeName;
+    public static class ShiftAssignment {
+        private AssignedEmployee assignedEmployee;
         private String assignmentStatus;
-        private LocalDateTime assignedAt;
-        private LocalDateTime checkInAt;
-        private LocalDateTime checkOutAt;
+        private LocalDateTime assignmentDate;
+        private LocalDateTime checkInDate;
+        private LocalDateTime checkOutDatetime;
+        private List<ShiftApproval> shiftApprovals;
+        private List<SwapRequest> swapRequests;
     }
 
     @Getter @Setter @NoArgsConstructor
-    public static class ApprovalRef {
-        private Integer shiftApprovalId;
-        private Integer approverEmployeeId;
+    public static class AssignedEmployee {
+        private Integer employeeId;
+        private String firstName;
+        private String lastName;
+    }
+
+    @Getter @Setter @NoArgsConstructor
+    public static class ShiftApproval {
+        private AssignedEmployee approverEmployee;
         private String decision;
-        private String comment;
-        private LocalDateTime decidedAt;
+        private String approvalComment;
+        private LocalDateTime decisionDatetime;
     }
 
     @Getter @Setter @NoArgsConstructor
-    public static class SwapRequestRef {
-        private Integer shiftSwapId;
-        private Integer employeeFromId;
-        private String employeeFromName;
-        private Integer employeeToId;
-        private String employeeToName;
+    public static class SwapRequest {
+        private AssignedEmployee employeeFrom;
+        private AssignedEmployee employeeTo;
         private String swapStatus;
+        private LocalDateTime requestDatetime;
         private String reason;
-        private LocalDateTime requestedAt;
-        private List<SwapApprovalRef> approvals;
+        private List<SwapApproval> swapApprovals;
     }
 
     @Getter @Setter @NoArgsConstructor
-    public static class SwapApprovalRef {
-        private Integer approverEmployeeId;
+    public static class SwapApproval {
+        private AssignedEmployee approverEmployee;
         private String decision;
-        private String comment;
-        private LocalDateTime decidedAt;
+        private String swapComment;
+        private LocalDateTime decisionDatetime;
     }
 }
