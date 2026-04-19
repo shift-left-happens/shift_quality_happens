@@ -9,8 +9,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
-// MongoDB document for the 'departments' collection.
-// Kept flat — departments are small reference data with no child entities to embed.
+// MongoDB document for the 'audit_log' collection.
+// Kept flat — audit_log are small reference data with no child entities to embed.
 @Document(collection = "audit_log")
 @Getter
 @Setter
