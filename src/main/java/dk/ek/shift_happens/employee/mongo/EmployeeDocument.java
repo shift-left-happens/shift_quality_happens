@@ -6,7 +6,9 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 // MongoDB document for the 'employees' collection.
@@ -20,56 +22,100 @@ import java.util.List;
 public class EmployeeDocument {
 
     @Id
-    private String id;
-
     private Integer employeeId;
     private String employeeNumber;
-    private Name name;
+
+    private String firstName;
+    private String lastName;
+
     private String email;
-    private String phone;
-    private String employmentStatus;
+    private String loginPassword;
+    private String phoneNumber;
+
     private LocalDate hireDate;
+    private String employmentStatus;
 
-    private DepartmentRef department;
-    private List<WorkLocationRef> workLocations;
-    private List<JobRoleRef> jobRoles;
-    private UserRoleRef userRole;
+    private WorkLocation primaryWorkLocation;
+    private UserRole userRole;
 
-    // --- embedded sub-documents ---
+    private List<EmployeeContract> employeeContracts;
+    private List<JobRole> jobRoles;
+    private List<LeaveRequest> leaveRequests;
+    private List<LeaveLedgerEntry> leaveLedger;
 
-    @Getter @Setter @NoArgsConstructor
-    public static class Name {
-        private String first;
-        private String last;
-    }
+    // --- sub documents ---
 
     @Getter @Setter @NoArgsConstructor
-    public static class DepartmentRef {
-        private Integer departmentId;
-        private String name;
-    }
-
-    @Getter @Setter @NoArgsConstructor
-    public static class WorkLocationRef {
+    public static class WorkLocation {
         private Integer workLocationId;
         private String locationName;
-        private String city;
-        private String country;
-        private String timezone;
-        private Boolean isPrimary;
     }
 
     @Getter @Setter @NoArgsConstructor
-    public static class JobRoleRef {
-        private Integer jobRoleId;
+    public static class UserRole {
+        private Integer roleId;
+        private String roleName;
+    }
+
+    @Getter @Setter @NoArgsConstructor
+    public static class Department {
+        private Integer departmentId;
+        private String departmentName;
+    }
+
+    @Getter @Setter @NoArgsConstructor
+    public static class EmployeeContract {
+        private Department department;
+        private String contractType;
+        private LocalDate startDate;
+        private LocalDate endDate;
+        private Integer weeklyHours;
+        private BigDecimal salaryAmount;
+        private Boolean isActive;
+    }
+
+    @Getter @Setter @NoArgsConstructor
+    public static class JobRole {
+        private String jobRoleId;
         private String roleName;
         private LocalDate assignedDate;
+        private LocalDate expiryDate;
         private String proficiencyLevel;
     }
 
     @Getter @Setter @NoArgsConstructor
-    public static class UserRoleRef {
-        private Integer userRoleId;
-        private String roleName;
+    public static class LeaveRequest {
+        private Integer leaveTypeId;
+        private LocalDate startDate;
+        private LocalDate endDate;
+        private String requestStatus;
+        private String reason;
+        private LocalDateTime requestedDatetime;
+        private List<Approval> approvals;
+    }
+
+    @Getter @Setter @NoArgsConstructor
+    public static class Approval {
+        private ApproverEmployee approverEmployee;
+        private String decision;
+        private String leaveComment;
+        private LocalDateTime decisionDatetime;
+    }
+
+    @Getter @Setter @NoArgsConstructor
+    public static class ApproverEmployee {
+        private Integer employeeId;
+        private String firstName;
+        private String lastName;
+    }
+
+    @Getter @Setter @NoArgsConstructor
+    public static class LeaveLedgerEntry {
+        private Integer leaveTypeId;
+        private BigDecimal changeAmountDays;
+        private String transactionType;
+        private String referenceEntityType;
+        private Integer referenceEntityId;
+        private LocalDateTime transactionDatetime;
     }
 }
