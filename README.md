@@ -212,7 +212,7 @@ Employee and Shift documents are **denormalized** — related data is embedded r
 
 Reference data (Department, JobRole, LeaveType, UserRole, WorkLocation, AuditLog) is kept flat.
 
-See [`src/main/resources/document_prototypes/`](src/main/resources/document_prototypes/) for the full document shapes.
+See [`src/main/resources/db/mongodb/schemas/`](src/main/resources/db/mongodb/schemas/) for the full document shapes.
 
 ---
 
