@@ -1,5 +1,9 @@
 package dk.ek.shift_happens.migration;
 
+import dk.ek.shift_happens.auditlog.AuditLog;
+import dk.ek.shift_happens.auditlog.AuditLogRepository;
+import dk.ek.shift_happens.auditlog.mongo.AuditLogDocument;
+import dk.ek.shift_happens.auditlog.mongo.AuditLogMongoRepository;
 import dk.ek.shift_happens.department.Department;
 import dk.ek.shift_happens.department.DepartmentRepository;
 import dk.ek.shift_happens.department.mongo.DepartmentDocument;
@@ -54,6 +58,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +80,7 @@ import java.util.stream.Collectors;
 public class MigrationService {
 
     // MySQL repositories (reads)
+    private final AuditLogRepository auditLogRepository;
     private final EmployeeRepository employeeRepository;
     private final EmployeeContractRepository employeeContractRepository;
     private final EmployeeJobRoleRepository employeeJobRoleRepository;
@@ -93,6 +99,7 @@ public class MigrationService {
     private final LeaveTypeRepository leaveTypeRepository;
 
     // MongoDB repositories (writes)
+    private final AuditLogMongoRepository auditLogMongoRepository;
     private final EmployeeMongoRepository employeeMongoRepository;
     private final ShiftMongoRepository shiftMongoRepository;
     private final DepartmentMongoRepository departmentMongoRepository;
@@ -115,7 +122,7 @@ public class MigrationService {
         List<String> allErrors = new ArrayList<>(mongo.errors());
         allErrors.addAll(neo4j.errors());
         return new MigrationResult(
-                mongo.employees(), mongo.shifts(), mongo.departments(), mongo.leaveDocuments(),
+                mongo.audit_logs(), mongo.employees(), mongo.shifts(), mongo.departments(), mongo.leaveDocuments(),
                 neo4j.neo4jEmployees(), neo4j.neo4jDepartments(), neo4j.neo4jWorkLocations(),
                 neo4j.neo4jShifts(), neo4j.neo4jJobRoles(),
                 allErrors
@@ -124,12 +131,13 @@ public class MigrationService {
 
     public MigrationResult migrateToMongo() {
         List<String> errors = new ArrayList<>();
-        int employees = 0, shifts = 0, departments = 0, leave = 0;
+        int employees = 0, shifts = 0, departments = 0, leave = 0, audit_logs = 0;
+        try { audit_logs   = migrateAuditLogsToMongo(); }   catch (Exception e) { log.error("mongo:audit_logs failed",   e); errors.add("mongo:audit_logs — "   + e.getMessage()); }
         try { employees   = migrateEmployeesToMongo(); }   catch (Exception e) { log.error("mongo:employees failed",   e); errors.add("mongo:employees — "   + e.getMessage()); }
         try { shifts      = migrateShiftsToMongo(); }      catch (Exception e) { log.error("mongo:shifts failed",      e); errors.add("mongo:shifts — "      + e.getMessage()); }
         try { departments = migrateDepartmentsToMongo(); } catch (Exception e) { log.error("mongo:departments failed", e); errors.add("mongo:departments — " + e.getMessage()); }
         try { leave       = migrateLeaveToMongo(); }       catch (Exception e) { log.error("mongo:leave failed",       e); errors.add("mongo:leave — "       + e.getMessage()); }
-        return new MigrationResult(employees, shifts, departments, leave, 0, 0, 0, 0, 0, errors);
+        return new MigrationResult(audit_logs, employees, shifts, departments, leave, 0, 0, 0, 0, 0, errors);
     }
 
     public MigrationResult migrateToNeo4j() {
@@ -140,12 +148,23 @@ public class MigrationService {
         try { workLocations = migrateWorkLocationsToNeo4j(); } catch (Exception e) { log.error("neo4j:worklocations failed", e); errors.add("neo4j:worklocations — " + e.getMessage()); }
         try { shifts        = migrateShiftsToNeo4j(); }        catch (Exception e) { log.error("neo4j:shifts failed",        e); errors.add("neo4j:shifts — "        + e.getMessage()); }
         try { jobRoles      = migrateJobRolesToNeo4j(); }      catch (Exception e) { log.error("neo4j:jobroles failed",      e); errors.add("neo4j:jobroles — "      + e.getMessage()); }
-        return new MigrationResult(0, 0, 0, 0, employees, departments, workLocations, shifts, jobRoles, errors);
+        return new MigrationResult(0, 0, 0, 0, 0, employees, departments, workLocations, shifts, jobRoles, errors);
     }
 
     // -------------------------------------------------------------------------
     // MongoDB migration methods
     // -------------------------------------------------------------------------
+
+    public int migrateAuditLogsToMongo() {
+
+
+        auditLogMongoRepository.deleteAll();
+        List<AuditLogDocument> docs = auditLogRepository.findAll().stream()
+                .map(this::toAuditLogDocument)
+                .toList();
+        auditLogMongoRepository.saveAll(docs);
+        return docs.size();
+    }
 
     public int migrateEmployeesToMongo() {
         // Load lookup tables
@@ -293,6 +312,18 @@ public class MigrationService {
     // -------------------------------------------------------------------------
     // Mappers — MongoDB
     // -------------------------------------------------------------------------
+    private AuditLogDocument toAuditLogDocument(AuditLog log) {
+        AuditLogDocument doc = new AuditLogDocument();
+        doc.setId(String.valueOf(log.getAuditLogId()));
+        doc.setEntityType(log.getEntityType());
+        doc.setEntityId(log.getEntityId());
+        doc.setActionType(log.getActionType());
+        doc.setDbUser(log.getDbUser());
+        doc.setActionDatetime(log.getActionDatetime());
+        doc.setOldValueSnapshot(log.getOldValueSnapshot());
+        doc.setNewValueSnapshot(log.getNewValueSnapshot());
+        return doc;
+    }
 
     private EmployeeDocument toEmployeeDocument(
             Employee e,
@@ -582,7 +613,7 @@ public class MigrationService {
     // Return type summarising what was migrated.
     // Any step that throws has its count left at 0 and its error message in errors[].
     public record MigrationResult(
-            int employees, int shifts, int departments, int leaveDocuments,
+            int audit_logs, int employees, int shifts, int departments, int leaveDocuments,
             int neo4jEmployees, int neo4jDepartments, int neo4jWorkLocations,
             int neo4jShifts, int neo4jJobRoles,
             List<String> errors
