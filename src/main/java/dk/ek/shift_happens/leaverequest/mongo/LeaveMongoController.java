@@ -24,4 +24,27 @@ public class LeaveMongoController {
         return leaveMongoRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
+
+    @PostMapping
+    public LeaveDocument create(@RequestBody LeaveDocument leave) {
+        return leaveMongoRepository.save(leave);
+    }
+
+    @PutMapping("/{id}")
+    public LeaveDocument update(@PathVariable String id, @RequestBody LeaveDocument leave) {
+        if (!leaveMongoRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        leave.setId(id);
+        return leaveMongoRepository.save(leave);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable String id) {
+        if (!leaveMongoRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        leaveMongoRepository.deleteById(id);
+    }
 }

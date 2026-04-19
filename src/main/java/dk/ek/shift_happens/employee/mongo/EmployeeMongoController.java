@@ -20,8 +20,31 @@ public class EmployeeMongoController {
     }
 
     @GetMapping("/{id}")
-    public EmployeeDocument getById(@PathVariable String id) {
+    public EmployeeDocument getById(@PathVariable Integer id) {
         return employeeMongoRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    @PostMapping
+    public EmployeeDocument create(@RequestBody EmployeeDocument employee) {
+        return employeeMongoRepository.save(employee);
+    }
+
+    @PutMapping("/{id}")
+    public EmployeeDocument update(@PathVariable Integer id, @RequestBody EmployeeDocument employee) {
+        if (!employeeMongoRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        employee.setEmployeeId(id);
+        return employeeMongoRepository.save(employee);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Integer id) {
+        if (!employeeMongoRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        employeeMongoRepository.deleteById(id);
     }
 }

@@ -2,10 +2,7 @@ package dk.ek.shift_happens.userrole.mongo;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -26,5 +23,28 @@ public class UserRoleMongoController {
     public UserRoleDocument getById(@PathVariable String id) {
         return userRoleMongoRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    @PostMapping
+    public UserRoleDocument create(@RequestBody UserRoleDocument userRole) {
+        return userRoleMongoRepository.save(userRole);
+    }
+
+    @PutMapping("/{id}")
+    public UserRoleDocument update(@PathVariable String id, @RequestBody UserRoleDocument userRole) {
+        if (!userRoleMongoRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        userRole.setId(id);
+        return userRoleMongoRepository.save(userRole);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable String id) {
+        if (!userRoleMongoRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        userRoleMongoRepository.deleteById(id);
     }
 }
