@@ -1,5 +1,6 @@
 package dk.ek.shift_happens.employeecontract;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -37,6 +38,7 @@ public class EmployeeContract {
     @Column(name = "weekly_hours")
     private Integer weeklyHours;
 
+    @JsonIgnore
     @Column(name = "salary_amount")
     private BigDecimal salaryAmount;
 

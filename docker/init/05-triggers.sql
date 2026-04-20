@@ -338,14 +338,14 @@ BEGIN
     INSERT INTO audit_log (entity_type,
                            entity_id,
                            action_type,
-                           performed_by_employee_id,
+                           db_user,
                            action_datetime,
                            old_value_snapshot,
                            new_value_snapshot)
     VALUES ('EMPLOYEE',
             NEW.employee_id,
             'INSERT',
-            NULL,
+            USER(),
             NOW(),
             NULL,
             JSON_OBJECT(
@@ -376,14 +376,14 @@ BEGIN
     INSERT INTO audit_log (entity_type,
                            entity_id,
                            action_type,
-                           performed_by_employee_id,
+                           db_user,
                            action_datetime,
                            old_value_snapshot,
                            new_value_snapshot)
     VALUES ('EMPLOYEE',
             OLD.employee_id,
             'UPDATE',
-            NULL,
+            USER(),
             NOW(),
             JSON_OBJECT(
                     'employee_id', OLD.employee_id,
@@ -423,14 +423,14 @@ BEGIN
     INSERT INTO audit_log (entity_type,
                            entity_id,
                            action_type,
-                           performed_by_employee_id,
+                           db_user,
                            action_datetime,
                            old_value_snapshot,
                            new_value_snapshot)
     VALUES ('EMPLOYEE',
             OLD.employee_id,
             'DELETE',
-            NULL,
+            USER(),
             NOW(),
             JSON_OBJECT(
                     'employee_id', OLD.employee_id,
@@ -469,3 +469,354 @@ DELETE
 FROM employee
 WHERE employee_id = @new_employee_id
 LIMIT 1;
+
+DELIMITER $$
+
+-- Department Audit
+DROP TRIGGER IF EXISTS trg_department_insert$$
+CREATE TRIGGER trg_department_insert AFTER INSERT ON department FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('DEPARTMENT', NEW.department_id, 'INSERT', USER(), NOW(), NULL, JSON_OBJECT('department_id', NEW.department_id, 'department_name', NEW.department_name, 'is_active', NEW.is_active));
+END$$
+
+DROP TRIGGER IF EXISTS trg_department_update$$
+CREATE TRIGGER trg_department_update BEFORE UPDATE ON department FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('DEPARTMENT', OLD.department_id, 'UPDATE', USER(), NOW(), 
+    JSON_OBJECT('department_id', OLD.department_id, 'department_name', OLD.department_name, 'is_active', OLD.is_active),
+    JSON_OBJECT('department_id', NEW.department_id, 'department_name', NEW.department_name, 'is_active', NEW.is_active));
+END$$
+
+DROP TRIGGER IF EXISTS trg_department_delete$$
+CREATE TRIGGER trg_department_delete BEFORE DELETE ON department FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('DEPARTMENT', OLD.department_id, 'DELETE', USER(), NOW(), JSON_OBJECT('department_id', OLD.department_id, 'department_name', OLD.department_name, 'is_active', OLD.is_active), NULL);
+END$$
+
+-- Work Location Audit
+DROP TRIGGER IF EXISTS trg_work_location_insert$$
+CREATE TRIGGER trg_work_location_insert AFTER INSERT ON work_location FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('WORK_LOCATION', NEW.work_location_id, 'INSERT', USER(), NOW(), NULL, JSON_OBJECT('work_location_id', NEW.work_location_id, 'location_name', NEW.location_name, 'city', NEW.city));
+END$$
+
+DROP TRIGGER IF EXISTS trg_work_location_update$$
+CREATE TRIGGER trg_work_location_update BEFORE UPDATE ON work_location FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('WORK_LOCATION', OLD.work_location_id, 'UPDATE', USER(), NOW(), JSON_OBJECT('work_location_id', OLD.work_location_id), JSON_OBJECT('work_location_id', NEW.work_location_id));
+END$$
+
+DROP TRIGGER IF EXISTS trg_work_location_delete$$
+CREATE TRIGGER trg_work_location_delete BEFORE DELETE ON work_location FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('WORK_LOCATION', OLD.work_location_id, 'DELETE', USER(), NOW(), JSON_OBJECT('work_location_id', OLD.work_location_id), NULL);
+END$$
+
+-- User Role Audit
+DROP TRIGGER IF EXISTS trg_user_role_insert$$
+CREATE TRIGGER trg_user_role_insert AFTER INSERT ON user_role FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('USER_ROLE', NEW.user_role_id, 'INSERT', USER(), NOW(), NULL, JSON_OBJECT('user_role_id', NEW.user_role_id, 'user_role_name', NEW.user_role_name));
+END$$
+
+DROP TRIGGER IF EXISTS trg_user_role_update$$
+CREATE TRIGGER trg_user_role_update BEFORE UPDATE ON user_role FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('USER_ROLE', OLD.user_role_id, 'UPDATE', USER(), NOW(), JSON_OBJECT('user_role_name', OLD.user_role_name), JSON_OBJECT('user_role_name', NEW.user_role_name));
+END$$
+
+DROP TRIGGER IF EXISTS trg_user_role_delete$$
+CREATE TRIGGER trg_user_role_delete BEFORE DELETE ON user_role FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('USER_ROLE', OLD.user_role_id, 'DELETE', USER(), NOW(), JSON_OBJECT('user_role_id', OLD.user_role_id), NULL);
+END$$
+
+-- Employee Contract Audit
+DROP TRIGGER IF EXISTS trg_employee_contract_insert$$
+CREATE TRIGGER trg_employee_contract_insert AFTER INSERT ON employee_contract FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('EMPLOYEE_CONTRACT', NEW.contract_id, 'INSERT', USER(), NOW(), NULL, JSON_OBJECT('contract_id', NEW.contract_id, 'employee_id', NEW.employee_id));
+END$$
+
+DROP TRIGGER IF EXISTS trg_employee_contract_update$$
+CREATE TRIGGER trg_employee_contract_update BEFORE UPDATE ON employee_contract FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('EMPLOYEE_CONTRACT', OLD.contract_id, 'UPDATE', USER(), NOW(), JSON_OBJECT('contract_id', OLD.contract_id), JSON_OBJECT('contract_id', NEW.contract_id));
+END$$
+
+DROP TRIGGER IF EXISTS trg_employee_contract_delete$$
+CREATE TRIGGER trg_employee_contract_delete BEFORE DELETE ON employee_contract FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('EMPLOYEE_CONTRACT', OLD.contract_id, 'DELETE', USER(), NOW(), JSON_OBJECT('contract_id', OLD.contract_id), NULL);
+END$$
+
+-- Job Role Audit
+DROP TRIGGER IF EXISTS trg_job_role_insert$$
+CREATE TRIGGER trg_job_role_insert AFTER INSERT ON job_role FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('JOB_ROLE', NEW.job_role_id, 'INSERT', USER(), NOW(), NULL, JSON_OBJECT('role_name', NEW.role_name));
+END$$
+
+DROP TRIGGER IF EXISTS trg_job_role_update$$
+CREATE TRIGGER trg_job_role_update BEFORE UPDATE ON job_role FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('JOB_ROLE', OLD.job_role_id, 'UPDATE', USER(), NOW(), JSON_OBJECT('role_name', OLD.role_name), JSON_OBJECT('role_name', NEW.role_name));
+END$$
+
+DROP TRIGGER IF EXISTS trg_job_role_delete$$
+CREATE TRIGGER trg_job_role_delete BEFORE DELETE ON job_role FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('JOB_ROLE', OLD.job_role_id, 'DELETE', USER(), NOW(), JSON_OBJECT('job_role_id', OLD.job_role_id), NULL);
+END$$
+
+-- Employee Job Role Audit
+DROP TRIGGER IF EXISTS trg_employee_job_role_insert$$
+CREATE TRIGGER trg_employee_job_role_insert AFTER INSERT ON employee_job_role FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('EMPLOYEE_JOB_ROLE', NEW.employee_job_role_id, 'INSERT', USER(), NOW(), NULL, JSON_OBJECT('employee_id', NEW.employee_id, 'job_role_id', NEW.job_role_id));
+END$$
+
+DROP TRIGGER IF EXISTS trg_employee_job_role_update$$
+CREATE TRIGGER trg_employee_job_role_update BEFORE UPDATE ON employee_job_role FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('EMPLOYEE_JOB_ROLE', OLD.employee_job_role_id, 'UPDATE', USER(), NOW(), JSON_OBJECT('employee_job_role_id', OLD.employee_job_role_id), JSON_OBJECT('employee_job_role_id', NEW.employee_job_role_id));
+END$$
+
+DROP TRIGGER IF EXISTS trg_employee_job_role_delete$$
+CREATE TRIGGER trg_employee_job_role_delete BEFORE DELETE ON employee_job_role FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('EMPLOYEE_JOB_ROLE', OLD.employee_job_role_id, 'DELETE', USER(), NOW(), JSON_OBJECT('employee_job_role_id', OLD.employee_job_role_id), NULL);
+END$$
+
+-- Shift Audit
+DROP TRIGGER IF EXISTS trg_shift_insert$$
+CREATE TRIGGER trg_shift_insert AFTER INSERT ON shift FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('SHIFT', NEW.shift_id, 'INSERT', USER(), NOW(), NULL, JSON_OBJECT('shift_name', NEW.shift_name, 'start_datetime', NEW.start_datetime));
+END$$
+
+DROP TRIGGER IF EXISTS trg_shift_update$$
+CREATE TRIGGER trg_shift_update BEFORE UPDATE ON shift FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('SHIFT', OLD.shift_id, 'UPDATE', USER(), NOW(), JSON_OBJECT('shift_id', OLD.shift_id), JSON_OBJECT('shift_id', NEW.shift_id));
+END$$
+
+DROP TRIGGER IF EXISTS trg_shift_delete$$
+CREATE TRIGGER trg_shift_delete BEFORE DELETE ON shift FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('SHIFT', OLD.shift_id, 'DELETE', USER(), NOW(), JSON_OBJECT('shift_id', OLD.shift_id), NULL);
+END$$
+
+-- Shift Required Job Role Audit
+DROP TRIGGER IF EXISTS trg_shift_required_job_role_insert$$
+CREATE TRIGGER trg_shift_required_job_role_insert AFTER INSERT ON shift_required_job_role FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('SHIFT_REQUIRED_JOB_ROLE', NEW.shift_required_job_role_id, 'INSERT', USER(), NOW(), NULL, JSON_OBJECT('shift_id', NEW.shift_id, 'job_role_id', NEW.job_role_id));
+END$$
+
+DROP TRIGGER IF EXISTS trg_shift_required_job_role_update$$
+CREATE TRIGGER trg_shift_required_job_role_update BEFORE UPDATE ON shift_required_job_role FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('SHIFT_REQUIRED_JOB_ROLE', OLD.shift_required_job_role_id, 'UPDATE', USER(), NOW(), JSON_OBJECT('shift_required_job_role_id', OLD.shift_required_job_role_id), JSON_OBJECT('shift_required_job_role_id', NEW.shift_required_job_role_id));
+END$$
+
+DROP TRIGGER IF EXISTS trg_shift_required_job_role_delete$$
+CREATE TRIGGER trg_shift_required_job_role_delete BEFORE DELETE ON shift_required_job_role FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('SHIFT_REQUIRED_JOB_ROLE', OLD.shift_required_job_role_id, 'DELETE', USER(), NOW(), JSON_OBJECT('shift_required_job_role_id', OLD.shift_required_job_role_id), NULL);
+END$$
+
+-- Shift Assignment Audit
+DROP TRIGGER IF EXISTS trg_shift_assignment_insert$$
+CREATE TRIGGER trg_shift_assignment_insert AFTER INSERT ON shift_assignment FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('SHIFT_ASSIGNMENT', NEW.shift_assignment_id, 'INSERT', USER(), NOW(), NULL, JSON_OBJECT('shift_id', NEW.shift_id, 'employee_id', NEW.employee_id));
+END$$
+
+DROP TRIGGER IF EXISTS trg_shift_assignment_update$$
+CREATE TRIGGER trg_shift_assignment_update BEFORE UPDATE ON shift_assignment FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('SHIFT_ASSIGNMENT', OLD.shift_assignment_id, 'UPDATE', USER(), NOW(), JSON_OBJECT('assignment_status', OLD.assignment_status), JSON_OBJECT('assignment_status', NEW.assignment_status));
+END$$
+
+DROP TRIGGER IF EXISTS trg_shift_assignment_delete$$
+CREATE TRIGGER trg_shift_assignment_delete BEFORE DELETE ON shift_assignment FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('SHIFT_ASSIGNMENT', OLD.shift_assignment_id, 'DELETE', USER(), NOW(), JSON_OBJECT('shift_assignment_id', OLD.shift_assignment_id), NULL);
+END$$
+
+-- Shift Approval Audit
+DROP TRIGGER IF EXISTS trg_shift_approval_insert$$
+CREATE TRIGGER trg_shift_approval_insert AFTER INSERT ON shift_approval FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('SHIFT_APPROVAL', NEW.shift_approval_id, 'INSERT', USER(), NOW(), NULL, JSON_OBJECT('shift_assignment_id', NEW.shift_assignment_id, 'decision', NEW.decision));
+END$$
+
+DROP TRIGGER IF EXISTS trg_shift_approval_update$$
+CREATE TRIGGER trg_shift_approval_update BEFORE UPDATE ON shift_approval FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('SHIFT_APPROVAL', OLD.shift_approval_id, 'UPDATE', USER(), NOW(), JSON_OBJECT('decision', OLD.decision), JSON_OBJECT('decision', NEW.decision));
+END$$
+
+DROP TRIGGER IF EXISTS trg_shift_approval_delete$$
+CREATE TRIGGER trg_shift_approval_delete BEFORE DELETE ON shift_approval FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('SHIFT_APPROVAL', OLD.shift_approval_id, 'DELETE', USER(), NOW(), JSON_OBJECT('shift_approval_id', OLD.shift_approval_id), NULL);
+END$$
+
+-- Shift Swap Audit
+DROP TRIGGER IF EXISTS trg_shift_swap_insert$$
+CREATE TRIGGER trg_shift_swap_insert AFTER INSERT ON shift_swap FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('SHIFT_SWAP', NEW.shift_swap_id, 'INSERT', USER(), NOW(), NULL, JSON_OBJECT('employee_from_id', NEW.employee_from_id, 'employee_to_id', NEW.employee_to_id));
+END$$
+
+DROP TRIGGER IF EXISTS trg_shift_swap_update$$
+CREATE TRIGGER trg_shift_swap_update BEFORE UPDATE ON shift_swap FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('SHIFT_SWAP', OLD.shift_swap_id, 'UPDATE', USER(), NOW(), JSON_OBJECT('swap_status', OLD.swap_status), JSON_OBJECT('swap_status', NEW.swap_status));
+END$$
+
+DROP TRIGGER IF EXISTS trg_shift_swap_delete$$
+CREATE TRIGGER trg_shift_swap_delete BEFORE DELETE ON shift_swap FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('SHIFT_SWAP', OLD.shift_swap_id, 'DELETE', USER(), NOW(), JSON_OBJECT('shift_swap_id', OLD.shift_swap_id), NULL);
+END$$
+
+-- Shift Swap Approval Audit
+DROP TRIGGER IF EXISTS trg_shift_swap_approval_insert$$
+CREATE TRIGGER trg_shift_swap_approval_insert AFTER INSERT ON shift_swap_approval FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('SHIFT_SWAP_APPROVAL', NEW.shift_swap_approval_id, 'INSERT', USER(), NOW(), NULL, JSON_OBJECT('shift_swap_id', NEW.shift_swap_id, 'decision', NEW.decision));
+END$$
+
+DROP TRIGGER IF EXISTS trg_shift_swap_approval_update$$
+CREATE TRIGGER trg_shift_swap_approval_update BEFORE UPDATE ON shift_swap_approval FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('SHIFT_SWAP_APPROVAL', OLD.shift_swap_approval_id, 'UPDATE', USER(), NOW(), JSON_OBJECT('decision', OLD.decision), JSON_OBJECT('decision', NEW.decision));
+END$$
+
+DROP TRIGGER IF EXISTS trg_shift_swap_approval_delete$$
+CREATE TRIGGER trg_shift_swap_approval_delete BEFORE DELETE ON shift_swap_approval FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('SHIFT_SWAP_APPROVAL', OLD.shift_swap_approval_id, 'DELETE', USER(), NOW(), JSON_OBJECT('shift_swap_approval_id', OLD.shift_swap_approval_id), NULL);
+END$$
+
+-- Leave Type Audit
+DROP TRIGGER IF EXISTS trg_leave_type_insert$$
+CREATE TRIGGER trg_leave_type_insert AFTER INSERT ON leave_type FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('LEAVE_TYPE', NEW.leave_type_id, 'INSERT', USER(), NOW(), NULL, JSON_OBJECT('leave_type_name', NEW.leave_type_name));
+END$$
+
+DROP TRIGGER IF EXISTS trg_leave_type_update$$
+CREATE TRIGGER trg_leave_type_update BEFORE UPDATE ON leave_type FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('LEAVE_TYPE', OLD.leave_type_id, 'UPDATE', USER(), NOW(), JSON_OBJECT('leave_type_name', OLD.leave_type_name), JSON_OBJECT('leave_type_name', NEW.leave_type_name));
+END$$
+
+DROP TRIGGER IF EXISTS trg_leave_type_delete$$
+CREATE TRIGGER trg_leave_type_delete BEFORE DELETE ON leave_type FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('LEAVE_TYPE', OLD.leave_type_id, 'DELETE', USER(), NOW(), JSON_OBJECT('leave_type_id', OLD.leave_type_id), NULL);
+END$$
+
+-- Leave Request Audit
+DROP TRIGGER IF EXISTS trg_leave_request_insert$$
+CREATE TRIGGER trg_leave_request_insert AFTER INSERT ON leave_request FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('LEAVE_REQUEST', NEW.leave_request_id, 'INSERT', USER(), NOW(), NULL, JSON_OBJECT('employee_id', NEW.employee_id, 'leave_type_id', NEW.leave_type_id));
+END$$
+
+DROP TRIGGER IF EXISTS trg_leave_request_update$$
+CREATE TRIGGER trg_leave_request_update BEFORE UPDATE ON leave_request FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('LEAVE_REQUEST', OLD.leave_request_id, 'UPDATE', USER(), NOW(), JSON_OBJECT('request_status', OLD.request_status), JSON_OBJECT('request_status', NEW.request_status));
+END$$
+
+DROP TRIGGER IF EXISTS trg_leave_request_delete$$
+CREATE TRIGGER trg_leave_request_delete BEFORE DELETE ON leave_request FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('LEAVE_REQUEST', OLD.leave_request_id, 'DELETE', USER(), NOW(), JSON_OBJECT('leave_request_id', OLD.leave_request_id), NULL);
+END$$
+
+-- Leave Approval Audit
+DROP TRIGGER IF EXISTS trg_leave_approval_insert$$
+CREATE TRIGGER trg_leave_approval_insert AFTER INSERT ON leave_approval FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('LEAVE_APPROVAL', NEW.leave_approval_id, 'INSERT', USER(), NOW(), NULL, JSON_OBJECT('leave_request_id', NEW.leave_request_id, 'decision', NEW.decision));
+END$$
+
+DROP TRIGGER IF EXISTS trg_leave_approval_update$$
+CREATE TRIGGER trg_leave_approval_update BEFORE UPDATE ON leave_approval FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('LEAVE_APPROVAL', OLD.leave_approval_id, 'UPDATE', USER(), NOW(), JSON_OBJECT('decision', OLD.decision), JSON_OBJECT('decision', NEW.decision));
+END$$
+
+DROP TRIGGER IF EXISTS trg_leave_approval_delete$$
+CREATE TRIGGER trg_leave_approval_delete BEFORE DELETE ON leave_approval FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('LEAVE_APPROVAL', OLD.leave_approval_id, 'DELETE', USER(), NOW(), JSON_OBJECT('leave_approval_id', OLD.leave_approval_id), NULL);
+END$$
+
+-- Leave Ledger Audit
+DROP TRIGGER IF EXISTS trg_leave_ledger_insert$$
+CREATE TRIGGER trg_leave_ledger_insert AFTER INSERT ON leave_ledger FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('LEAVE_LEDGER', NEW.leave_ledger_id, 'INSERT', USER(), NOW(), NULL, JSON_OBJECT('employee_id', NEW.employee_id, 'change_amount_days', NEW.change_amount_days));
+END$$
+
+DROP TRIGGER IF EXISTS trg_leave_ledger_update$$
+CREATE TRIGGER trg_leave_ledger_update BEFORE UPDATE ON leave_ledger FOR EACH ROW
+BEGIN
+    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+    VALUES ('LEAVE_LEDGER', OLD.leave_ledger_id, 'UPDATE', USER(), NOW(), JSON_OBJECT('change_amount_days', OLD.change_amount_days), JSON_OBJECT('change_amount_days', NEW.change_amount_days));
+END$$
+
+DELIMITER ;
