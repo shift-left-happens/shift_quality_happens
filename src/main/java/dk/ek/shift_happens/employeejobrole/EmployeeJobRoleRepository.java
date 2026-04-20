@@ -7,5 +7,5 @@ import java.util.List;
 
 @Repository
 public interface EmployeeJobRoleRepository extends JpaRepository<EmployeeJobRole, Integer> {
-    List<EmployeeJobRole> findAll();
+    List<EmployeeJobRole> findByEmployeeId(Integer employeeId);
 }
