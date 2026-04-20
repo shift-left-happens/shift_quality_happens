@@ -2,10 +2,9 @@ package dk.ek.shift_happens.leaveapproval;
 
 import dk.ek.shift_happens.employee.Employee;
 import dk.ek.shift_happens.employee.EmployeeRepository;
+import dk.ek.shift_happens.employee.UserRole;
 import dk.ek.shift_happens.leaverequest.LeaveRequest;
 import dk.ek.shift_happens.leaverequest.LeaveRequestRepository;
-import dk.ek.shift_happens.userrole.UserRole;
-import dk.ek.shift_happens.userrole.UserRoleRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,8 +27,6 @@ class LeaveApprovalServiceTest {
     private LeaveRequestRepository leaveRequestRepository;
     @Mock
     private EmployeeRepository employeeRepository;
-    @Mock
-    private UserRoleRepository userRoleRepository;
 
     @InjectMocks
     private LeaveApprovalService leaveApprovalService;
@@ -37,8 +34,7 @@ class LeaveApprovalServiceTest {
     @Test
     void approve_allowsAdministrator() {
         LeaveRequest request = pendingRequest();
-        Employee approver = employeeWithRole(1);
-        UserRole role = roleNamed(1, "Administrator");
+        Employee approver = employeeWithRole(UserRole.Administrator);
         LeaveApproval approval = new LeaveApproval();
         approval.setLeaveRequestId(5);
         approval.setApproverEmployeeId(99);
@@ -46,7 +42,6 @@ class LeaveApprovalServiceTest {
 
         when(leaveRequestRepository.findById(5)).thenReturn(Optional.of(request));
         when(employeeRepository.findById(99)).thenReturn(Optional.of(approver));
-        when(userRoleRepository.findById(1)).thenReturn(Optional.of(role));
         when(leaveApprovalRepository.save(any(LeaveApproval.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(leaveRequestRepository.save(any(LeaveRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -61,8 +56,7 @@ class LeaveApprovalServiceTest {
     @Test
     void approve_allowsManager() {
         LeaveRequest request = pendingRequest();
-        Employee approver = employeeWithRole(3);
-        UserRole role = roleNamed(3, "Manager");
+        Employee approver = employeeWithRole(UserRole.Manager);
         LeaveApproval approval = new LeaveApproval();
         approval.setLeaveRequestId(5);
         approval.setApproverEmployeeId(100);
@@ -70,7 +64,6 @@ class LeaveApprovalServiceTest {
 
         when(leaveRequestRepository.findById(5)).thenReturn(Optional.of(request));
         when(employeeRepository.findById(100)).thenReturn(Optional.of(approver));
-        when(userRoleRepository.findById(3)).thenReturn(Optional.of(role));
         when(leaveApprovalRepository.save(any(LeaveApproval.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(leaveRequestRepository.save(any(LeaveRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -83,8 +76,7 @@ class LeaveApprovalServiceTest {
     @Test
     void approve_rejectsRegularEmployee() {
         LeaveRequest request = pendingRequest();
-        Employee approver = employeeWithRole(2);
-        UserRole role = roleNamed(2, "Employee");
+        Employee approver = employeeWithRole(UserRole.Employee);
         LeaveApproval approval = new LeaveApproval();
         approval.setLeaveRequestId(5);
         approval.setApproverEmployeeId(101);
@@ -92,7 +84,6 @@ class LeaveApprovalServiceTest {
 
         when(leaveRequestRepository.findById(5)).thenReturn(Optional.of(request));
         when(employeeRepository.findById(101)).thenReturn(Optional.of(approver));
-        when(userRoleRepository.findById(2)).thenReturn(Optional.of(role));
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> leaveApprovalService.approve(approval));
@@ -112,19 +103,12 @@ class LeaveApprovalServiceTest {
         return request;
     }
 
-    private Employee employeeWithRole(Integer roleId) {
+    private Employee employeeWithRole(UserRole role) {
         Employee employee = new Employee();
         employee.setEmployeeId(99);
-        employee.setFkUserRoleId(roleId);
+        employee.setUserRole(role);
         employee.setEmail("approver@example.com");
         employee.setLoginPassword("secret123");
         return employee;
-    }
-
-    private UserRole roleNamed(Integer id, String name) {
-        UserRole role = new UserRole();
-        role.setUserRoleId(id);
-        role.setUserRoleName(name);
-        return role;
     }
 }

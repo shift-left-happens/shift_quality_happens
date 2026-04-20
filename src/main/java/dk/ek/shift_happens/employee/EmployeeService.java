@@ -52,7 +52,7 @@ public class EmployeeService {
             if (patch.getLastName() != null) existing.setLastName(patch.getLastName());
             if (patch.getEmail() != null) existing.setEmail(patch.getEmail());
             if (patch.getLoginPassword() != null) existing.setLoginPassword(passwordEncoder.encode(patch.getLoginPassword()));
-            if (patch.getFkUserRoleId() != null) existing.setFkUserRoleId(patch.getFkUserRoleId());
+            if (patch.getUserRole() != null) existing.setUserRole(patch.getUserRole());
             if (patch.getPhoneNumber() != null) existing.setPhoneNumber(patch.getPhoneNumber());
             if (patch.getHireDate() != null) existing.setHireDate(patch.getHireDate());
             if (patch.getEmploymentStatus() != null) existing.setEmploymentStatus(patch.getEmploymentStatus());

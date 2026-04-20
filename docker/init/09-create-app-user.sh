@@ -36,7 +36,6 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON \`${MYSQL_DATABASE}\`.shift_assignment T
 GRANT SELECT, INSERT, UPDATE, DELETE ON \`${MYSQL_DATABASE}\`.shift_required_job_role TO app_crud_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON \`${MYSQL_DATABASE}\`.shift_swap TO app_crud_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON \`${MYSQL_DATABASE}\`.shift_swap_approval TO app_crud_role;
-GRANT SELECT, INSERT, UPDATE, DELETE ON \`${MYSQL_DATABASE}\`.user_role TO app_crud_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON \`${MYSQL_DATABASE}\`.work_location TO app_crud_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON \`${MYSQL_DATABASE}\`.vw_employee_leave_overview TO app_crud_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON \`${MYSQL_DATABASE}\`.vw_employee_shift_overview TO app_crud_role;
