@@ -63,17 +63,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-// One-time migrator: reads all data from MySQL (via JPA/Hibernate ORM) and writes
-// it into MongoDB (ODM) and Neo4j (OGM).
-//
-// Strategy: load all SQL tables into memory as Maps keyed by their primary ID,
-// then do all the joining/embedding in Java. This avoids N+1 queries and keeps
-// the mapping logic readable.
-//
-// MongoDB collections: employees, shifts, departments, leave_requests
-// Neo4j graph types:   Employee, Department, WorkLocation, Shift, JobRole
-// Neo4j relationships: WORKS_AT, WORKS_IN, HAS_ROLE, IN_DEPARTMENT,
-//                      AT_LOCATION, REQUIRES_ROLE, ASSIGNED_TO
+/**
+ * Orchestrates data migration from MySQL into MongoDB and Neo4j.
+ *
+ * Mongo-specific mapping stays here, while graph-specific work lives in
+ * Neo4jMigrationService to keep responsibilities separated.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -123,26 +118,30 @@ public class MigrationService {
         List<String> allErrors = new ArrayList<>(mongo.errors());
         allErrors.addAll(neo4j.errors());
         return new MigrationResult(
-                mongo.audit_logs(), mongo.employees(), mongo.shifts(), mongo.departments(), mongo.leaveDocuments(),
+                mongo.employees(), mongo.shifts(), mongo.departments(), mongo.leaveDocuments(),
                 neo4j.neo4jEmployees(), neo4j.neo4jDepartments(), neo4j.neo4jWorkLocations(),
                 neo4j.neo4jShifts(), neo4j.neo4jJobRoles(), neo4j.neo4jShiftSwaps(),
+                neo4j.neo4jLeaveTypes(), neo4j.neo4jLeaveRequests(), neo4j.neo4jLeaveApprovals(),
+                neo4j.neo4jShiftApprovals(), neo4j.neo4jShiftSwapApprovals(),
                 allErrors
         );
     }
 
     public MigrationResult migrateToMongo() {
         List<String> errors = new ArrayList<>();
-        int employees = 0, shifts = 0, departments = 0, leave = 0, audit_logs = 0;
-        try { audit_logs   = migrateAuditLogsToMongo(); }   catch (Exception e) { log.error("mongo:audit_logs failed",   e); errors.add("mongo:audit_logs — "   + e.getMessage()); }
-        try { employees    = migrateEmployeesToMongo(); }    catch (Exception e) { log.error("mongo:employees failed",    e); errors.add("mongo:employees — "    + e.getMessage()); }
-        try { shifts       = migrateShiftsToMongo(); }       catch (Exception e) { log.error("mongo:shifts failed",       e); errors.add("mongo:shifts — "       + e.getMessage()); }
-        try { departments  = migrateDepartmentsToMongo(); }  catch (Exception e) { log.error("mongo:departments failed",  e); errors.add("mongo:departments — "  + e.getMessage()); }
-        try { leave        = migrateLeaveToMongo(); }        catch (Exception e) { log.error("mongo:leave failed",        e); errors.add("mongo:leave — "        + e.getMessage()); }
-        try { migrateJobRolesToMongo(); }                    catch (Exception e) { log.error("mongo:job_roles failed",      e); errors.add("mongo:job_roles — "      + e.getMessage()); }
-        try { migrateWorkLocationsToMongo(); }               catch (Exception e) { log.error("mongo:work_locations failed", e); errors.add("mongo:work_locations — " + e.getMessage()); }
-        try { migrateUserRolesToMongo(); }                   catch (Exception e) { log.error("mongo:user_roles failed",     e); errors.add("mongo:user_roles — "     + e.getMessage()); }
-        try { migrateLeaveTypesToMongo(); }                  catch (Exception e) { log.error("mongo:leave_types failed",    e); errors.add("mongo:leave_types — "    + e.getMessage()); }
-        return new MigrationResult(audit_logs, employees, shifts, departments, leave, 0, 0, 0, 0, 0, 0, errors);
+        int auditLogs = 0, employees = 0, shifts = 0, departments = 0, leave = 0;
+
+        try { auditLogs   = migrateAuditLogsToMongo(); }    catch (Exception e) { log.error("mongo:audit_logs failed",     e); errors.add("mongo:audit_logs — "     + e.getMessage()); }
+        try { employees   = migrateEmployeesToMongo(); }    catch (Exception e) { log.error("mongo:employees failed",      e); errors.add("mongo:employees — "      + e.getMessage()); }
+        try { shifts      = migrateShiftsToMongo(); }       catch (Exception e) { log.error("mongo:shifts failed",         e); errors.add("mongo:shifts — "         + e.getMessage()); }
+        try { departments = migrateDepartmentsToMongo(); }  catch (Exception e) { log.error("mongo:departments failed",    e); errors.add("mongo:departments — "    + e.getMessage()); }
+        try { leave       = migrateLeaveToMongo(); }        catch (Exception e) { log.error("mongo:leave failed",          e); errors.add("mongo:leave — "          + e.getMessage()); }
+        try { migrateJobRolesToMongo(); }                   catch (Exception e) { log.error("mongo:job_roles failed",      e); errors.add("mongo:job_roles — "      + e.getMessage()); }
+        try { migrateWorkLocationsToMongo(); }              catch (Exception e) { log.error("mongo:work_locations failed", e); errors.add("mongo:work_locations — " + e.getMessage()); }
+        try { migrateUserRolesToMongo(); }                  catch (Exception e) { log.error("mongo:user_roles failed",     e); errors.add("mongo:user_roles — "     + e.getMessage()); }
+        try { migrateLeaveTypesToMongo(); }                 catch (Exception e) { log.error("mongo:leave_types failed",    e); errors.add("mongo:leave_types — "    + e.getMessage()); }
+
+        return new MigrationResult(employees, shifts, departments, leave, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, errors);
     }
 
     public MigrationResult migrateToNeo4j() {
@@ -688,13 +687,5 @@ public class MigrationService {
     private <K, V> Map<K, V> index(List<V> list, java.util.function.Function<V, K> keyMapper) {
         return list.stream().collect(Collectors.toMap(keyMapper, v -> v));
     }
-
-    // Return type summarising what was migrated.
-    // Any step that throws has its count left at 0 and its error message in errors[].
-    public record MigrationResult(
-            int audit_logs, int employees, int shifts, int departments, int leaveDocuments,
-            int neo4jEmployees, int neo4jDepartments, int neo4jWorkLocations,
-            int neo4jShifts, int neo4jJobRoles, int neo4jShiftSwaps,
-            List<String> errors
-    ) {}
 }
+

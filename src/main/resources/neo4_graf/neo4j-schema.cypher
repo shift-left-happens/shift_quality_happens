@@ -23,11 +23,20 @@ FOR (s:Shift) REQUIRE s.shiftId IS UNIQUE;
 CREATE CONSTRAINT shift_swap_id IF NOT EXISTS
 FOR (ss:ShiftSwap) REQUIRE ss.shiftSwapId IS UNIQUE;
 
+CREATE CONSTRAINT leave_type_id IF NOT EXISTS
+FOR (lt:LeaveType) REQUIRE lt.leaveTypeId IS UNIQUE;
+
 CREATE CONSTRAINT leave_request_id IF NOT EXISTS
 FOR (lr:LeaveRequest) REQUIRE lr.leaveRequestId IS UNIQUE;
 
 CREATE CONSTRAINT leave_approval_id IF NOT EXISTS
 FOR (la:LeaveApproval) REQUIRE la.leaveApprovalId IS UNIQUE;
+
+CREATE CONSTRAINT shift_approval_id IF NOT EXISTS
+FOR (sa:ShiftApproval) REQUIRE sa.shiftApprovalId IS UNIQUE;
+
+CREATE CONSTRAINT shift_swap_approval_id IF NOT EXISTS
+FOR (ssa:ShiftSwapApproval) REQUIRE ssa.shiftSwapApprovalId IS UNIQUE;
 
 // ========================
 // Recommended graph model
@@ -39,8 +48,11 @@ FOR (la:LeaveApproval) REQUIRE la.leaveApprovalId IS UNIQUE;
 //   (:JobRole)
 //   (:Shift)
 //   (:ShiftSwap)
+//   (:LeaveType)
 //   (:LeaveRequest)
 //   (:LeaveApproval)
+//   (:ShiftApproval)
+//   (:ShiftSwapApproval)
 //
 // Relationships:
 //   (:Employee)-[:WORKS_IN]->(:Department)
@@ -52,10 +64,12 @@ FOR (la:LeaveApproval) REQUIRE la.leaveApprovalId IS UNIQUE;
 //   (:ShiftSwap)-[:FOR_SHIFT]->(:Shift)
 //   (:ShiftSwap)-[:FROM_EMPLOYEE]->(:Employee)
 //   (:ShiftSwap)-[:TO_EMPLOYEE]->(:Employee)
-//   (:Employee)-[:REQUESTED]->(:LeaveRequest)
+//   (:Employee)-[:REQUESTED_LEAVE]->(:LeaveRequest)
 //   (:LeaveRequest)-[:OF_TYPE]->(:LeaveType)
-//   (:Employee)-[:APPROVED]->(:LeaveApproval)
-//   (:LeaveApproval)-[:FOR_REQUEST]->(:LeaveRequest)
+//   (:LeaveRequest)-[:HAS_APPROVAL]->(:LeaveApproval)
+//   (:LeaveApproval)-[:APPROVED_BY]->(:Employee)
+//   (:Shift)-[:HAS_APPROVAL]->(:ShiftApproval)
+//   (:ShiftSwap)-[:HAS_APPROVAL]->(:ShiftSwapApproval)
 
 // ========================
 // Example seed data

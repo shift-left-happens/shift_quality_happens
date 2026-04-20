@@ -15,17 +15,17 @@ public class MigrationController {
     // Migrates all MySQL data into both MongoDB and Neo4j.
     // Clears existing secondary-DB data before writing to ensure a clean state.
     @PostMapping
-    public MigrationService.MigrationResult migrateAll() {
+    public MigrationResult migrateAll() {
         return migrationService.migrateAll();
     }
 
     @PostMapping("/mongo")
-    public MigrationService.MigrationResult migrateToMongo() {
+    public MigrationResult migrateToMongo() {
         return migrationService.migrateToMongo();
     }
 
     @PostMapping("/neo4j")
-    public MigrationService.MigrationResult migrateToNeo4j() {
+    public MigrationResult migrateToNeo4j() {
         return migrationService.migrateToNeo4j();
     }
 }
