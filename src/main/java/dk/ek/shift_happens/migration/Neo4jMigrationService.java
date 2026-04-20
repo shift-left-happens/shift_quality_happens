@@ -73,7 +73,7 @@ public class Neo4jMigrationService {
         try { jobRoles      = migrateJobRolesToNeo4j(); }      catch (Exception e) { log.error("neo4j:jobroles failed",      e); errors.add("neo4j:jobroles — "      + e.getMessage()); }
         try { shiftSwaps    = migrateShiftSwapsToNeo4j(); }    catch (Exception e) { log.error("neo4j:shiftswaps failed",    e); errors.add("neo4j:shiftswaps — "    + e.getMessage()); }
         try { createNeo4jRelationships(); }                    catch (Exception e) { log.error("neo4j:relationships failed", e); errors.add("neo4j:relationships — " + e.getMessage()); }
-        return new MigrationService.MigrationResult(0, 0, 0, 0, employees, departments, workLocations, shifts, jobRoles, shiftSwaps, errors);
+        return new MigrationService.MigrationResult(0, 0, 0, 0, 0, employees, departments, workLocations, shifts, jobRoles, shiftSwaps, errors);
     }
 
     public int migrateEmployeesToNeo4j() {

@@ -1,5 +1,9 @@
 package dk.ek.shift_happens.migration;
 
+import dk.ek.shift_happens.auditlog.AuditLog;
+import dk.ek.shift_happens.auditlog.AuditLogRepository;
+import dk.ek.shift_happens.auditlog.mongo.AuditLogDocument;
+import dk.ek.shift_happens.auditlog.mongo.AuditLogMongoRepository;
 import dk.ek.shift_happens.department.Department;
 import dk.ek.shift_happens.department.DepartmentRepository;
 import dk.ek.shift_happens.department.mongo.DepartmentDocument;
@@ -14,14 +18,20 @@ import dk.ek.shift_happens.employeejobrole.EmployeeJobRole;
 import dk.ek.shift_happens.employeejobrole.EmployeeJobRoleRepository;
 import dk.ek.shift_happens.jobrole.JobRole;
 import dk.ek.shift_happens.jobrole.JobRoleRepository;
+import dk.ek.shift_happens.jobrole.mongo.JobRoleDocument;
+import dk.ek.shift_happens.jobrole.mongo.JobRoleMongoRepository;
 import dk.ek.shift_happens.leaveapproval.LeaveApproval;
 import dk.ek.shift_happens.leaveapproval.LeaveApprovalRepository;
+import dk.ek.shift_happens.leaveledger.LeaveLedger;
+import dk.ek.shift_happens.leaveledger.LeaveLedgerRepository;
 import dk.ek.shift_happens.leaverequest.LeaveRequest;
 import dk.ek.shift_happens.leaverequest.LeaveRequestRepository;
 import dk.ek.shift_happens.leaverequest.mongo.LeaveDocument;
 import dk.ek.shift_happens.leaverequest.mongo.LeaveMongoRepository;
 import dk.ek.shift_happens.leavetype.LeaveType;
 import dk.ek.shift_happens.leavetype.LeaveTypeRepository;
+import dk.ek.shift_happens.leavetype.mongo.LeaveTypeDocument;
+import dk.ek.shift_happens.leavetype.mongo.LeaveTypeMongoRepository;
 import dk.ek.shift_happens.shift.Shift;
 import dk.ek.shift_happens.shift.ShiftRepository;
 import dk.ek.shift_happens.shift.mongo.ShiftDocument;
@@ -38,8 +48,12 @@ import dk.ek.shift_happens.shiftswapapproval.ShiftSwapApproval;
 import dk.ek.shift_happens.shiftswapapproval.ShiftSwapApprovalRepository;
 import dk.ek.shift_happens.userrole.UserRole;
 import dk.ek.shift_happens.userrole.UserRoleRepository;
+import dk.ek.shift_happens.userrole.mongo.UserRoleDocument;
+import dk.ek.shift_happens.userrole.mongo.UserRoleMongoRepository;
 import dk.ek.shift_happens.worklocation.WorkLocation;
 import dk.ek.shift_happens.worklocation.WorkLocationRepository;
+import dk.ek.shift_happens.worklocation.mongo.WorkLocationDocument;
+import dk.ek.shift_happens.worklocation.mongo.WorkLocationMongoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -66,6 +80,7 @@ import java.util.stream.Collectors;
 public class MigrationService {
 
     // MySQL repositories (reads)
+    private final AuditLogRepository auditLogRepository;
     private final EmployeeRepository employeeRepository;
     private final EmployeeContractRepository employeeContractRepository;
     private final EmployeeJobRoleRepository employeeJobRoleRepository;
@@ -81,13 +96,19 @@ public class MigrationService {
     private final ShiftSwapApprovalRepository shiftSwapApprovalRepository;
     private final LeaveRequestRepository leaveRequestRepository;
     private final LeaveApprovalRepository leaveApprovalRepository;
+    private final LeaveLedgerRepository leaveLedgerRepository;
     private final LeaveTypeRepository leaveTypeRepository;
 
     // MongoDB repositories (writes)
+    private final AuditLogMongoRepository auditLogMongoRepository;
     private final EmployeeMongoRepository employeeMongoRepository;
     private final ShiftMongoRepository shiftMongoRepository;
     private final DepartmentMongoRepository departmentMongoRepository;
     private final LeaveMongoRepository leaveMongoRepository;
+    private final JobRoleMongoRepository jobRoleMongoRepository;
+    private final WorkLocationMongoRepository workLocationMongoRepository;
+    private final UserRoleMongoRepository userRoleMongoRepository;
+    private final LeaveTypeMongoRepository leaveTypeMongoRepository;
 
     // Neo4j migration orchestration
     private final Neo4jMigrationService neo4jMigrationService;
@@ -102,7 +123,7 @@ public class MigrationService {
         List<String> allErrors = new ArrayList<>(mongo.errors());
         allErrors.addAll(neo4j.errors());
         return new MigrationResult(
-                mongo.employees(), mongo.shifts(), mongo.departments(), mongo.leaveDocuments(),
+                mongo.audit_logs(), mongo.employees(), mongo.shifts(), mongo.departments(), mongo.leaveDocuments(),
                 neo4j.neo4jEmployees(), neo4j.neo4jDepartments(), neo4j.neo4jWorkLocations(),
                 neo4j.neo4jShifts(), neo4j.neo4jJobRoles(), neo4j.neo4jShiftSwaps(),
                 allErrors
@@ -111,12 +132,17 @@ public class MigrationService {
 
     public MigrationResult migrateToMongo() {
         List<String> errors = new ArrayList<>();
-        int employees = 0, shifts = 0, departments = 0, leave = 0;
-        try { employees   = migrateEmployeesToMongo(); }   catch (Exception e) { log.error("mongo:employees failed",   e); errors.add("mongo:employees — "   + e.getMessage()); }
-        try { shifts      = migrateShiftsToMongo(); }      catch (Exception e) { log.error("mongo:shifts failed",      e); errors.add("mongo:shifts — "      + e.getMessage()); }
-        try { departments = migrateDepartmentsToMongo(); } catch (Exception e) { log.error("mongo:departments failed", e); errors.add("mongo:departments — " + e.getMessage()); }
-        try { leave       = migrateLeaveToMongo(); }       catch (Exception e) { log.error("mongo:leave failed",       e); errors.add("mongo:leave — "       + e.getMessage()); }
-        return new MigrationResult(employees, shifts, departments, leave, 0, 0, 0, 0, 0, 0, errors);
+        int employees = 0, shifts = 0, departments = 0, leave = 0, audit_logs = 0;
+        try { audit_logs   = migrateAuditLogsToMongo(); }   catch (Exception e) { log.error("mongo:audit_logs failed",   e); errors.add("mongo:audit_logs — "   + e.getMessage()); }
+        try { employees    = migrateEmployeesToMongo(); }    catch (Exception e) { log.error("mongo:employees failed",    e); errors.add("mongo:employees — "    + e.getMessage()); }
+        try { shifts       = migrateShiftsToMongo(); }       catch (Exception e) { log.error("mongo:shifts failed",       e); errors.add("mongo:shifts — "       + e.getMessage()); }
+        try { departments  = migrateDepartmentsToMongo(); }  catch (Exception e) { log.error("mongo:departments failed",  e); errors.add("mongo:departments — "  + e.getMessage()); }
+        try { leave        = migrateLeaveToMongo(); }        catch (Exception e) { log.error("mongo:leave failed",        e); errors.add("mongo:leave — "        + e.getMessage()); }
+        try { migrateJobRolesToMongo(); }                    catch (Exception e) { log.error("mongo:job_roles failed",      e); errors.add("mongo:job_roles — "      + e.getMessage()); }
+        try { migrateWorkLocationsToMongo(); }               catch (Exception e) { log.error("mongo:work_locations failed", e); errors.add("mongo:work_locations — " + e.getMessage()); }
+        try { migrateUserRolesToMongo(); }                   catch (Exception e) { log.error("mongo:user_roles failed",     e); errors.add("mongo:user_roles — "     + e.getMessage()); }
+        try { migrateLeaveTypesToMongo(); }                  catch (Exception e) { log.error("mongo:leave_types failed",    e); errors.add("mongo:leave_types — "    + e.getMessage()); }
+        return new MigrationResult(audit_logs, employees, shifts, departments, leave, 0, 0, 0, 0, 0, 0, errors);
     }
 
     public MigrationResult migrateToNeo4j() {
@@ -127,8 +153,20 @@ public class MigrationService {
     // MongoDB migration methods
     // -------------------------------------------------------------------------
 
+    public int migrateAuditLogsToMongo() {
+
+
+        auditLogMongoRepository.deleteAll();
+        List<AuditLogDocument> docs = auditLogRepository.findAll().stream()
+                .map(this::toAuditLogDocument)
+                .toList();
+        auditLogMongoRepository.saveAll(docs);
+        return docs.size();
+    }
+
     public int migrateEmployeesToMongo() {
         // Load lookup tables
+        Map<Integer, Employee>   allEmployees  = index(employeeRepository.findAll(), Employee::getEmployeeId);
         Map<Integer, Department> departments   = index(departmentRepository.findAll(), Department::getDepartmentId);
         Map<Integer, WorkLocation> locations   = index(workLocationRepository.findAll(), WorkLocation::getWorkLocationId);
         Map<Integer, UserRole> userRoles       = index(userRoleRepository.findAll(), UserRole::getUserRoleId);
@@ -142,11 +180,24 @@ public class MigrationService {
                 employeeJobRoleRepository.findAll().stream()
                         .collect(Collectors.groupingBy(EmployeeJobRole::getEmployeeId));
 
+        Map<Integer, List<LeaveRequest>> leaveRequestsByEmployee =
+                leaveRequestRepository.findAll().stream()
+                        .collect(Collectors.groupingBy(LeaveRequest::getEmployeeId));
+
+        Map<Integer, List<LeaveApproval>> leaveApprovalsByRequest =
+                leaveApprovalRepository.findAll().stream()
+                        .collect(Collectors.groupingBy(LeaveApproval::getLeaveRequestId));
+
+        Map<Integer, List<LeaveLedger>> leaveLedgerByEmployee =
+                leaveLedgerRepository.findAll().stream()
+                        .collect(Collectors.groupingBy(LeaveLedger::getEmployeeId));
+
         employeeMongoRepository.deleteAll();
 
-        List<EmployeeDocument> docs = employeeRepository.findAll().stream()
+        List<EmployeeDocument> docs = allEmployees.values().stream()
                 .map(e -> toEmployeeDocument(e, departments, locations, userRoles, jobRoles,
-                        contractsByEmployee, rolesByEmployee))
+                        contractsByEmployee, rolesByEmployee, leaveRequestsByEmployee, leaveApprovalsByRequest,
+                        leaveLedgerByEmployee, allEmployees))
                 .toList();
 
         employeeMongoRepository.saveAll(docs);
@@ -221,9 +272,57 @@ public class MigrationService {
         return docs.size();
     }
 
+    public int migrateJobRolesToMongo() {
+        jobRoleMongoRepository.deleteAll();
+        List<JobRoleDocument> docs = jobRoleRepository.findAll().stream()
+                .map(this::toJobRoleDocument)
+                .toList();
+        jobRoleMongoRepository.saveAll(docs);
+        return docs.size();
+    }
+
+    public int migrateWorkLocationsToMongo() {
+        workLocationMongoRepository.deleteAll();
+        List<WorkLocationDocument> docs = workLocationRepository.findAll().stream()
+                .map(this::toWorkLocationDocument)
+                .toList();
+        workLocationMongoRepository.saveAll(docs);
+        return docs.size();
+    }
+
+    public int migrateUserRolesToMongo() {
+        userRoleMongoRepository.deleteAll();
+        List<UserRoleDocument> docs = userRoleRepository.findAll().stream()
+                .map(this::toUserRoleDocument)
+                .toList();
+        userRoleMongoRepository.saveAll(docs);
+        return docs.size();
+    }
+
+    public int migrateLeaveTypesToMongo() {
+        leaveTypeMongoRepository.deleteAll();
+        List<LeaveTypeDocument> docs = leaveTypeRepository.findAll().stream()
+                .map(this::toLeaveTypeDocument)
+                .toList();
+        leaveTypeMongoRepository.saveAll(docs);
+        return docs.size();
+    }
+
     // -------------------------------------------------------------------------
     // Mappers — MongoDB
     // -------------------------------------------------------------------------
+    private AuditLogDocument toAuditLogDocument(AuditLog log) {
+        AuditLogDocument doc = new AuditLogDocument();
+        doc.setId(String.valueOf(log.getAuditLogId()));
+        doc.setEntityType(log.getEntityType());
+        doc.setEntityId(log.getEntityId());
+        doc.setActionType(log.getActionType());
+        doc.setDbUser(log.getDbUser());
+        doc.setActionDatetime(log.getActionDatetime());
+        doc.setOldValueSnapshot(log.getOldValueSnapshot());
+        doc.setNewValueSnapshot(log.getNewValueSnapshot());
+        return doc;
+    }
 
     private EmployeeDocument toEmployeeDocument(
             Employee e,
@@ -232,70 +331,118 @@ public class MigrationService {
             Map<Integer, UserRole> userRoles,
             Map<Integer, JobRole> jobRoles,
             Map<Integer, List<EmployeeContract>> contractsByEmployee,
-            Map<Integer, List<EmployeeJobRole>> rolesByEmployee) {
+            Map<Integer, List<EmployeeJobRole>> rolesByEmployee,
+            Map<Integer, List<LeaveRequest>> leaveRequestsByEmployee,
+            Map<Integer, List<LeaveApproval>> leaveApprovalsByRequest,
+            Map<Integer, List<LeaveLedger>> leaveLedgerByEmployee,
+            Map<Integer, Employee> allEmployees) {
 
         EmployeeDocument doc = new EmployeeDocument();
         doc.setEmployeeId(e.getEmployeeId());
         doc.setEmployeeNumber(e.getEmployeeNumber());
+        doc.setFirstName(e.getFirstName());
+        doc.setLastName(e.getLastName());
         doc.setEmail(e.getEmail());
-        doc.setPhone(e.getPhoneNumber());
-        doc.setEmploymentStatus(e.getEmploymentStatus());
+        doc.setLoginPassword(e.getLoginPassword());
+        doc.setPhoneNumber(e.getPhoneNumber());
         doc.setHireDate(e.getHireDate());
+        doc.setEmploymentStatus(e.getEmploymentStatus());
 
-        EmployeeDocument.Name name = new EmployeeDocument.Name();
-        name.setFirst(e.getFirstName());
-        name.setLast(e.getLastName());
-        doc.setName(name);
-
-        // Embed primary department from active contract
-        contractsByEmployee.getOrDefault(e.getEmployeeId(), List.of()).stream()
-                .filter(c -> Boolean.TRUE.equals(c.getIsActive()))
-                .findFirst()
-                .ifPresent(c -> {
-                    Department dept = departments.get(c.getDepartmentId());
-                    if (dept != null) {
-                        EmployeeDocument.DepartmentRef ref = new EmployeeDocument.DepartmentRef();
-                        ref.setDepartmentId(dept.getDepartmentId());
-                        ref.setName(dept.getDepartmentName());
-                        doc.setDepartment(ref);
-                    }
-                });
-
-        // Embed primary work location
+        // Work Location
         WorkLocation loc = locations.get(e.getPrimaryWorkLocationId());
         if (loc != null) {
-            EmployeeDocument.WorkLocationRef wRef = new EmployeeDocument.WorkLocationRef();
-            wRef.setWorkLocationId(loc.getWorkLocationId());
-            wRef.setLocationName(loc.getLocationName());
-            wRef.setCity(loc.getCity());
-            wRef.setCountry(loc.getCountry());
-            wRef.setTimezone(loc.getTimezone());
-            wRef.setIsPrimary(true);
-            doc.setWorkLocations(List.of(wRef));
+            EmployeeDocument.WorkLocation wl = new EmployeeDocument.WorkLocation();
+            wl.setWorkLocationId(loc.getWorkLocationId());
+            wl.setLocationName(loc.getLocationName());
+            doc.setPrimaryWorkLocation(wl);
         }
 
-        // Embed user role
+        // User Role
         UserRole ur = userRoles.get(e.getFkUserRoleId());
         if (ur != null) {
-            EmployeeDocument.UserRoleRef urRef = new EmployeeDocument.UserRoleRef();
-            urRef.setUserRoleId(ur.getUserRoleId());
-            urRef.setRoleName(ur.getUserRoleName());
-            doc.setUserRole(urRef);
+            EmployeeDocument.UserRole role = new EmployeeDocument.UserRole();
+            role.setRoleId(ur.getUserRoleId());
+            role.setRoleName(ur.getUserRoleName());
+            doc.setUserRole(role);
         }
 
-        // Embed job roles
-        List<EmployeeDocument.JobRoleRef> jrRefs = rolesByEmployee
-                .getOrDefault(e.getEmployeeId(), List.of()).stream()
+        // Contracts
+        doc.setEmployeeContracts(contractsByEmployee.getOrDefault(e.getEmployeeId(), List.of()).stream()
+                .map(c -> {
+                    EmployeeDocument.EmployeeContract contract = new EmployeeDocument.EmployeeContract();
+                    Department d = departments.get(c.getDepartmentId());
+                    if (d != null) {
+                        EmployeeDocument.Department dept = new EmployeeDocument.Department();
+                        dept.setDepartmentId(d.getDepartmentId());
+                        dept.setDepartmentName(d.getDepartmentName());
+                        contract.setDepartment(dept);
+                    }
+                    contract.setContractType(c.getContractType());
+                    contract.setStartDate(c.getStartDate());
+                    contract.setEndDate(c.getEndDate());
+                    contract.setWeeklyHours(c.getWeeklyHours());
+                    contract.setSalaryAmount(c.getSalaryAmount());
+                    contract.setIsActive(c.getIsActive());
+                    return contract;
+                }).toList());
+
+        // Job Roles
+        doc.setJobRoles(rolesByEmployee.getOrDefault(e.getEmployeeId(), List.of()).stream()
                 .map(ejr -> {
                     JobRole jr = jobRoles.get(ejr.getJobRoleId());
-                    EmployeeDocument.JobRoleRef ref = new EmployeeDocument.JobRoleRef();
-                    ref.setJobRoleId(ejr.getJobRoleId());
-                    ref.setRoleName(jr != null ? jr.getRoleName() : null);
-                    ref.setAssignedDate(ejr.getAssignedDate());
-                    ref.setProficiencyLevel(ejr.getProficiencyLevel());
-                    return ref;
-                }).toList();
-        doc.setJobRoles(jrRefs);
+                    EmployeeDocument.JobRole jobRole = new EmployeeDocument.JobRole();
+                    jobRole.setJobRoleId(String.valueOf(ejr.getJobRoleId()));
+                    jobRole.setRoleName(jr != null ? jr.getRoleName() : null);
+                    jobRole.setAssignedDate(ejr.getAssignedDate());
+                    jobRole.setProficiencyLevel(ejr.getProficiencyLevel());
+                    // Note: expiryDate is not in EmployeeJobRole MySQL entity based on typical patterns, 
+                    // but it's in EmployeeDocument. Leaving null if not found.
+                    return jobRole;
+                }).toList());
+
+        // Leave Requests
+        doc.setLeaveRequests(leaveRequestsByEmployee.getOrDefault(e.getEmployeeId(), List.of()).stream()
+                .map(lr -> {
+                    EmployeeDocument.LeaveRequest req = new EmployeeDocument.LeaveRequest();
+                    req.setLeaveTypeId(lr.getLeaveTypeId());
+                    req.setStartDate(lr.getStartDate());
+                    req.setEndDate(lr.getEndDate());
+                    req.setRequestStatus(lr.getRequestStatus());
+                    req.setReason(lr.getReason());
+                    req.setRequestedDatetime(lr.getRequestedDatetime());
+
+                    req.setApprovals(leaveApprovalsByRequest.getOrDefault(lr.getLeaveRequestId(), List.of()).stream()
+                            .map(la -> {
+                                EmployeeDocument.Approval app = new EmployeeDocument.Approval();
+                                app.setDecision(la.getDecision());
+                                app.setLeaveComment(la.getLeaveComment());
+                                app.setDecisionDatetime(la.getDecisionDatetime());
+
+                                Employee approver = allEmployees.get(la.getApproverEmployeeId());
+                                if (approver != null) {
+                                    EmployeeDocument.ApproverEmployee ae = new EmployeeDocument.ApproverEmployee();
+                                    ae.setEmployeeId(approver.getEmployeeId());
+                                    ae.setFirstName(approver.getFirstName());
+                                    ae.setLastName(approver.getLastName());
+                                    app.setApproverEmployee(ae);
+                                }
+                                return app;
+                            }).toList());
+                    return req;
+                }).toList());
+
+        // Leave Ledger
+        doc.setLeaveLedger(leaveLedgerByEmployee.getOrDefault(e.getEmployeeId(), List.of()).stream()
+                .map(ll -> {
+                    EmployeeDocument.LeaveLedgerEntry entry = new EmployeeDocument.LeaveLedgerEntry();
+                    entry.setLeaveTypeId(ll.getLeaveTypeId());
+                    entry.setChangeAmountDays(ll.getChangeAmountDays());
+                    entry.setTransactionType(ll.getTransactionType());
+                    entry.setReferenceEntityType(ll.getReferenceEntityType());
+                    entry.setReferenceEntityId(ll.getReferenceEntityId());
+                    entry.setTransactionDatetime(ll.getTransactionDatetime());
+                    return entry;
+                }).toList());
 
         return doc;
     }
@@ -317,97 +464,186 @@ public class MigrationService {
         doc.setShiftName(s.getShiftName());
         doc.setStartDateTime(s.getStartDatetime());
         doc.setEndDateTime(s.getEndDatetime());
-        doc.setStatus(s.getShiftStatus());
+        doc.setShiftStatus(s.getShiftStatus());
 
         Department dept = departments.get(s.getDepartmentId());
         if (dept != null) {
-            ShiftDocument.DepartmentRef dRef = new ShiftDocument.DepartmentRef();
+            ShiftDocument.Department dRef = new ShiftDocument.Department();
             dRef.setDepartmentId(dept.getDepartmentId());
-            dRef.setName(dept.getDepartmentName());
+            dRef.setDepartmentName(dept.getDepartmentName());
             doc.setDepartment(dRef);
         }
 
         WorkLocation loc = locations.get(s.getWorkLocationId());
         if (loc != null) {
-            ShiftDocument.WorkLocationRef lRef = new ShiftDocument.WorkLocationRef();
+            ShiftDocument.WorkLocation lRef = new ShiftDocument.WorkLocation();
             lRef.setWorkLocationId(loc.getWorkLocationId());
             lRef.setLocationName(loc.getLocationName());
             doc.setWorkLocation(lRef);
         }
 
         // Required roles
-        doc.setRequiredRoles(requiredByShift.getOrDefault(s.getShiftId(), List.of()).stream()
-                .map(r -> {
-                    JobRole jr = jobRoles.get(r.getJobRoleId());
-                    ShiftDocument.RequiredRoleRef ref = new ShiftDocument.RequiredRoleRef();
-                    ref.setJobRoleId(r.getJobRoleId());
-                    ref.setRoleName(jr != null ? jr.getRoleName() : null);
-                    ref.setRequiredEmployeeCount(r.getRequiredEmployeeCount());
-                    return ref;
+        Map<Integer, List<ShiftRequiredJobRole>> groupedRequired = requiredByShift.getOrDefault(s.getShiftId(), List.of()).stream()
+                .collect(Collectors.groupingBy(ShiftRequiredJobRole::getRequiredEmployeeCount));
+
+        doc.setRequiredJobRoles(groupedRequired.entrySet().stream()
+                .map(entry -> {
+                    ShiftDocument.RequiredJobRole req = new ShiftDocument.RequiredJobRole();
+                    req.setRequiredEmployees(entry.getKey());
+                    req.setJobRoles(entry.getValue().stream()
+                            .map(r -> {
+                                JobRole jr = jobRoles.get(r.getJobRoleId());
+                                ShiftDocument.JobRole jrRef = new ShiftDocument.JobRole();
+                                jrRef.setJobRoleId(r.getJobRoleId());
+                                jrRef.setRoleName(jr != null ? jr.getRoleName() : null);
+                                return jrRef;
+                            }).toList());
+                    return req;
                 }).toList());
 
         // Assignments with nested approvals and swap requests
-        doc.setAssignments(assignmentsByShift.getOrDefault(s.getShiftId(), List.of()).stream()
+        doc.setShiftAssignments(assignmentsByShift.getOrDefault(s.getShiftId(), List.of()).stream()
                 .map(a -> {
                     Employee emp = employees.get(a.getEmployeeId());
-                    ShiftDocument.AssignmentRef aRef = new ShiftDocument.AssignmentRef();
-                    aRef.setShiftAssignmentId(a.getShiftAssignmentId());
-                    aRef.setEmployeeId(a.getEmployeeId());
-                    aRef.setEmployeeName(emp != null ? emp.getFirstName() + " " + emp.getLastName() : null);
+                    ShiftDocument.ShiftAssignment aRef = new ShiftDocument.ShiftAssignment();
+                    
+                    ShiftDocument.AssignedEmployee assignedEmp = new ShiftDocument.AssignedEmployee();
+                    if (emp != null) {
+                        assignedEmp.setEmployeeId(emp.getEmployeeId());
+                        assignedEmp.setFirstName(emp.getFirstName());
+                        assignedEmp.setLastName(emp.getLastName());
+                    } else {
+                        assignedEmp.setEmployeeId(a.getEmployeeId());
+                    }
+                    aRef.setAssignedEmployee(assignedEmp);
+                    
                     aRef.setAssignmentStatus(a.getAssignmentStatus());
-                    aRef.setAssignedAt(a.getAssignedDatetime());
-                    aRef.setCheckInAt(a.getCheckInDatetime());
-                    aRef.setCheckOutAt(a.getCheckOutDatetime());
+                    aRef.setAssignmentDate(a.getAssignedDatetime());
+                    aRef.setCheckInDate(a.getCheckInDatetime());
+                    aRef.setCheckOutDatetime(a.getCheckOutDatetime());
+
+                    // Nested approvals for this assignment
+                    aRef.setShiftApprovals(approvalsByAssignment.getOrDefault(a.getShiftAssignmentId(), List.of()).stream()
+                            .map(ap -> {
+                                ShiftDocument.ShiftApproval approval = new ShiftDocument.ShiftApproval();
+                                Employee approver = employees.get(ap.getApproverEmployeeId());
+                                ShiftDocument.AssignedEmployee appEmp = new ShiftDocument.AssignedEmployee();
+                                if (approver != null) {
+                                    appEmp.setEmployeeId(approver.getEmployeeId());
+                                    appEmp.setFirstName(approver.getFirstName());
+                                    appEmp.setLastName(approver.getLastName());
+                                } else {
+                                    appEmp.setEmployeeId(ap.getApproverEmployeeId());
+                                }
+                                approval.setApproverEmployee(appEmp);
+                                approval.setDecision(ap.getDecision());
+                                approval.setApprovalComment(ap.getApprovalComment());
+                                approval.setDecisionDatetime(ap.getDecisionDatetime());
+                                return approval;
+                            }).toList());
+
+                    // Nested swap requests for this assignment
+                    aRef.setSwapRequests(swapsByAssignment.getOrDefault(a.getShiftAssignmentId(), List.of()).stream()
+                            .map(sw -> {
+                                ShiftDocument.SwapRequest swap = new ShiftDocument.SwapRequest();
+                                Employee from = employees.get(sw.getEmployeeFromId());
+                                Employee to = employees.get(sw.getEmployeeToId());
+                                
+                                ShiftDocument.AssignedEmployee fromEmp = new ShiftDocument.AssignedEmployee();
+                                if (from != null) {
+                                    fromEmp.setEmployeeId(from.getEmployeeId());
+                                    fromEmp.setFirstName(from.getFirstName());
+                                    fromEmp.setLastName(from.getLastName());
+                                } else {
+                                    fromEmp.setEmployeeId(sw.getEmployeeFromId());
+                                }
+                                swap.setEmployeeFrom(fromEmp);
+
+                                ShiftDocument.AssignedEmployee toEmp = new ShiftDocument.AssignedEmployee();
+                                if (to != null) {
+                                    toEmp.setEmployeeId(to.getEmployeeId());
+                                    toEmp.setFirstName(to.getFirstName());
+                                    toEmp.setLastName(to.getLastName());
+                                } else {
+                                    toEmp.setEmployeeId(sw.getEmployeeToId());
+                                }
+                                swap.setEmployeeTo(toEmp);
+
+                                swap.setSwapStatus(sw.getSwapStatus());
+                                swap.setRequestDatetime(sw.getRequestDatetime());
+                                swap.setReason(sw.getReason());
+
+                                // Swap approvals
+                                swap.setSwapApprovals(swapApprovalsBySwap.getOrDefault(sw.getShiftSwapId(), List.of()).stream()
+                                        .map(sa -> {
+                                            ShiftDocument.SwapApproval saRef = new ShiftDocument.SwapApproval();
+                                            Employee approver = employees.get(sa.getApproverEmployeeId());
+                                            ShiftDocument.AssignedEmployee appEmp = new ShiftDocument.AssignedEmployee();
+                                            if (approver != null) {
+                                                appEmp.setEmployeeId(approver.getEmployeeId());
+                                                appEmp.setFirstName(approver.getFirstName());
+                                                appEmp.setLastName(approver.getLastName());
+                                            } else {
+                                                appEmp.setEmployeeId(sa.getApproverEmployeeId());
+                                            }
+                                            saRef.setApproverEmployee(appEmp);
+                                            saRef.setDecision(sa.getDecision());
+                                            saRef.setSwapComment(sa.getShiftSwapComment());
+                                            saRef.setDecisionDatetime(sa.getDecisionDatetime());
+                                            return saRef;
+                                        }).toList());
+                                return swap;
+                            }).toList());
+
                     return aRef;
                 }).toList());
 
-        // Shift-level approvals (collected across all assignments)
-        doc.setApprovals(assignmentsByShift.getOrDefault(s.getShiftId(), List.of()).stream()
-                .flatMap(a -> approvalsByAssignment.getOrDefault(a.getShiftAssignmentId(), List.of()).stream())
-                .map(ap -> {
-                    ShiftDocument.ApprovalRef ref = new ShiftDocument.ApprovalRef();
-                    ref.setShiftApprovalId(ap.getShiftApprovalId());
-                    ref.setApproverEmployeeId(ap.getApproverEmployeeId());
-                    ref.setDecision(ap.getDecision());
-                    ref.setComment(ap.getApprovalComment());
-                    ref.setDecidedAt(ap.getDecisionDatetime());
-                    return ref;
-                }).toList());
+        return doc;
+    }
 
-        // Swap requests with nested approvals
-        doc.setSwapRequests(assignmentsByShift.getOrDefault(s.getShiftId(), List.of()).stream()
-                .flatMap(a -> swapsByAssignment.getOrDefault(a.getShiftAssignmentId(), List.of()).stream())
-                .map(sw -> {
-                    Employee from = employees.get(sw.getEmployeeFromId());
-                    Employee to   = employees.get(sw.getEmployeeToId());
-                    ShiftDocument.SwapRequestRef ref = new ShiftDocument.SwapRequestRef();
-                    ref.setShiftSwapId(sw.getShiftSwapId());
-                    ref.setEmployeeFromId(sw.getEmployeeFromId());
-                    ref.setEmployeeFromName(from != null ? from.getFirstName() + " " + from.getLastName() : null);
-                    ref.setEmployeeToId(sw.getEmployeeToId());
-                    ref.setEmployeeToName(to != null ? to.getFirstName() + " " + to.getLastName() : null);
-                    ref.setSwapStatus(sw.getSwapStatus());
-                    ref.setReason(sw.getReason());
-                    ref.setRequestedAt(sw.getRequestDatetime());
-                    ref.setApprovals(swapApprovalsBySwap.getOrDefault(sw.getShiftSwapId(), List.of()).stream()
-                            .map(sa -> {
-                                ShiftDocument.SwapApprovalRef saRef = new ShiftDocument.SwapApprovalRef();
-                                saRef.setApproverEmployeeId(sa.getApproverEmployeeId());
-                                saRef.setDecision(sa.getDecision());
-                                saRef.setComment(sa.getShiftSwapComment());
-                                saRef.setDecidedAt(sa.getDecisionDatetime());
-                                return saRef;
-                            }).toList());
-                    return ref;
-                }).toList());
+    private JobRoleDocument toJobRoleDocument(JobRole jr) {
+        JobRoleDocument doc = new JobRoleDocument();
+        doc.setJobRoleId(jr.getJobRoleId());
+        doc.setRoleName(jr.getRoleName());
+        doc.setJobRoleDescription(jr.getJobRoleDescription());
+        doc.setIsCertificationRequired(jr.getIsCertificationRequired());
+        return doc;
+    }
 
+    private WorkLocationDocument toWorkLocationDocument(WorkLocation w) {
+        WorkLocationDocument doc = new WorkLocationDocument();
+        doc.setWorkLocationId(w.getWorkLocationId());
+        doc.setLocationName(w.getLocationName());
+        doc.setAddressLine1(w.getAddressLine1());
+        doc.setAddressLine2(w.getAddressLine2());
+        doc.setCity(w.getCity());
+        doc.setCountry(w.getCountry());
+        doc.setTimezone(w.getTimezone());
+        doc.setIsActive(w.getIsActive());
+        return doc;
+    }
+
+    private UserRoleDocument toUserRoleDocument(UserRole ur) {
+        UserRoleDocument doc = new UserRoleDocument();
+        doc.setUserRoleId(ur.getUserRoleId());
+        doc.setUserRoleName(ur.getUserRoleName());
+        return doc;
+    }
+
+    private LeaveTypeDocument toLeaveTypeDocument(LeaveType lt) {
+        LeaveTypeDocument doc = new LeaveTypeDocument();
+        doc.setLeaveTypeId(lt.getLeaveTypeId());
+        doc.setLeaveTypeName(lt.getLeaveTypeName());
+        doc.setLeaveTypeDescription(lt.getLeaveTypeDescription());
+        doc.setRequiresApproval(lt.getRequiresApproval());
+        doc.setIsPaidLeave(lt.getIsPaidLeave());
         return doc;
     }
 
     private DepartmentDocument toDepartmentDocument(Department d) {
         DepartmentDocument doc = new DepartmentDocument();
         doc.setDepartmentId(d.getDepartmentId());
-        doc.setName(d.getDepartmentName());
+        doc.setDepartmentName(d.getDepartmentName());
         doc.setIsActive(d.getIsActive());
         return doc;
     }
@@ -456,7 +692,7 @@ public class MigrationService {
     // Return type summarising what was migrated.
     // Any step that throws has its count left at 0 and its error message in errors[].
     public record MigrationResult(
-            int employees, int shifts, int departments, int leaveDocuments,
+            int audit_logs, int employees, int shifts, int departments, int leaveDocuments,
             int neo4jEmployees, int neo4jDepartments, int neo4jWorkLocations,
             int neo4jShifts, int neo4jJobRoles, int neo4jShiftSwaps,
             List<String> errors
