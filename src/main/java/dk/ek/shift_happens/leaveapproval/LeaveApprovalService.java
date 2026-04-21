@@ -35,6 +35,10 @@ public class LeaveApprovalService {
         return this.leaveApprovalRepository.findByLeaveRequestId(leaveRequestId);
     }
 
+    public List<LeaveApproval> findByRequestOwner(Integer employeeId) {
+        return this.leaveApprovalRepository.findByRequestOwner(employeeId);
+    }
+
     public LeaveApproval approve(LeaveApproval approval) {
         if (approval.getLeaveRequestId() == null) {
             throw new IllegalArgumentException("leaveRequestId is required");
@@ -78,6 +82,31 @@ public class LeaveApprovalService {
         this.leaveRequestRepository.save(leaveRequest);
 
         return savedApproval;
+    }
+
+    public Optional<LeaveApproval> update(Integer id, LeaveApproval details) {
+        return this.leaveApprovalRepository.findById(id).map(existing -> {
+            if (details.getDecision() != null && !details.getDecision().isBlank()) {
+                String normalized = details.getDecision().trim().toUpperCase(Locale.ROOT);
+                if (!normalized.equals("APPROVED") && !normalized.equals("REJECTED")) {
+                    throw new IllegalArgumentException("decision must be APPROVED or REJECTED");
+                }
+                existing.setDecision(normalized);
+
+                this.leaveRequestRepository.findById(existing.getLeaveRequestId())
+                        .ifPresent(req -> {
+                            req.setRequestStatus(normalized);
+                            this.leaveRequestRepository.save(req);
+                        });
+            }
+
+            if (details.getLeaveComment() != null) {
+                existing.setLeaveComment(details.getLeaveComment());
+            }
+
+            existing.setDecisionDatetime(LocalDateTime.now());
+            return this.leaveApprovalRepository.save(existing);
+        });
     }
 
     public boolean delete(Integer id) {

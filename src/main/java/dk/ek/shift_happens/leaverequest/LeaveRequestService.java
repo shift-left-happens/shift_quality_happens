@@ -17,6 +17,10 @@ public class LeaveRequestService {
         return this.leaveRequestRepository.findAll();
     }
 
+    public List<LeaveRequest> findByEmployeeId(Integer employeeId) {
+        return this.leaveRequestRepository.findByEmployeeId(employeeId);
+    }
+
     public Optional<LeaveRequest> findById(Integer id) {
         return this.leaveRequestRepository.findById(id);
     }
