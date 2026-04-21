@@ -92,6 +92,25 @@ If you have `make` installed, these wrap the docker/maven commands above:
 
 ---
 
+## Security
+
+### SQL Injection Prevention
+All database access goes through Spring Data JPA repositories (`JpaRepository`) and named JPQL parameters. Queries are never built by string concatenation — the framework compiles them into parameterized prepared statements, so user input cannot alter query structure.
+
+### Database Users & Privileges (MySQL)
+The application connects as `app_user`, a least-privilege account defined in [`src/main/resources/db/mysql/migrations/v6_users_privileges.sql`](src/main/resources/db/mysql/migrations/v6_users_privileges.sql). It holds:
+- **`SELECT` only** on `audit_log` (no writes)
+- **`SELECT, INSERT` only** on `leave_ledger` (double-entry ledger, no updates/deletes)
+- **Full CRUD** on all other operational tables
+- No `DROP`, `ALTER`, `CREATE`, or `GRANT` permissions
+
+In Docker, the user is created at startup by [`docker/init/09-create-app-user.sh`](docker/init/09-create-app-user.sh) using credentials from `.env`.
+
+### Database Backups
+See the [Database Operations](#database-operations) section below for the full backup, restore, and verification guide.
+
+---
+
 ## Authentication
 
 All endpoints except `POST /auth/login` require a JWT bearer token.
@@ -179,6 +198,109 @@ All MongoDB endpoints support `GET`, `POST`, `PUT`, and `DELETE`.
 | `POST /migrate` | Full migration: MySQL → MongoDB + Neo4j |
 | `POST /migrate/mongo` | MySQL → MongoDB only |
 | `POST /migrate/neo4j` | MySQL → Neo4j only |
+
+---
+
+## Database Operations
+
+This section covers three scenarios: loading the committed dump files shipped with the repo, taking new backups, and restoring from a backup.
+
+---
+
+### Scenario 1 — Fresh setup from the committed dumps
+
+Use this when you clone the repo and want MongoDB and Neo4j populated without running the migration yourself. MySQL is always seeded automatically by Docker on first start.
+
+```bash
+# 1. Start all three databases
+make run-dbs
+
+# 2. Load MongoDB and Neo4j from the committed dump files
+make load-dbs
+
+# 3. Confirm the data is there
+make verify
+```
+
+Expected output from `make verify`:
+```
+=== MySQL ===
+101
+=== MongoDB ===
+101
+=== Neo4j ===
+label, count
+"Department", 20
+"Employee", 101
+"JobRole", 12
+"Shift", 100
+"WorkLocation", 10
+```
+
+---
+
+### Scenario 2 — Take a new backup
+
+Use this to snapshot the current live state of all three databases.
+
+```bash
+# Databases must be running
+make run-dbs
+
+# Run the backup — creates backups/<timestamp>/ with mysql.sql, mongodb/, neo4j.dump, backup.log
+make backup
+```
+
+The script prints a coloured status line per database and exits with an error if any step fails. A `backup.log` is written inside the timestamped folder.
+
+To **update the committed dump files** after a backup (e.g. after seeding new data):
+```bash
+make backup
+
+# Copy the fresh dumps over the committed ones
+cp -r backups/<timestamp>/mongodb/. src/main/resources/db/mongodb/dump/
+cp    backups/<timestamp>/neo4j.dump src/main/resources/db/neo4j/neo4j.dump
+
+# Verify then commit
+make verify
+git add src/main/resources/db/mongodb/dump/ src/main/resources/db/neo4j/neo4j.dump
+git commit -m "chore: update committed db dump artifacts"
+```
+
+---
+
+### Scenario 3 — Restore from a backup
+
+Use this to roll back all three databases to a previous backup.
+
+```bash
+# Wipe everything and restart fresh containers
+make reset
+
+# Restore from a specific backup
+make restore BACKUP=backups/<timestamp>
+```
+
+The restore script validates all three files exist before touching anything, then prints the row/document/node count per database as confirmation:
+```
+  ✓ MySQL restored — 101 employee rows
+  ✓ MongoDB restored — 101 employee documents
+  ✓ Neo4j restored — 243 nodes
+```
+
+---
+
+### Quick reference
+
+| Command | What it does |
+|---|---|
+| `make backup` | Dump all 3 DBs → `backups/<timestamp>/` |
+| `make restore BACKUP=backups/<ts>` | Restore all 3 DBs from a backup |
+| `make load-dbs` | Load committed dump files into running containers |
+| `make load-mongo` | Load committed MongoDB dump only |
+| `make load-neo4j` | Load committed Neo4j dump only |
+| `make verify` | Print record counts for all 3 databases |
+| `make reset` | Wipe all volumes, restart fresh (re-runs init scripts) |
 
 ---
 

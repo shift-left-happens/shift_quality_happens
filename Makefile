@@ -2,7 +2,9 @@
 include .env
 export
 
-# Shift Happens - Docker commands
+# ──────────────────────────────────────────────────────────────
+# Development
+# ──────────────────────────────────────────────────────────────
 
 ## Start all 3 databases in the background, then run the Spring Boot app locally
 run-all:
@@ -42,3 +44,45 @@ db-logs:
 ## Connect to MySQL CLI inside the container
 db-shell:
 	docker exec -it shift-happens-db mysql -u root -p$(MYSQL_ROOT_PASSWORD) $(MYSQL_DATABASE)
+
+# ──────────────────────────────────────────────────────────────
+# Load Dumps  (restore committed seed data into live containers)
+# ──────────────────────────────────────────────────────────────
+
+## Load both committed dumps — run after: make reset && make run-dbs
+load-dbs:
+	@bash src/main/resources/db/mongodb/load.sh
+	@bash src/main/resources/db/neo4j/load.sh
+
+## Load the committed MongoDB dump only
+load-mongo:
+	@bash src/main/resources/db/mongodb/load.sh
+
+## Load the committed Neo4j dump only
+load-neo4j:
+	@bash src/main/resources/db/neo4j/load.sh
+
+# ──────────────────────────────────────────────────────────────
+# Backups
+# ──────────────────────────────────────────────────────────────
+
+## Dump all 3 databases to backups/<timestamp>/
+backup:
+	@bash scripts/backup.sh
+
+## Restore from a backup. Usage: make restore BACKUP=backups/<timestamp>
+restore:
+	@bash scripts/restore.sh $(BACKUP)
+
+## Print record counts across all 3 databases
+verify:
+	@echo "=== MySQL ==="
+	@docker exec shift-happens-db mysql -u root -p$(MYSQL_ROOT_PASSWORD) -sN \
+		-e "SELECT COUNT(*) FROM $(MYSQL_DATABASE).employee;" 2>/dev/null
+	@echo "=== MongoDB ==="
+	@docker exec shift-happens-mongo mongosh shift_happens --quiet \
+		--eval "db.employees.countDocuments()" 2>/dev/null
+	@echo "=== Neo4j ==="
+	@docker exec shift-happens-neo4j cypher-shell \
+		-u neo4j -p $(NEO4J_PASSWORD) \
+		"MATCH (n) RETURN labels(n)[0] AS label, count(n) AS count ORDER BY label;" 2>/dev/null
