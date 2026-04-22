@@ -84,6 +84,18 @@ services:
     command: ["-a", "bolt://neo4j:7687", "-u", "neo4j", "-p", "${NEO4J_PASSWORD}", "-f", "/init/neo4j-schema.cypher"]
     restart: "no"
 
+  neo4j-init-indexes:
+    image: neo4j:5
+    container_name: shift-happens-neo4j-init-indexes
+    depends_on:
+      neo4j-init:
+        condition: service_completed_successfully
+    volumes:
+      - ./src/main/resources/neo4_graf/neo4j-indexes.cypher:/init/neo4j-indexes.cypher:ro
+    entrypoint: ["cypher-shell"]
+    command: ["-a", "bolt://neo4j:7687", "-u", "neo4j", "-p", "${NEO4J_PASSWORD}", "-f", "/init/neo4j-indexes.cypher"]
+    restart: "no"
+
 volumes:
   db-data:
   mongo-data:

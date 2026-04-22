@@ -21,6 +21,8 @@ public record MigrationResult(
         int neo4jLeaveApprovals,
         int neo4jShiftApprovals,
         int neo4jShiftSwapApprovals,
+        int neo4jLeaveLedgers,
+        int neo4jEmployeeContracts,
         List<String> errors
 ) {
 }

@@ -1,6 +1,7 @@
-// Shift Happens - Neo4j starter schema
+// Shift Happens - Neo4j startup schema
 // Run this in Neo4j Browser or with cypher-shell.
-// This file creates the core constraints and shows the intended graph model.
+// This file is intended for startup initialization and should only contain
+// constraints and documentation of the intended graph model.
 
 // ========================
 // Constraints
@@ -38,6 +39,12 @@ FOR (sa:ShiftApproval) REQUIRE sa.shiftApprovalId IS UNIQUE;
 CREATE CONSTRAINT shift_swap_approval_id IF NOT EXISTS
 FOR (ssa:ShiftSwapApproval) REQUIRE ssa.shiftSwapApprovalId IS UNIQUE;
 
+CREATE CONSTRAINT leave_ledger_id IF NOT EXISTS
+FOR (ll:LeaveLedger) REQUIRE ll.leaveLedgerId IS UNIQUE;
+
+CREATE CONSTRAINT employee_contract_id IF NOT EXISTS
+FOR (ec:EmployeeContract) REQUIRE ec.contractId IS UNIQUE;
+
 // ========================
 // Recommended graph model
 // ========================
@@ -53,63 +60,32 @@ FOR (ssa:ShiftSwapApproval) REQUIRE ssa.shiftSwapApprovalId IS UNIQUE;
 //   (:LeaveApproval)
 //   (:ShiftApproval)
 //   (:ShiftSwapApproval)
+//   (:LeaveLedger)
+//   (:EmployeeContract)
 //
 // Relationships:
-//   (:Employee)-[:WORKS_IN]->(:Department)
-//   (:Employee)-[:WORKS_AT]->(:WorkLocation)
-//   (:Employee)-[:HAS_ROLE {assignedDate, expiryDate, proficiencyLevel}]->(:JobRole)
-//   (:Shift)-[:IN_DEPARTMENT]->(:Department)
-//   (:Shift)-[:AT_LOCATION]->(:WorkLocation)
-//   (:Employee)-[:ASSIGNED_TO {assignmentStatus, assignedDatetime, checkInDatetime, checkOutDatetime}]->(:Shift)
-//   (:ShiftSwap)-[:FOR_SHIFT]->(:Shift)
-//   (:ShiftSwap)-[:FROM_EMPLOYEE]->(:Employee)
-//   (:ShiftSwap)-[:TO_EMPLOYEE]->(:Employee)
+//   (:Employee)-[:WORKS_IN_DEPT]->(:Department)
+//   (:Employee)-[:WORKS_AT_LOCATION]->(:WorkLocation)
+//   (:Employee)-[:HAS_JOB_ROLE {assignedDate, expiryDate, proficiencyLevel}]->(:JobRole)
+//   (:Employee)-[:HAS_CONTRACT]->(:EmployeeContract)
+//   (:EmployeeContract)-[:CONTRACT_IN_DEPT]->(:Department)
+//   (:Shift)-[:SHIFT_IN_DEPT]->(:Department)
+//   (:Shift)-[:SHIFT_AT_LOCATION]->(:WorkLocation)
+//   (:Employee)-[:ASSIGNED_TO_SHIFT {assignmentStatus, assignedDatetime, checkInDatetime, checkOutDatetime}]->(:Shift)
+//   (:Shift)-[:REQUIRES_ROLE {requiredEmployeeCount}]->(:JobRole)
+//   (:ShiftSwap)-[:SWAP_FOR_SHIFT]->(:Shift)
+//   (:ShiftSwap)-[:SWAP_FROM_EMPLOYEE]->(:Employee)
+//   (:ShiftSwap)-[:SWAP_TO_EMPLOYEE]->(:Employee)
 //   (:Employee)-[:REQUESTED_LEAVE]->(:LeaveRequest)
-//   (:LeaveRequest)-[:OF_TYPE]->(:LeaveType)
-//   (:LeaveRequest)-[:HAS_APPROVAL]->(:LeaveApproval)
-//   (:LeaveApproval)-[:APPROVED_BY]->(:Employee)
-//   (:Shift)-[:HAS_APPROVAL]->(:ShiftApproval)
-//   (:ShiftSwap)-[:HAS_APPROVAL]->(:ShiftSwapApproval)
+//   (:LeaveRequest)-[:OF_LEAVE_TYPE]->(:LeaveType)
+//   (:LeaveApproval)-[:REVIEWS_LEAVE_REQUEST]->(:LeaveRequest)
+//   (:Employee)-[:APPROVES_LEAVE]->(:LeaveApproval)
+//   (:LeaveApproval)-[:CONCERNS_EMPLOYEE]->(:Employee)
+//   (:Employee)-[:ENTITLED_TO_LEAVE]->(:LeaveLedger)
+//   (:LeaveLedger)-[:TRACKS_LEAVE_TYPE]->(:LeaveType)
+//   (:Shift)-[:HAS_SHIFT_APPROVAL]->(:ShiftApproval)
+//   (:ShiftApproval)-[:APPROVED_BY_EMPLOYEE]->(:Employee)
+//   (:ShiftApproval)-[:APPROVAL_FOR_EMPLOYEE]->(:Employee)
+//   (:ShiftSwap)-[:HAS_SWAP_APPROVAL]->(:ShiftSwapApproval)
+//   (:ShiftSwapApproval)-[:APPROVED_BY_EMPLOYEE]->(:Employee)
 
-// ========================
-// Example seed data
-// ========================
-MERGE (d:Department {departmentId: 1})
-SET d.departmentName = 'Kitchen',
-    d.isActive = true;
-
-MERGE (w:WorkLocation {workLocationId: 1})
-SET w.locationName = 'HQ',
-    w.city = 'Copenhagen',
-    w.country = 'Denmark',
-    w.isActive = true;
-
-MERGE (j:JobRole {jobRoleId: 1})
-SET j.roleName = 'Chef',
-    j.isCertificationRequired = false;
-
-MERGE (e:Employee {employeeId: 1})
-SET e.employeeNumber = 'EMP001',
-    e.firstName = 'Anna',
-    e.lastName = 'Jensen',
-    e.email = 'anna@shift-happens.dk',
-    e.employmentStatus = 'ACTIVE';
-
-MERGE (s:Shift {shiftId: 1})
-SET s.shiftName = 'Morning Shift',
-    s.startDatetime = datetime('2026-04-19T08:00:00'),
-    s.endDatetime = datetime('2026-04-19T16:00:00'),
-    s.shiftStatus = 'PLANNED';
-
-MERGE (e)-[:WORKS_IN]->(d)
-MERGE (e)-[:WORKS_AT]->(w)
-MERGE (e)-[:HAS_ROLE {
-  assignedDate: date('2026-01-01'),
-  proficiencyLevel: 'INTERMEDIATE'
-}]->(j)
-MERGE (s)-[:IN_DEPARTMENT]->(d)
-MERGE (s)-[:AT_LOCATION]->(w)
-MERGE (e)-[:ASSIGNED_TO {
-  assignmentStatus: 'ASSIGNED',
-  assignedDatetime: datetime('2026-04-18T12:00:00')
-}]->(s);
