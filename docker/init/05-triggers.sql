@@ -359,7 +359,7 @@ BEGIN
                     'employment_status', NEW.employment_status,
                     'primary_work_location_id', NEW.primary_work_location_id,
                     'login_password', '*****', -- hidden password
-                    'fk_user_role_id', NEW.fk_user_role_id
+                    'user_role', NEW.user_role
             ));
 END$$
 
@@ -396,7 +396,7 @@ BEGIN
                     'employment_status', OLD.employment_status,
                     'primary_work_location_id', OLD.primary_work_location_id,
                     'login_password', '*****', -- Password hidden
-                    'fk_user_role_id', OLD.fk_user_role_id
+                    'user_role', OLD.user_role
             ),
             JSON_OBJECT(
                     'employee_id', NEW.employee_id,
@@ -409,7 +409,7 @@ BEGIN
                     'employment_status', NEW.employment_status,
                     'primary_work_location_id', NEW.primary_work_location_id,
                     'login_password', '*****', -- Password hidden
-                    'fk_user_role_id', NEW.fk_user_role_id
+                    'user_role', NEW.user_role
             ));
 END$$
 
@@ -443,7 +443,7 @@ BEGIN
                     'employment_status', OLD.employment_status,
                     'primary_work_location_id', OLD.primary_work_location_id,
                     'login_password', '*****', -- Password hidden
-                    'fk_user_role_id', OLD.fk_user_role_id
+                    'user_role', OLD.user_role
             ),
             NULL);
 END$$
@@ -452,10 +452,10 @@ DELIMITER ;
 
 /* TEST above triggers */
 
-INSERT INTO employee (employee_number, first_name, last_name, email, login_password, fk_user_role_id,
+INSERT INTO employee (employee_number, first_name, last_name, email, login_password, user_role,
                       phone_number, hire_date, employment_status, primary_work_location_id)
 VALUES ('EMP00999', 'First999', 'Last999', 'employee999@shift.dk',
-        'f8262c2c54195e78753bf48d51b2e6895493d97f514d933d4847120ffdb39ee4', 2, '+45 50000101', '2020-09-19', 'ACTIVE',
+        'f8262c2c54195e78753bf48d51b2e6895493d97f514d933d4847120ffdb39ee4', 'Employee', '+45 50000101', '2020-09-19', 'ACTIVE',
         1);
 
 SET @new_employee_id = LAST_INSERT_ID();
@@ -519,26 +519,26 @@ BEGIN
 END$$
 
 -- User Role Audit
-DROP TRIGGER IF EXISTS trg_user_role_insert$$
-CREATE TRIGGER trg_user_role_insert AFTER INSERT ON user_role FOR EACH ROW
-BEGIN
-    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
-    VALUES ('USER_ROLE', NEW.user_role_id, 'INSERT', USER(), NOW(), NULL, JSON_OBJECT('user_role_id', NEW.user_role_id, 'user_role_name', NEW.user_role_name));
-END$$
-
-DROP TRIGGER IF EXISTS trg_user_role_update$$
-CREATE TRIGGER trg_user_role_update BEFORE UPDATE ON user_role FOR EACH ROW
-BEGIN
-    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
-    VALUES ('USER_ROLE', OLD.user_role_id, 'UPDATE', USER(), NOW(), JSON_OBJECT('user_role_name', OLD.user_role_name), JSON_OBJECT('user_role_name', NEW.user_role_name));
-END$$
-
-DROP TRIGGER IF EXISTS trg_user_role_delete$$
-CREATE TRIGGER trg_user_role_delete BEFORE DELETE ON user_role FOR EACH ROW
-BEGIN
-    INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
-    VALUES ('USER_ROLE', OLD.user_role_id, 'DELETE', USER(), NOW(), JSON_OBJECT('user_role_id', OLD.user_role_id), NULL);
-END$$
+# DROP TRIGGER IF EXISTS trg_user_role_insert$$
+# CREATE TRIGGER trg_user_role_insert AFTER INSERT ON user_role FOR EACH ROW
+# BEGIN
+#     INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+#     VALUES ('USER_ROLE', NEW.user_role_id, 'INSERT', USER(), NOW(), NULL, JSON_OBJECT('user_role_id', NEW.user_role_id, 'user_role_name', NEW.user_role_name));
+# END$$
+#
+# DROP TRIGGER IF EXISTS trg_user_role_update$$
+# CREATE TRIGGER trg_user_role_update BEFORE UPDATE ON user_role FOR EACH ROW
+# BEGIN
+#     INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+#     VALUES ('USER_ROLE', OLD.user_role_id, 'UPDATE', USER(), NOW(), JSON_OBJECT('user_role_name', OLD.user_role_name), JSON_OBJECT('user_role_name', NEW.user_role_name));
+# END$$
+#
+# DROP TRIGGER IF EXISTS trg_user_role_delete$$
+# CREATE TRIGGER trg_user_role_delete BEFORE DELETE ON user_role FOR EACH ROW
+# BEGIN
+#     INSERT INTO audit_log (entity_type, entity_id, action_type, db_user, action_datetime, old_value_snapshot, new_value_snapshot)
+#     VALUES ('USER_ROLE', OLD.user_role_id, 'DELETE', USER(), NOW(), JSON_OBJECT('user_role_id', OLD.user_role_id), NULL);
+# END$$
 
 -- Employee Contract Audit
 DROP TRIGGER IF EXISTS trg_employee_contract_insert$$

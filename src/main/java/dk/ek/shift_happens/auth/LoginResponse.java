@@ -12,6 +12,5 @@ public class LoginResponse {
     private String firstName;
     private String lastName;
     private String email;
-    private Integer roleId;
     private String roleName;
 }
