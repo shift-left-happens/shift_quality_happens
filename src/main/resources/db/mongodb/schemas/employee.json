@@ -12,10 +12,7 @@
         "work_location_id": 0,
         "location_name": ""
     },
-    "user_role": {
-        "role_id": 0,
-        "role_name": ""
-    },
+    "user_role": "",
     "employee_contracts": [
         {
             "department": {
