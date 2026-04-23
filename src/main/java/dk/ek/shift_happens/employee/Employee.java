@@ -22,6 +22,10 @@ public class Employee {
     @Column(name = "employee_number", unique = true)
     private String employeeNumber;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_role")
+    private UserRole userRole;
+
     @Column(name = "first_name")
     private String firstName;
 
@@ -34,9 +38,6 @@ public class Employee {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "login_password", nullable = false)
     private String loginPassword;
-
-    @Column(name = "fk_user_role_id", nullable = false)
-    private Integer fkUserRoleId;
 
     @Column(name = "phone_number")
     private String phoneNumber;

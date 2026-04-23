@@ -27,8 +27,8 @@ WHERE employee_id = 30;
 
 -- Administrator (role 1) — new account
 INSERT INTO employee (employee_number, first_name, last_name, email, login_password,
-                      fk_user_role_id, phone_number, hire_date, employment_status,
+                      user_role, phone_number, hire_date, employment_status,
                       primary_work_location_id)
 VALUES ('ADM00001', 'Admin', 'User', 'admin@shift.dk',
         '$2a$10$s53B7sTK0OeOrRP/VmrT6uZhMrmAOQXUxN/Rle/1aLnlgM4iobIx6',
-        1, '+45 00000001', CURDATE(), 'ACTIVE', 1);
+        'Administrator', '+45 00000001', CURDATE(), 'ACTIVE', 1);

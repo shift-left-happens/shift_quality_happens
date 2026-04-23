@@ -13,7 +13,7 @@ import java.util.List;
 
 // MongoDB document for the 'employees' collection.
 // Denormalised from MySQL: employee + employee_contract + employee_job_role
-//                          + work_location + user_role are all embedded.
+//                          + work_location + user_role is embedded.
 // Reads are served from this single document with no joins required.
 @Document(collection = "employees")
 @Getter
@@ -36,7 +36,7 @@ public class EmployeeDocument {
     private String employmentStatus;
 
     private WorkLocation primaryWorkLocation;
-    private UserRole userRole;
+    private String userRole;
 
     private List<EmployeeContract> employeeContracts;
     private List<JobRole> jobRoles;
@@ -49,12 +49,6 @@ public class EmployeeDocument {
     public static class WorkLocation {
         private Integer workLocationId;
         private String locationName;
-    }
-
-    @Getter @Setter @NoArgsConstructor
-    public static class UserRole {
-        private Integer roleId;
-        private String roleName;
     }
 
     @Getter @Setter @NoArgsConstructor

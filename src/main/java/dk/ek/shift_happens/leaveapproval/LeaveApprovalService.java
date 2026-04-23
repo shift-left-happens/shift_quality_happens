@@ -2,10 +2,9 @@ package dk.ek.shift_happens.leaveapproval;
 
 import dk.ek.shift_happens.employee.Employee;
 import dk.ek.shift_happens.employee.EmployeeRepository;
+import dk.ek.shift_happens.employee.UserRole;
 import dk.ek.shift_happens.leaverequest.LeaveRequest;
 import dk.ek.shift_happens.leaverequest.LeaveRequestRepository;
-import dk.ek.shift_happens.userrole.UserRole;
-import dk.ek.shift_happens.userrole.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,7 +20,6 @@ public class LeaveApprovalService {
     private final LeaveApprovalRepository leaveApprovalRepository;
     private final LeaveRequestRepository leaveRequestRepository;
     private final EmployeeRepository employeeRepository;
-    private final UserRoleRepository userRoleRepository;
 
     public List<LeaveApproval> findAll() {
         return this.leaveApprovalRepository.findAll();
@@ -65,11 +63,12 @@ public class LeaveApprovalService {
         Employee approver = this.employeeRepository.findById(approval.getApproverEmployeeId())
                 .orElseThrow(() -> new IllegalArgumentException("Approver not found"));
 
-        UserRole role = this.userRoleRepository.findById(approver.getFkUserRoleId())
-                .orElseThrow(() -> new IllegalArgumentException("Approver role not found"));
+        UserRole role = approver.getUserRole();
+        if (role == null) {
+            throw new IllegalArgumentException("Approver role not found");
+        }
 
-        String roleName = role.getUserRoleName() == null ? "" : role.getUserRoleName().trim().toLowerCase(Locale.ROOT);
-        if (!roleName.equals("administrator") && !roleName.equals("manager")) {
+        if (role != UserRole.Administrator && role != UserRole.Manager) {
             throw new IllegalArgumentException("Only Administrator or Manager can approve leave requests");
         }
 
