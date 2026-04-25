@@ -2,7 +2,6 @@ package dk.ek.shift_happens.auth;
 
 import dk.ek.shift_happens.employee.Employee;
 import dk.ek.shift_happens.employee.EmployeeRepository;
-import dk.ek.shift_happens.userrole.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -35,7 +34,6 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final EmployeeRepository employeeRepository;
-    private final UserRoleRepository userRoleRepository;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
@@ -54,9 +52,7 @@ public class AuthController {
         Employee employee = employeeRepository.findByEmail(request.getEmail())
                 .orElseThrow();
 
-        String roleName = userRoleRepository.findById(employee.getFkUserRoleId())
-                .map(r -> r.getUserRoleName())
-                .orElse("Employee");
+        String roleName = employee.getUserRole() != null ? employee.getUserRole().getRoleName() : "Employee";
 
         // Generate JWT with user identity embedded in the claims
         String token = jwtService.generateToken(employee.getEmail(), employee.getEmployeeId(), roleName);
@@ -68,7 +64,6 @@ public class AuthController {
                 employee.getFirstName(),
                 employee.getLastName(),
                 employee.getEmail(),
-                employee.getFkUserRoleId(),
                 roleName
         ));
     }

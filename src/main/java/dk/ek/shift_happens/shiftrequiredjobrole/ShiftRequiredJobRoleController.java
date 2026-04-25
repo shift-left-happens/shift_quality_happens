@@ -1,6 +1,7 @@
 package dk.ek.shift_happens.shiftrequiredjobrole;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,21 +15,25 @@ public class ShiftRequiredJobRoleController {
     private final ShiftRequiredJobRoleRepository shiftRequiredJobRoleRepository;
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public List<ShiftRequiredJobRole> getShiftRequiredJobRoles() {
         return this.shiftRequiredJobRoleRepository.findAll();
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public Optional<ShiftRequiredJobRole> getShiftRequiredJobRoleById(@PathVariable Integer id) {
         return this.shiftRequiredJobRoleRepository.findById(id);
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public ShiftRequiredJobRole createShiftRequiredJobRole(@RequestBody ShiftRequiredJobRole shiftRequiredJobRole) {
         return this.shiftRequiredJobRoleRepository.save(shiftRequiredJobRole);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public ShiftRequiredJobRole updateShiftRequiredJobRole(@PathVariable Integer id, @RequestBody ShiftRequiredJobRole shiftRequiredJobRoleDetails) {
         ShiftRequiredJobRole shiftRequiredJobRole = this.shiftRequiredJobRoleRepository.findById(id).orElseThrow();
         shiftRequiredJobRole.setShiftId(shiftRequiredJobRoleDetails.getShiftId());
@@ -38,6 +43,7 @@ public class ShiftRequiredJobRoleController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public void deleteShiftRequiredJobRole(@PathVariable Integer id) {
         this.shiftRequiredJobRoleRepository.deleteById(id);
     }

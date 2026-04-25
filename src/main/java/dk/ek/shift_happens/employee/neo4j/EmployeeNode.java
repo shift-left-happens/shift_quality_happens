@@ -24,7 +24,7 @@ public class EmployeeNode {
     private String firstName;
     private String lastName;
     private String email;
-    private Integer fkUserRoleId;
+    private String userRole;
     private String phoneNumber;
     private LocalDate hireDate;
     private String employmentStatus;

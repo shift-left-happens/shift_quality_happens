@@ -8,4 +8,5 @@ import java.util.List;
 @Repository
 public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Integer> {
     List<LeaveRequest> findAll();
+    List<LeaveRequest> findByEmployeeId(Integer employeeId);
 }

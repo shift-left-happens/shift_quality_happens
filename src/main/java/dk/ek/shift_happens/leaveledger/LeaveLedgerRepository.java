@@ -8,4 +8,5 @@ import java.util.List;
 @Repository
 public interface LeaveLedgerRepository extends JpaRepository<LeaveLedger, Integer> {
     List<LeaveLedger> findAll();
+    List<LeaveLedger> findByEmployeeId(Integer employeeId);
 }

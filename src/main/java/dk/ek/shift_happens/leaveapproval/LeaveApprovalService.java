@@ -2,10 +2,9 @@ package dk.ek.shift_happens.leaveapproval;
 
 import dk.ek.shift_happens.employee.Employee;
 import dk.ek.shift_happens.employee.EmployeeRepository;
+import dk.ek.shift_happens.employee.UserRole;
 import dk.ek.shift_happens.leaverequest.LeaveRequest;
 import dk.ek.shift_happens.leaverequest.LeaveRequestRepository;
-import dk.ek.shift_happens.userrole.UserRole;
-import dk.ek.shift_happens.userrole.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,7 +20,6 @@ public class LeaveApprovalService {
     private final LeaveApprovalRepository leaveApprovalRepository;
     private final LeaveRequestRepository leaveRequestRepository;
     private final EmployeeRepository employeeRepository;
-    private final UserRoleRepository userRoleRepository;
 
     public List<LeaveApproval> findAll() {
         return this.leaveApprovalRepository.findAll();
@@ -33,6 +31,10 @@ public class LeaveApprovalService {
 
     public List<LeaveApproval> findByLeaveRequestId(Integer leaveRequestId) {
         return this.leaveApprovalRepository.findByLeaveRequestId(leaveRequestId);
+    }
+
+    public List<LeaveApproval> findByRequestOwner(Integer employeeId) {
+        return this.leaveApprovalRepository.findByRequestOwner(employeeId);
     }
 
     public LeaveApproval approve(LeaveApproval approval) {
@@ -61,11 +63,12 @@ public class LeaveApprovalService {
         Employee approver = this.employeeRepository.findById(approval.getApproverEmployeeId())
                 .orElseThrow(() -> new IllegalArgumentException("Approver not found"));
 
-        UserRole role = this.userRoleRepository.findById(approver.getFkUserRoleId())
-                .orElseThrow(() -> new IllegalArgumentException("Approver role not found"));
+        UserRole role = approver.getUserRole();
+        if (role == null) {
+            throw new IllegalArgumentException("Approver role not found");
+        }
 
-        String roleName = role.getUserRoleName() == null ? "" : role.getUserRoleName().trim().toLowerCase(Locale.ROOT);
-        if (!roleName.equals("administrator") && !roleName.equals("manager")) {
+        if (role != UserRole.Administrator && role != UserRole.Manager) {
             throw new IllegalArgumentException("Only Administrator or Manager can approve leave requests");
         }
 
@@ -78,6 +81,31 @@ public class LeaveApprovalService {
         this.leaveRequestRepository.save(leaveRequest);
 
         return savedApproval;
+    }
+
+    public Optional<LeaveApproval> update(Integer id, LeaveApproval details) {
+        return this.leaveApprovalRepository.findById(id).map(existing -> {
+            if (details.getDecision() != null && !details.getDecision().isBlank()) {
+                String normalized = details.getDecision().trim().toUpperCase(Locale.ROOT);
+                if (!normalized.equals("APPROVED") && !normalized.equals("REJECTED")) {
+                    throw new IllegalArgumentException("decision must be APPROVED or REJECTED");
+                }
+                existing.setDecision(normalized);
+
+                this.leaveRequestRepository.findById(existing.getLeaveRequestId())
+                        .ifPresent(req -> {
+                            req.setRequestStatus(normalized);
+                            this.leaveRequestRepository.save(req);
+                        });
+            }
+
+            if (details.getLeaveComment() != null) {
+                existing.setLeaveComment(details.getLeaveComment());
+            }
+
+            existing.setDecisionDatetime(LocalDateTime.now());
+            return this.leaveApprovalRepository.save(existing);
+        });
     }
 
     public boolean delete(Integer id) {

@@ -46,10 +46,6 @@ import dk.ek.shift_happens.shiftswap.ShiftSwap;
 import dk.ek.shift_happens.shiftswap.ShiftSwapRepository;
 import dk.ek.shift_happens.shiftswapapproval.ShiftSwapApproval;
 import dk.ek.shift_happens.shiftswapapproval.ShiftSwapApprovalRepository;
-import dk.ek.shift_happens.userrole.UserRole;
-import dk.ek.shift_happens.userrole.UserRoleRepository;
-import dk.ek.shift_happens.userrole.mongo.UserRoleDocument;
-import dk.ek.shift_happens.userrole.mongo.UserRoleMongoRepository;
 import dk.ek.shift_happens.worklocation.WorkLocation;
 import dk.ek.shift_happens.worklocation.WorkLocationRepository;
 import dk.ek.shift_happens.worklocation.mongo.WorkLocationDocument;
@@ -81,7 +77,6 @@ public class MigrationService {
     private final EmployeeJobRoleRepository employeeJobRoleRepository;
     private final JobRoleRepository jobRoleRepository;
     private final WorkLocationRepository workLocationRepository;
-    private final UserRoleRepository userRoleRepository;
     private final DepartmentRepository departmentRepository;
     private final ShiftRepository shiftRepository;
     private final ShiftRequiredJobRoleRepository shiftRequiredJobRoleRepository;
@@ -102,7 +97,6 @@ public class MigrationService {
     private final LeaveMongoRepository leaveMongoRepository;
     private final JobRoleMongoRepository jobRoleMongoRepository;
     private final WorkLocationMongoRepository workLocationMongoRepository;
-    private final UserRoleMongoRepository userRoleMongoRepository;
     private final LeaveTypeMongoRepository leaveTypeMongoRepository;
 
     // Neo4j migration orchestration
@@ -169,7 +163,7 @@ public class MigrationService {
         Map<Integer, Employee>   allEmployees  = index(employeeRepository.findAll(), Employee::getEmployeeId);
         Map<Integer, Department> departments   = index(departmentRepository.findAll(), Department::getDepartmentId);
         Map<Integer, WorkLocation> locations   = index(workLocationRepository.findAll(), WorkLocation::getWorkLocationId);
-        Map<Integer, UserRole> userRoles       = index(userRoleRepository.findAll(), UserRole::getUserRoleId);
+        //Map<Integer, UserRole> userRoles       = index(userRoleRepository.findAll(), UserRole::getUserRoleId);
         Map<Integer, JobRole> jobRoles         = index(jobRoleRepository.findAll(), JobRole::getJobRoleId);
 
         Map<Integer, List<EmployeeContract>> contractsByEmployee =
@@ -195,7 +189,7 @@ public class MigrationService {
         employeeMongoRepository.deleteAll();
 
         List<EmployeeDocument> docs = allEmployees.values().stream()
-                .map(e -> toEmployeeDocument(e, departments, locations, userRoles, jobRoles,
+                .map(e -> toEmployeeDocument(e, departments, locations, jobRoles,
                         contractsByEmployee, rolesByEmployee, leaveRequestsByEmployee, leaveApprovalsByRequest,
                         leaveLedgerByEmployee, allEmployees))
                 .toList();
@@ -290,15 +284,6 @@ public class MigrationService {
         return docs.size();
     }
 
-    public int migrateUserRolesToMongo() {
-        userRoleMongoRepository.deleteAll();
-        List<UserRoleDocument> docs = userRoleRepository.findAll().stream()
-                .map(this::toUserRoleDocument)
-                .toList();
-        userRoleMongoRepository.saveAll(docs);
-        return docs.size();
-    }
-
     public int migrateLeaveTypesToMongo() {
         leaveTypeMongoRepository.deleteAll();
         List<LeaveTypeDocument> docs = leaveTypeRepository.findAll().stream()
@@ -328,7 +313,6 @@ public class MigrationService {
             Employee e,
             Map<Integer, Department> departments,
             Map<Integer, WorkLocation> locations,
-            Map<Integer, UserRole> userRoles,
             Map<Integer, JobRole> jobRoles,
             Map<Integer, List<EmployeeContract>> contractsByEmployee,
             Map<Integer, List<EmployeeJobRole>> rolesByEmployee,
@@ -347,6 +331,7 @@ public class MigrationService {
         doc.setPhoneNumber(e.getPhoneNumber());
         doc.setHireDate(e.getHireDate());
         doc.setEmploymentStatus(e.getEmploymentStatus());
+        doc.setUserRole(e.getUserRole() != null ? e.getUserRole().getRoleName() : null);
 
         // Work Location
         WorkLocation loc = locations.get(e.getPrimaryWorkLocationId());
@@ -355,15 +340,6 @@ public class MigrationService {
             wl.setWorkLocationId(loc.getWorkLocationId());
             wl.setLocationName(loc.getLocationName());
             doc.setPrimaryWorkLocation(wl);
-        }
-
-        // User Role
-        UserRole ur = userRoles.get(e.getFkUserRoleId());
-        if (ur != null) {
-            EmployeeDocument.UserRole role = new EmployeeDocument.UserRole();
-            role.setRoleId(ur.getUserRoleId());
-            role.setRoleName(ur.getUserRoleName());
-            doc.setUserRole(role);
         }
 
         // Contracts
@@ -620,13 +596,6 @@ public class MigrationService {
         doc.setCountry(w.getCountry());
         doc.setTimezone(w.getTimezone());
         doc.setIsActive(w.getIsActive());
-        return doc;
-    }
-
-    private UserRoleDocument toUserRoleDocument(UserRole ur) {
-        UserRoleDocument doc = new UserRoleDocument();
-        doc.setUserRoleId(ur.getUserRoleId());
-        doc.setUserRoleName(ur.getUserRoleName());
         return doc;
     }
 

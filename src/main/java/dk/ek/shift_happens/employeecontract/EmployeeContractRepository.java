@@ -8,4 +8,5 @@ import java.util.List;
 @Repository
 public interface EmployeeContractRepository extends JpaRepository<EmployeeContract, Integer> {
     List<EmployeeContract> findAll();
+    List<EmployeeContract> findByEmployeeId(Integer employeeId);
 }

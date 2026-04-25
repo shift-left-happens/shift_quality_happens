@@ -8,4 +8,5 @@ import java.util.List;
 @Repository
 public interface ShiftAssignmentRepository extends JpaRepository<ShiftAssignment, Integer> {
     List<ShiftAssignment> findAll();
+    List<ShiftAssignment> findByEmployeeId(Integer employeeId);
 }
