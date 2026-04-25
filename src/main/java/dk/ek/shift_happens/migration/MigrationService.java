@@ -133,7 +133,6 @@ public class MigrationService {
         try { leave       = migrateLeaveToMongo(); }        catch (Exception e) { log.error("mongo:leave failed",          e); errors.add("mongo:leave — "          + e.getMessage()); }
         try { migrateJobRolesToMongo(); }                   catch (Exception e) { log.error("mongo:job_roles failed",      e); errors.add("mongo:job_roles — "      + e.getMessage()); }
         try { migrateWorkLocationsToMongo(); }              catch (Exception e) { log.error("mongo:work_locations failed", e); errors.add("mongo:work_locations — " + e.getMessage()); }
-        try { migrateUserRolesToMongo(); }                  catch (Exception e) { log.error("mongo:user_roles failed",     e); errors.add("mongo:user_roles — "     + e.getMessage()); }
         try { migrateLeaveTypesToMongo(); }                 catch (Exception e) { log.error("mongo:leave_types failed",    e); errors.add("mongo:leave_types — "    + e.getMessage()); }
 
         return new MigrationResult(employees, shifts, departments, leave, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, errors);

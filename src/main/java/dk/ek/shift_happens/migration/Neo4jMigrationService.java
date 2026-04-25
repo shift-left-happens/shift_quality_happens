@@ -688,7 +688,7 @@ public class Neo4jMigrationService {
         node.setFirstName(e.getFirstName());
         node.setLastName(e.getLastName());
         node.setEmail(e.getEmail());
-        node.setFkUserRoleId(e.getFkUserRoleId());
+        node.setUserRole(e.getUserRole() != null ? e.getUserRole().name() : null);
         node.setPhoneNumber(e.getPhoneNumber());
         node.setHireDate(e.getHireDate());
         node.setEmploymentStatus(e.getEmploymentStatus());
