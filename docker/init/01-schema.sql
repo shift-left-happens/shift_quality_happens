@@ -245,6 +245,3 @@ CREATE INDEX idx_leave_employee ON leave_request (employee_id);
 
 ALTER TABLE shift_assignment
     ADD CONSTRAINT uq_shift_employee UNIQUE (shift_id, employee_id);
-
-ALTER TABLE audit_log
-ADD COLUMN db_user VARCHAR(100) NULL AFTER action_type;
