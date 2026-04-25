@@ -58,11 +58,6 @@ services:
   neo4j:
     image: neo4j:5
     container_name: shift-happens-neo4j
-    healthcheck:
-      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${NEO4J_PASSWORD}", "RETURN 1"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
     ports:
       - "7474:7474"
       - "7687:7687"
@@ -70,6 +65,36 @@ services:
       NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
     volumes:
       - neo4j-data:/data
+      - ./src/main/resources/neo4_graf:/import
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${NEO4J_PASSWORD}", "RETURN 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  neo4j-init:
+    image: neo4j:5
+    container_name: shift-happens-neo4j-init
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    volumes:
+      - ./src/main/resources/neo4_graf/neo4j-schema.cypher:/init/neo4j-schema.cypher:ro
+    entrypoint: ["cypher-shell"]
+    command: ["-a", "bolt://neo4j:7687", "-u", "neo4j", "-p", "${NEO4J_PASSWORD}", "-f", "/init/neo4j-schema.cypher"]
+    restart: "no"
+
+  neo4j-init-indexes:
+    image: neo4j:5
+    container_name: shift-happens-neo4j-init-indexes
+    depends_on:
+      neo4j-init:
+        condition: service_completed_successfully
+    volumes:
+      - ./src/main/resources/neo4_graf/neo4j-indexes.cypher:/init/neo4j-indexes.cypher:ro
+    entrypoint: ["cypher-shell"]
+    command: ["-a", "bolt://neo4j:7687", "-u", "neo4j", "-p", "${NEO4J_PASSWORD}", "-f", "/init/neo4j-indexes.cypher"]
+    restart: "no"
 
 volumes:
   db-data:
