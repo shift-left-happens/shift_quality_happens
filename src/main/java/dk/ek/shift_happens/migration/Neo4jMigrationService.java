@@ -84,7 +84,7 @@ public class Neo4jMigrationService {
 
     public MigrationResult migrateToNeo4j() {
         List<String> errors = new ArrayList<>();
-        int employees = 0, departments = 0, workLocations = 0, shifts = 0, jobRoles = 0, shiftSwaps = 0;
+        int employees = 0, departments = 0, workLocations = 0, shifts = 0, jobRoles = 0, shiftSwaps = 0, shiftAssignments = 0;
         int leaveTypes = 0, leaveRequests = 0, leaveApprovals = 0, shiftApprovals = 0, shiftSwapApprovals = 0;
         int leaveLedgers = 0, employeeContracts = 0;
 
@@ -94,6 +94,7 @@ public class Neo4jMigrationService {
         try { shifts             = migrateShiftsToNeo4j(); }              catch (Exception e) { log.error("neo4j:shifts failed",               e); errors.add("neo4j:shifts — "               + e.getMessage()); }
         try { jobRoles           = migrateJobRolesToNeo4j(); }            catch (Exception e) { log.error("neo4j:jobroles failed",             e); errors.add("neo4j:jobroles — "             + e.getMessage()); }
         try { shiftSwaps         = migrateShiftSwapsToNeo4j(); }          catch (Exception e) { log.error("neo4j:shiftswaps failed",           e); errors.add("neo4j:shiftswaps — "           + e.getMessage()); }
+        try { shiftAssignments   = migrateShiftAssignmentsToNeo4j(); }    catch (Exception e) { log.error("neo4j:shiftassignments failed",     e); errors.add("neo4j:shiftassignments — "     + e.getMessage()); }
         try { leaveTypes         = migrateLeaveTypesToNeo4j(); }          catch (Exception e) { log.error("neo4j:leavetypes failed",           e); errors.add("neo4j:leavetypes — "           + e.getMessage()); }
         try { leaveRequests      = migrateLeaveRequestsToNeo4j(); }       catch (Exception e) { log.error("neo4j:leaverequests failed",        e); errors.add("neo4j:leaverequests — "        + e.getMessage()); }
         try { leaveApprovals     = migrateLeaveApprovalsToNeo4j(); }      catch (Exception e) { log.error("neo4j:leaveapprovals failed",       e); errors.add("neo4j:leaveapprovals — "       + e.getMessage()); }
@@ -105,7 +106,7 @@ public class Neo4jMigrationService {
 
         return new MigrationResult(
                 0, 0, 0, 0,
-                employees, departments, workLocations, shifts, jobRoles, shiftSwaps,
+                employees, departments, workLocations, shifts, jobRoles, shiftSwaps, shiftAssignments,
                 leaveTypes, leaveRequests, leaveApprovals, shiftApprovals, shiftSwapApprovals,
                 leaveLedgers, employeeContracts,
                 errors
@@ -164,6 +165,36 @@ public class Neo4jMigrationService {
                 .toList();
         shiftSwapNeo4jRepository.saveAll(nodes);
         return nodes.size();
+    }
+
+    public int migrateShiftAssignmentsToNeo4j() {
+        deleteAllNodesByLabel("ShiftAssignment");
+        List<ShiftAssignment> assignments = shiftAssignmentRepository.findAll();
+
+        assignments.forEach(a -> {
+            Map<String, Object> params = new HashMap<>();
+            params.put("shiftAssignmentId", a.getShiftAssignmentId());
+            params.put("shiftId", a.getShiftId());
+            params.put("employeeId", a.getEmployeeId());
+            params.put("assignmentStatus", a.getAssignmentStatus());
+            params.put("assignedDatetime", a.getAssignedDatetime());
+            params.put("checkInDatetime", a.getCheckInDatetime());
+            params.put("checkOutDatetime", a.getCheckOutDatetime());
+
+            neo4jClient.query("""
+                    MERGE (sa:ShiftAssignment {shiftAssignmentId: $shiftAssignmentId})
+                    SET sa.shiftId = $shiftId,
+                        sa.employeeId = $employeeId,
+                        sa.assignmentStatus = $assignmentStatus,
+                        sa.assignedDatetime = $assignedDatetime,
+                        sa.checkInDatetime = $checkInDatetime,
+                        sa.checkOutDatetime = $checkOutDatetime
+                    """)
+                    .bindAll(params)
+                    .run();
+        });
+
+        return assignments.size();
     }
 
     public int migrateLeaveTypesToNeo4j() {
@@ -495,21 +526,16 @@ public class Neo4jMigrationService {
     private void createShiftAssignmentRelationships() {
         shiftAssignmentRepository.findAll().forEach(a -> {
             Map<String, Object> params = new HashMap<>();
+            params.put("shiftAssignmentId", a.getShiftAssignmentId());
             params.put("employeeId", a.getEmployeeId());
             params.put("shiftId", a.getShiftId());
-            params.put("assignmentStatus", a.getAssignmentStatus());
-            params.put("assignedDatetime", a.getAssignedDatetime());
-            params.put("checkInDatetime", a.getCheckInDatetime());
-            params.put("checkOutDatetime", a.getCheckOutDatetime());
 
             neo4jClient.query("""
                     MATCH (e:Employee {employeeId: $employeeId})
+                    MATCH (sa:ShiftAssignment {shiftAssignmentId: $shiftAssignmentId})
                     MATCH (sh:Shift {shiftId: $shiftId})
-                    MERGE (e)-[r:ASSIGNED_TO_SHIFT]->(sh)
-                    SET r.assignmentStatus = $assignmentStatus,
-                        r.assignedDatetime = $assignedDatetime,
-                        r.checkInDatetime = $checkInDatetime,
-                        r.checkOutDatetime = $checkOutDatetime
+                    MERGE (e)-[:ASSIGNED_TO_SHIFT]->(sa)
+                    MERGE (sa)-[:COVER_SHIFT_ASSIGNMENT]->(sh)
                     """)
                     .bindAll(params)
                     .run();
@@ -517,29 +543,21 @@ public class Neo4jMigrationService {
     }
 
     private void createShiftSwapRelationships() {
-        Map<Integer, ShiftAssignment> assignmentsById = shiftAssignmentRepository.findAll().stream()
-                .collect(java.util.stream.Collectors.toMap(ShiftAssignment::getShiftAssignmentId, a -> a));
-
         shiftSwapRepository.findAll().forEach(swap -> {
-            ShiftAssignment assignment = assignmentsById.get(swap.getOriginalShiftAssignmentId());
-            if (assignment == null) {
-                return;
-            }
-
             Map<String, Object> params = new HashMap<>();
             params.put("shiftSwapId", swap.getShiftSwapId());
             params.put("employeeFromId", swap.getEmployeeFromId());
             params.put("employeeToId", swap.getEmployeeToId());
-            params.put("shiftId", assignment.getShiftId());
+            params.put("originalShiftAssignmentId", swap.getOriginalShiftAssignmentId());
 
             neo4jClient.query("""
                     MATCH (ss:ShiftSwap {shiftSwapId: $shiftSwapId})
                     MATCH (from:Employee {employeeId: $employeeFromId})
                     MATCH (to:Employee {employeeId: $employeeToId})
-                    MATCH (sh:Shift {shiftId: $shiftId})
+                    MATCH (sa:ShiftAssignment {shiftAssignmentId: $originalShiftAssignmentId})
                     MERGE (ss)-[:SWAP_FROM_EMPLOYEE]->(from)
                     MERGE (ss)-[:SWAP_TO_EMPLOYEE]->(to)
-                    MERGE (ss)-[:SWAP_FOR_SHIFT]->(sh)
+                    MERGE (ss)-[:ASSIGNMENT_GETTING_SWAPPED]->(sa)
                     """)
                     .bindAll(params)
                     .run();
@@ -626,29 +644,18 @@ public class Neo4jMigrationService {
     }
 
     private void createShiftApprovalRelationships() {
-        Map<Integer, ShiftAssignment> assignmentsById = shiftAssignmentRepository.findAll().stream()
-                .collect(java.util.stream.Collectors.toMap(ShiftAssignment::getShiftAssignmentId, a -> a));
-
         shiftApprovalRepository.findAll().forEach(approval -> {
-            ShiftAssignment assignment = assignmentsById.get(approval.getShiftAssignmentId());
-            if (assignment == null) {
-                return;
-            }
-
             Map<String, Object> params = new HashMap<>();
             params.put("shiftApprovalId", approval.getShiftApprovalId());
+            params.put("shiftAssignmentId", approval.getShiftAssignmentId());
             params.put("approverEmployeeId", approval.getApproverEmployeeId());
-            params.put("shiftId", assignment.getShiftId());
-            params.put("employeeId", assignment.getEmployeeId());
 
             neo4jClient.query("""
-                    MATCH (sh:Shift {shiftId: $shiftId})
-                    MATCH (sa:ShiftApproval {shiftApprovalId: $shiftApprovalId})
+                    MATCH (sa:ShiftAssignment {shiftAssignmentId: $shiftAssignmentId})
+                    MATCH (sap:ShiftApproval {shiftApprovalId: $shiftApprovalId})
                     MATCH (approver:Employee {employeeId: $approverEmployeeId})
-                    MATCH (e:Employee {employeeId: $employeeId})
-                    MERGE (sh)-[:HAS_SHIFT_APPROVAL]->(sa)
-                    MERGE (sa)-[:APPROVED_BY_EMPLOYEE]->(approver)
-                    MERGE (sa)-[:APPROVAL_FOR_EMPLOYEE]->(e)
+                    MERGE (sap)-[:NEED_APPROVAL]->(sa)
+                    MERGE (approver)-[:APPROVED_BY_EMPLOYEE]->(sap)
                     """)
                     .bindAll(params)
                     .run();

@@ -120,7 +120,7 @@ public class MigrationService {
         return new MigrationResult(
                 mongo.employees(), mongo.shifts(), mongo.departments(), mongo.leaveDocuments(),
                 neo4j.neo4jEmployees(), neo4j.neo4jDepartments(), neo4j.neo4jWorkLocations(),
-                neo4j.neo4jShifts(), neo4j.neo4jJobRoles(), neo4j.neo4jShiftSwaps(),
+                neo4j.neo4jShifts(), neo4j.neo4jJobRoles(), neo4j.neo4jShiftSwaps(), neo4j.neo4jShiftAssignments(),
                 neo4j.neo4jLeaveTypes(), neo4j.neo4jLeaveRequests(), neo4j.neo4jLeaveApprovals(),
                 neo4j.neo4jShiftApprovals(), neo4j.neo4jShiftSwapApprovals(),
                 neo4j.neo4jLeaveLedgers(), neo4j.neo4jEmployeeContracts(),
@@ -142,7 +142,7 @@ public class MigrationService {
         try { migrateUserRolesToMongo(); }                  catch (Exception e) { log.error("mongo:user_roles failed",     e); errors.add("mongo:user_roles — "     + e.getMessage()); }
         try { migrateLeaveTypesToMongo(); }                 catch (Exception e) { log.error("mongo:leave_types failed",    e); errors.add("mongo:leave_types — "    + e.getMessage()); }
 
-        return new MigrationResult(employees, shifts, departments, leave, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, errors);
+        return new MigrationResult(employees, shifts, departments, leave, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, errors);
     }
 
     public MigrationResult migrateToNeo4j() {

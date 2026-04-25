@@ -16,6 +16,7 @@ public record MigrationResult(
         int neo4jShifts,
         int neo4jJobRoles,
         int neo4jShiftSwaps,
+        int neo4jShiftAssignments,
         int neo4jLeaveTypes,
         int neo4jLeaveRequests,
         int neo4jLeaveApprovals,

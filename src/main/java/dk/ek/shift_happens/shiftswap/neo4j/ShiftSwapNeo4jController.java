@@ -17,6 +17,7 @@ public class ShiftSwapNeo4jController {
 
     private final ShiftSwapNeo4jRepository shiftSwapNeo4jRepository;
     private final Neo4jClient neo4jClient;
+    private final ShiftSwapNeo4jService shiftSwapNeo4jService;
 
     @GetMapping
     public List<ShiftSwapNode> getAll() {
@@ -109,5 +110,21 @@ public class ShiftSwapNeo4jController {
                 .all();
 
         return new ArrayList<>(rows);
+    }
+
+    /**
+     * Executes the shift swap in Neo4j inside a single transaction.
+     * Deletes the ASSIGNED_TO_SHIFT relationship from employeeFrom and creates
+     * a new one for employeeTo, then marks the ShiftSwap node as 'completed'.
+     *
+     * @param shiftSwapId the shiftSwapId on the ShiftSwap node
+     * @param shiftId     the shiftId of the Shift being swapped
+     */
+    @PostMapping("/{shiftSwapId}/execute")
+    public ResponseEntity<Map<String, Object>> executeSwap(
+            @PathVariable Integer shiftSwapId,
+            @RequestParam Integer shiftId) {
+        Map<String, Object> result = shiftSwapNeo4jService.executeSwap(shiftSwapId, shiftId);
+        return ResponseEntity.ok(result);
     }
 }
