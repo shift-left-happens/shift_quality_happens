@@ -6,17 +6,17 @@ export
 # Development
 # ──────────────────────────────────────────────────────────────
 
-## Start all 3 databases in the background, then run the Spring Boot app locally
+## Start MySQL in the background, then run the Spring Boot app locally
 run-all:
-	docker compose up -d --wait db mongodb neo4j
+	docker compose up -d --wait db
 	@echo "MySQL is ready."
 	./mvnw spring-boot:run
 
-## Start all 3 databases in the background only (no app)
+## Start MySQL in the background only (no app)
 run-dbs:
-	docker compose up -d --wait db mongodb neo4j
+	docker compose up -d --wait db
 
-## Run the Spring Boot app locally (databases must already be running)
+## Run the Spring Boot app locally (database must already be running)
 run-app:
 	./mvnw spring-boot:run
 
@@ -24,16 +24,16 @@ run-app:
 db:
 	docker compose up db
 
-## Nuke all volumes and restart databases fresh (re-runs all init scripts)
+## Nuke the volume and restart MySQL fresh (re-runs all init scripts)
 reset:
 	docker compose down -v
-	docker compose up -d --wait db mongodb neo4j
+	docker compose up -d --wait db
 
 ## Stop everything
 down:
 	docker compose down
 
-## Stop everything and delete all data volumes
+## Stop everything and delete the data volume
 clean:
 	docker compose down -v
 
@@ -43,30 +43,13 @@ db-logs:
 
 ## Connect to MySQL CLI inside the container
 db-shell:
-	docker exec -it shift-happens-db mysql -u root -p$(MYSQL_ROOT_PASSWORD) $(MYSQL_DATABASE)
-
-# ──────────────────────────────────────────────────────────────
-# Load Dumps  (restore committed seed data into live containers)
-# ──────────────────────────────────────────────────────────────
-
-## Load both committed dumps — run after: make reset && make run-dbs
-load-dbs:
-	@bash src/main/resources/db/mongodb/load.sh
-	@bash src/main/resources/db/neo4j/load.sh
-
-## Load the committed MongoDB dump only
-load-mongo:
-	@bash src/main/resources/db/mongodb/load.sh
-
-## Load the committed Neo4j dump only
-load-neo4j:
-	@bash src/main/resources/db/neo4j/load.sh
+	docker exec -it shift-quality-happens-db mysql -u root -p$(MYSQL_ROOT_PASSWORD) $(MYSQL_DATABASE)
 
 # ──────────────────────────────────────────────────────────────
 # Backups
 # ──────────────────────────────────────────────────────────────
 
-## Dump all 3 databases to backups/<timestamp>/
+## Dump the MySQL database to backups/<timestamp>/
 backup:
 	@bash scripts/backup.sh
 
@@ -74,15 +57,8 @@ backup:
 restore:
 	@bash scripts/restore.sh $(BACKUP)
 
-## Print record counts across all 3 databases
+## Print employee row count
 verify:
 	@echo "=== MySQL ==="
-	@docker exec shift-happens-db mysql -u root -p$(MYSQL_ROOT_PASSWORD) -sN \
+	@docker exec shift-quality-happens-db mysql -u root -p$(MYSQL_ROOT_PASSWORD) -sN \
 		-e "SELECT COUNT(*) FROM $(MYSQL_DATABASE).employee;" 2>/dev/null
-	@echo "=== MongoDB ==="
-	@docker exec shift-happens-mongo mongosh shift_happens --quiet \
-		--eval "db.employees.countDocuments()" 2>/dev/null
-	@echo "=== Neo4j ==="
-	@docker exec shift-happens-neo4j cypher-shell \
-		-u neo4j -p $(NEO4J_PASSWORD) \
-		"MATCH (n) RETURN labels(n)[0] AS label, count(n) AS count ORDER BY label;" 2>/dev/null
