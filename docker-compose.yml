@@ -1,7 +1,7 @@
 services:
   db:
     image: mysql:8.0
-    container_name: shift-happens-db
+    container_name: shift-quality-happens-db
     command: --event-scheduler=ON
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -9,7 +9,7 @@ services:
       APP_DB_USER: ${APP_DB_USER}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD}
     ports:
-      - "3307:3306"
+      - "3308:3307"
     volumes:
       - db-data:/var/lib/mysql
       - ./docker/init:/docker-entrypoint-initdb.d
@@ -21,7 +21,7 @@ services:
 
   app:
     build: .
-    container_name: shift-happens-app
+    container_name: shift-quality-happens-app
     ports:
       - "8080:8080"
     environment:
@@ -30,73 +30,9 @@ services:
       DB_PASSWORD: ${APP_DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       PASSWORD_PEPPER: ${PASSWORD_PEPPER}
-      MONGO_URI: mongodb://mongodb:27017/shift_happens
-      NEO4J_URI: bolt://neo4j:7687
-      NEO4J_USERNAME: ${NEO4J_USERNAME}
-      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
     depends_on:
       db:
         condition: service_healthy
-      mongodb:
-        condition: service_healthy
-      neo4j:
-        condition: service_healthy
-
-  mongodb:
-    image: mongo:7
-    container_name: shift-happens-mongo
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
-
-  neo4j:
-    image: neo4j:5
-    container_name: shift-happens-neo4j
-    ports:
-      - "7474:7474"
-      - "7687:7687"
-    environment:
-      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
-    volumes:
-      - neo4j-data:/data
-      - ./src/main/resources/neo4_graf:/import
-    healthcheck:
-      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${NEO4J_PASSWORD}", "RETURN 1"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
-
-  neo4j-init:
-    image: neo4j:5
-    container_name: shift-happens-neo4j-init
-    depends_on:
-      neo4j:
-        condition: service_healthy
-    volumes:
-      - ./src/main/resources/neo4_graf/neo4j-schema.cypher:/init/neo4j-schema.cypher:ro
-    entrypoint: ["cypher-shell"]
-    command: ["-a", "bolt://neo4j:7687", "-u", "neo4j", "-p", "${NEO4J_PASSWORD}", "-f", "/init/neo4j-schema.cypher"]
-    restart: "no"
-
-  neo4j-init-indexes:
-    image: neo4j:5
-    container_name: shift-happens-neo4j-init-indexes
-    depends_on:
-      neo4j-init:
-        condition: service_completed_successfully
-    volumes:
-      - ./src/main/resources/neo4_graf/neo4j-indexes.cypher:/init/neo4j-indexes.cypher:ro
-    entrypoint: ["cypher-shell"]
-    command: ["-a", "bolt://neo4j:7687", "-u", "neo4j", "-p", "${NEO4J_PASSWORD}", "-f", "/init/neo4j-indexes.cypher"]
-    restart: "no"
 
 volumes:
   db-data:
-  mongo-data:
-  neo4j-data:
