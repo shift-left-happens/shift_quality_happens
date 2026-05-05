@@ -40,7 +40,7 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: ci_root
-          MYSQL_DATABASE: shift_ci
+          MYSQL_DATABASE: shift_happens
         ports:
           - 3306:3306
         options: >-
@@ -64,13 +64,13 @@ jobs:
         run: |
           for f in $(ls docker/init/*.sql | sort); do
             echo "Running $f..."
-            mysql -h 127.0.0.1 -uroot -pci_root shift_ci < "$f"
+            mysql -h 127.0.0.1 -uroot -pci_root shift_happens < "$f"
           done
 
       - name: Run tests with coverage
         run: ./mvnw test
         env:
-          DB_URL: jdbc:mysql://127.0.0.1:3306/shift_ci
+          DB_URL: jdbc:mysql://127.0.0.1:3306/shift_happens
           DB_USERNAME: root
           DB_PASSWORD: ci_root
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
