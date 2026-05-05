@@ -35,6 +35,7 @@ jobs:
   testsuite-java:
     name: Unit & Integration Tests
     runs-on: ubuntu-latest
+    needs: lint-java
     services:
       db:
         image: mysql:8.0
@@ -62,7 +63,7 @@ jobs:
 
       - name: Run DB init scripts
         run: |
-          for f in $(ls docker/init/*.sql | sort); do
+          for f in docker/init/*.sql; do
             echo "Running $f..."
             mysql -h 127.0.0.1 -uroot -pci_root shift_happens < "$f"
           done
