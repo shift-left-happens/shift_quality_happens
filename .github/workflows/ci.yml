@@ -108,10 +108,7 @@ jobs:
           name: coverage-report
           path: target/site/jacoco
 
-      - name: Compile project
-        run: ./mvnw compile -DskipTests
-
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v7
+        run: ./mvnw compile sonar:sonar -DskipTests
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
