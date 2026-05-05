@@ -1,11 +1,10 @@
 package dk.ek.shift_happens.shiftapproval;
 
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/shiftapprovals")
@@ -34,7 +33,8 @@ public class ShiftApprovalController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
-    public ShiftApproval updateShiftApproval(@PathVariable Integer id, @RequestBody ShiftApproval shiftApprovalDetails) {
+    public ShiftApproval updateShiftApproval(
+            @PathVariable Integer id, @RequestBody ShiftApproval shiftApprovalDetails) {
         ShiftApproval shiftApproval = this.shiftApprovalRepository.findById(id).orElseThrow();
         shiftApproval.setShiftAssignmentId(shiftApprovalDetails.getShiftAssignmentId());
         shiftApproval.setApproverEmployeeId(shiftApprovalDetails.getApproverEmployeeId());

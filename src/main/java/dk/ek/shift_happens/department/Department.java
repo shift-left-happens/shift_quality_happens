@@ -16,8 +16,10 @@ public class Department {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "department_id")
     private Integer departmentId;
+
     @Column(name = "department_name")
     private String departmentName;
+
     @Column(name = "is_active")
     private Boolean isActive;
 }

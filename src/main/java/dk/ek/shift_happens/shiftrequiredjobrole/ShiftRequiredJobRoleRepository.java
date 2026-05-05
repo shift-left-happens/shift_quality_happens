@@ -1,9 +1,8 @@
 package dk.ek.shift_happens.shiftrequiredjobrole;
 
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 @Repository
 public interface ShiftRequiredJobRoleRepository extends JpaRepository<ShiftRequiredJobRole, Integer> {

@@ -5,13 +5,12 @@ import dk.ek.shift_happens.employee.EmployeeRepository;
 import dk.ek.shift_happens.employee.UserRole;
 import dk.ek.shift_happens.leaverequest.LeaveRequest;
 import dk.ek.shift_happens.leaverequest.LeaveRequestRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -53,14 +52,16 @@ public class LeaveApprovalService {
             throw new IllegalArgumentException("decision must be APPROVED or REJECTED");
         }
 
-        LeaveRequest leaveRequest = this.leaveRequestRepository.findById(approval.getLeaveRequestId())
+        LeaveRequest leaveRequest = this.leaveRequestRepository
+                .findById(approval.getLeaveRequestId())
                 .orElseThrow(() -> new IllegalArgumentException("Leave request not found"));
 
         if (!"PENDING".equalsIgnoreCase(leaveRequest.getRequestStatus())) {
             throw new IllegalArgumentException("Only pending leave requests can be approved");
         }
 
-        Employee approver = this.employeeRepository.findById(approval.getApproverEmployeeId())
+        Employee approver = this.employeeRepository
+                .findById(approval.getApproverEmployeeId())
                 .orElseThrow(() -> new IllegalArgumentException("Approver not found"));
 
         UserRole role = approver.getUserRole();
@@ -92,7 +93,8 @@ public class LeaveApprovalService {
                 }
                 existing.setDecision(normalized);
 
-                this.leaveRequestRepository.findById(existing.getLeaveRequestId())
+                this.leaveRequestRepository
+                        .findById(existing.getLeaveRequestId())
                         .ifPresent(req -> {
                             req.setRequestStatus(normalized);
                             this.leaveRequestRepository.save(req);

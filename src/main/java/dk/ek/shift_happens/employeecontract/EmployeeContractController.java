@@ -1,14 +1,13 @@
 package dk.ek.shift_happens.employeecontract;
 
 import dk.ek.shift_happens.auth.AuthHelper;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/employeecontracts")
@@ -30,11 +29,11 @@ public class EmployeeContractController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public EmployeeContract getById(@PathVariable Integer id, Authentication auth) {
-        EmployeeContract contract = employeeContractRepository.findById(id)
+        EmployeeContract contract = employeeContractRepository
+                .findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-        if (authHelper.isEmployee(auth)
-                && !contract.getEmployeeId().equals(authHelper.currentEmployeeId(auth))) {
+        if (authHelper.isEmployee(auth) && !contract.getEmployeeId().equals(authHelper.currentEmployeeId(auth))) {
             throw authHelper.forbidden();
         }
         return contract;
@@ -50,7 +49,8 @@ public class EmployeeContractController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public EmployeeContract update(@PathVariable Integer id, @RequestBody EmployeeContract details) {
-        EmployeeContract existing = employeeContractRepository.findById(id)
+        EmployeeContract existing = employeeContractRepository
+                .findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         existing.setEmployeeId(details.getEmployeeId());
         existing.setDepartmentId(details.getDepartmentId());

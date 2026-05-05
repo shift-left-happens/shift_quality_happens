@@ -2,14 +2,13 @@ package dk.ek.shift_happens.auth;
 
 import dk.ek.shift_happens.employee.Employee;
 import dk.ek.shift_happens.employee.EmployeeRepository;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 /**
  * Authentication endpoint — the only public endpoint in the API.
@@ -41,18 +40,17 @@ public class AuthController {
         // using PepperedPasswordEncoder (pepper + BCrypt + salt)
         try {
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-            );
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         } catch (BadCredentialsException e) {
             // Generic error message — don't reveal whether email or password was wrong
             return ResponseEntity.status(401).body(Map.of("error", "Invalid email or password"));
         }
 
         // Authentication succeeded — load employee details for the JWT payload
-        Employee employee = employeeRepository.findByEmail(request.getEmail())
-                .orElseThrow();
+        Employee employee = employeeRepository.findByEmail(request.getEmail()).orElseThrow();
 
-        String roleName = employee.getUserRole() != null ? employee.getUserRole().getRoleName() : "Employee";
+        String roleName =
+                employee.getUserRole() != null ? employee.getUserRole().getRoleName() : "Employee";
 
         // Generate JWT with user identity embedded in the claims
         String token = jwtService.generateToken(employee.getEmail(), employee.getEmployeeId(), roleName);
@@ -64,7 +62,6 @@ public class AuthController {
                 employee.getFirstName(),
                 employee.getLastName(),
                 employee.getEmail(),
-                roleName
-        ));
+                roleName));
     }
 }

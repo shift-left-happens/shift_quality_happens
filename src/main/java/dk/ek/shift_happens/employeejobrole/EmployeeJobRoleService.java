@@ -1,9 +1,8 @@
 package dk.ek.shift_happens.employeejobrole;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -20,8 +19,7 @@ public class EmployeeJobRoleService {
     }
 
     public EmployeeJobRole getById(Integer id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Not found"));
+        return repository.findById(id).orElseThrow(() -> new RuntimeException("Not found"));
     }
 
     public EmployeeJobRole create(EmployeeJobRole role) {

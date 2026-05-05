@@ -6,8 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class ShiftHappensApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(ShiftHappensApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(ShiftHappensApplication.class, args);
+    }
 }

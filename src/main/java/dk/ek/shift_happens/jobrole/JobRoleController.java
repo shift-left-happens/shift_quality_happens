@@ -1,12 +1,11 @@
 package dk.ek.shift_happens.jobrole;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/jobroles")
@@ -24,8 +23,7 @@ public class JobRoleController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public JobRole getById(@PathVariable Integer id) {
-        return jobRoleRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return jobRoleRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     @PostMapping
@@ -38,8 +36,8 @@ public class JobRoleController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public JobRole update(@PathVariable Integer id, @RequestBody JobRole details) {
-        JobRole existing = jobRoleRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        JobRole existing =
+                jobRoleRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         existing.setRoleName(details.getRoleName());
         existing.setJobRoleDescription(details.getJobRoleDescription());
         existing.setIsCertificationRequired(details.getIsCertificationRequired());

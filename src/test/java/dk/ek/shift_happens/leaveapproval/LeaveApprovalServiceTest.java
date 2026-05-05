@@ -1,30 +1,31 @@
 package dk.ek.shift_happens.leaveapproval;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import dk.ek.shift_happens.employee.Employee;
 import dk.ek.shift_happens.employee.EmployeeRepository;
 import dk.ek.shift_happens.employee.UserRole;
 import dk.ek.shift_happens.leaverequest.LeaveRequest;
 import dk.ek.shift_happens.leaverequest.LeaveRequestRepository;
+import java.time.LocalDate;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class LeaveApprovalServiceTest {
 
     @Mock
     private LeaveApprovalRepository leaveApprovalRepository;
+
     @Mock
     private LeaveRequestRepository leaveRequestRepository;
+
     @Mock
     private EmployeeRepository employeeRepository;
 
@@ -42,7 +43,8 @@ class LeaveApprovalServiceTest {
 
         when(leaveRequestRepository.findById(5)).thenReturn(Optional.of(request));
         when(employeeRepository.findById(99)).thenReturn(Optional.of(approver));
-        when(leaveApprovalRepository.save(any(LeaveApproval.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(leaveApprovalRepository.save(any(LeaveApproval.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
         when(leaveRequestRepository.save(any(LeaveRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         LeaveApproval saved = leaveApprovalService.approve(approval);
@@ -64,7 +66,8 @@ class LeaveApprovalServiceTest {
 
         when(leaveRequestRepository.findById(5)).thenReturn(Optional.of(request));
         when(employeeRepository.findById(100)).thenReturn(Optional.of(approver));
-        when(leaveApprovalRepository.save(any(LeaveApproval.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(leaveApprovalRepository.save(any(LeaveApproval.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
         when(leaveRequestRepository.save(any(LeaveRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         LeaveApproval saved = leaveApprovalService.approve(approval);
@@ -85,8 +88,8 @@ class LeaveApprovalServiceTest {
         when(leaveRequestRepository.findById(5)).thenReturn(Optional.of(request));
         when(employeeRepository.findById(101)).thenReturn(Optional.of(approver));
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> leaveApprovalService.approve(approval));
+        IllegalArgumentException ex =
+                assertThrows(IllegalArgumentException.class, () -> leaveApprovalService.approve(approval));
 
         assertTrue(ex.getMessage().contains("Administrator") || ex.getMessage().contains("Manager"));
         verify(leaveApprovalRepository, never()).save(any());

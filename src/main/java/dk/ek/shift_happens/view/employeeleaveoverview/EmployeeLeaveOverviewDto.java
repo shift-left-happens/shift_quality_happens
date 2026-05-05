@@ -21,8 +21,7 @@ public record EmployeeLeaveOverviewDto(
         LocalDateTime approvalDatetime,
         String approverNumber,
         String approverFirstName,
-        String approverLastName
-) {
+        String approverLastName) {
     public static EmployeeLeaveOverviewDto from(EmployeeLeaveOverviewView view) {
         return new EmployeeLeaveOverviewDto(
                 view.getEmployeeNumber(),
@@ -42,7 +41,6 @@ public record EmployeeLeaveOverviewDto(
                 view.getApprovalDatetime(),
                 view.getApproverNumber(),
                 view.getApproverFirstName(),
-                view.getApproverLastName()
-        );
+                view.getApproverLastName());
     }
 }

@@ -1,11 +1,10 @@
 package dk.ek.shift_happens.shiftrequiredjobrole;
 
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/shiftrequiredjobroles")
@@ -34,8 +33,10 @@ public class ShiftRequiredJobRoleController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
-    public ShiftRequiredJobRole updateShiftRequiredJobRole(@PathVariable Integer id, @RequestBody ShiftRequiredJobRole shiftRequiredJobRoleDetails) {
-        ShiftRequiredJobRole shiftRequiredJobRole = this.shiftRequiredJobRoleRepository.findById(id).orElseThrow();
+    public ShiftRequiredJobRole updateShiftRequiredJobRole(
+            @PathVariable Integer id, @RequestBody ShiftRequiredJobRole shiftRequiredJobRoleDetails) {
+        ShiftRequiredJobRole shiftRequiredJobRole =
+                this.shiftRequiredJobRoleRepository.findById(id).orElseThrow();
         shiftRequiredJobRole.setShiftId(shiftRequiredJobRoleDetails.getShiftId());
         shiftRequiredJobRole.setJobRoleId(shiftRequiredJobRoleDetails.getJobRoleId());
         shiftRequiredJobRole.setRequiredEmployeeCount(shiftRequiredJobRoleDetails.getRequiredEmployeeCount());

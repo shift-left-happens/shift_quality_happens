@@ -1,14 +1,13 @@
 package dk.ek.shift_happens.shiftassignment;
 
 import dk.ek.shift_happens.auth.AuthHelper;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/shiftassignments")
@@ -30,10 +29,10 @@ public class ShiftAssignmentController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ShiftAssignment getShiftAssignmentById(@PathVariable Integer id, Authentication auth) {
-        ShiftAssignment assignment = shiftAssignmentRepository.findById(id)
+        ShiftAssignment assignment = shiftAssignmentRepository
+                .findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        if (authHelper.isEmployee(auth)
-                && !assignment.getEmployeeId().equals(authHelper.currentEmployeeId(auth))) {
+        if (authHelper.isEmployee(auth) && !assignment.getEmployeeId().equals(authHelper.currentEmployeeId(auth))) {
             throw authHelper.forbidden();
         }
         return assignment;
@@ -47,8 +46,10 @@ public class ShiftAssignmentController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
-    public ShiftAssignment updateShiftAssignment(@PathVariable Integer id, @RequestBody ShiftAssignment shiftAssignmentDetails) {
-        ShiftAssignment shiftAssignment = this.shiftAssignmentRepository.findById(id).orElseThrow();
+    public ShiftAssignment updateShiftAssignment(
+            @PathVariable Integer id, @RequestBody ShiftAssignment shiftAssignmentDetails) {
+        ShiftAssignment shiftAssignment =
+                this.shiftAssignmentRepository.findById(id).orElseThrow();
         shiftAssignment.setShiftId(shiftAssignmentDetails.getShiftId());
         shiftAssignment.setEmployeeId(shiftAssignmentDetails.getEmployeeId());
         shiftAssignment.setAssignmentStatus(shiftAssignmentDetails.getAssignmentStatus());

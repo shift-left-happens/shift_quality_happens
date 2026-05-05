@@ -1,16 +1,15 @@
 package dk.ek.shift_happens.leaverequest;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.LocalDate;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class LeaveRequestServiceTest {
@@ -30,8 +29,7 @@ class LeaveRequestServiceTest {
         request.setEndDate(LocalDate.of(2026, 5, 3));
         request.setReason("Family trip");
 
-        when(leaveRequestRepository.save(any(LeaveRequest.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(leaveRequestRepository.save(any(LeaveRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         LeaveRequest saved = leaveRequestService.create(request);
 
@@ -48,8 +46,8 @@ class LeaveRequestServiceTest {
         request.setStartDate(LocalDate.of(2026, 5, 10));
         request.setEndDate(LocalDate.of(2026, 5, 3));
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> leaveRequestService.create(request));
+        IllegalArgumentException ex =
+                assertThrows(IllegalArgumentException.class, () -> leaveRequestService.create(request));
 
         assertTrue(ex.getMessage().contains("start"));
         verify(leaveRequestRepository, never()).save(any());
