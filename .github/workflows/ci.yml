@@ -109,7 +109,7 @@ jobs:
           path: target/site/jacoco
 
       - name: Compile and collect dependencies
-        run: ./mvnw compile dependency:copy-dependencies -DskipTests -DincludeScope=compile -DoutputDirectory=target/dependency
+        run: ./mvnw compile dependency:copy-dependencies -DskipTests -DoutputDirectory=target/dependency
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v7
