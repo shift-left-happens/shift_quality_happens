@@ -58,18 +58,15 @@ public class SecurityConfig {
     @PostConstruct
     void validateSecrets() {
         if (jwtSecret == null || jwtSecret.isBlank()) {
-            throw new IllegalStateException(
-                    "JWT_SECRET environment variable is not set. "
+            throw new IllegalStateException("JWT_SECRET environment variable is not set. "
                     + "The application cannot start without a signing key.");
         }
         if (pepper == null || pepper.isBlank()) {
-            throw new IllegalStateException(
-                    "PASSWORD_PEPPER environment variable is not set. "
+            throw new IllegalStateException("PASSWORD_PEPPER environment variable is not set. "
                     + "The application cannot start without a pepper value.");
         }
         if (jwtSecret.length() < 32) {
-            throw new IllegalStateException(
-                    "JWT_SECRET must be at least 32 characters for HMAC-SHA256.");
+            throw new IllegalStateException("JWT_SECRET must be at least 32 characters for HMAC-SHA256.");
         }
         log.info("Security secrets validated successfully.");
     }
@@ -82,23 +79,28 @@ public class SecurityConfig {
 
                 // No HTTP sessions — each request is authenticated via JWT
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
                 .authorizeHttpRequests(auth -> auth
                         // Public: login endpoint (no token needed)
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/auth/**")
+                        .permitAll()
 
                         // Audit log: admin only (sensitive operation history)
-                        .requestMatchers("/auditlogs/**").hasRole("ADMINISTRATOR")
+                        .requestMatchers("/auditlogs/**")
+                        .hasRole("ADMINISTRATOR")
 
                         // Write operations: admin and manager can create/update/delete
-                        .requestMatchers(HttpMethod.POST, "/**").hasAnyRole("ADMINISTRATOR", "MANAGER")
-                        .requestMatchers(HttpMethod.PATCH, "/**").hasAnyRole("ADMINISTRATOR", "MANAGER")
-                        .requestMatchers(HttpMethod.PUT, "/**").hasAnyRole("ADMINISTRATOR", "MANAGER")
-                        .requestMatchers(HttpMethod.DELETE, "/**").hasAnyRole("ADMINISTRATOR", "MANAGER")
+                        .requestMatchers(HttpMethod.POST, "/**")
+                        .hasAnyRole("ADMINISTRATOR", "MANAGER")
+                        .requestMatchers(HttpMethod.PATCH, "/**")
+                        .hasAnyRole("ADMINISTRATOR", "MANAGER")
+                        .requestMatchers(HttpMethod.PUT, "/**")
+                        .hasAnyRole("ADMINISTRATOR", "MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/**")
+                        .hasAnyRole("ADMINISTRATOR", "MANAGER")
 
                         // All other requests (GETs): any authenticated user
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest()
+                        .authenticated())
 
                 // Use our custom auth provider (BCrypt + pepper verification)
                 .authenticationProvider(authenticationProvider())

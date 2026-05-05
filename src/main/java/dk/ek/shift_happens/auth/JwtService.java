@@ -3,14 +3,13 @@ package dk.ek.shift_happens.auth;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
-
-import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Map;
+import javax.crypto.SecretKey;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
 
 /**
  * Service for creating and validating JSON Web Tokens (JWT).
@@ -34,8 +33,7 @@ public class JwtService {
     private final long expirationMs;
 
     public JwtService(
-            @Value("${jwt.secret}") String secret,
-            @Value("${jwt.expiration-ms:86400000}") long expirationMs) {
+            @Value("${jwt.secret}") String secret, @Value("${jwt.expiration-ms:86400000}") long expirationMs) {
         // HMAC-SHA key derived from the secret string — used to sign and verify tokens
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirationMs = expirationMs;
@@ -47,14 +45,14 @@ public class JwtService {
      */
     public String generateToken(String email, Integer employeeId, String roleName) {
         return Jwts.builder()
-                .subject(email)                             // Primary identifier
+                .subject(email) // Primary identifier
                 .claims(Map.of(
-                        "employeeId", employeeId,           // Embedded for quick lookups
-                        "role", roleName                    // Used for frontend role checks
-                ))
+                        "employeeId", employeeId, // Embedded for quick lookups
+                        "role", roleName // Used for frontend role checks
+                        ))
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expirationMs))
-                .signWith(key)                              // HMAC-SHA256 signature
+                .signWith(key) // HMAC-SHA256 signature
                 .compact();
     }
 
@@ -75,10 +73,6 @@ public class JwtService {
 
     /** Parse and verify the token signature, returning all claims. */
     private Claims extractAllClaims(String token) {
-        return Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
     }
 }

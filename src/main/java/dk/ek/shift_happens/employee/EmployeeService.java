@@ -1,11 +1,10 @@
 package dk.ek.shift_happens.employee;
 
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Service layer for Employee CRUD operations.
@@ -22,7 +21,7 @@ import java.util.Optional;
 public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
-    private final PasswordEncoder passwordEncoder;  // PepperedPasswordEncoder (pepper + BCrypt + salt)
+    private final PasswordEncoder passwordEncoder; // PepperedPasswordEncoder (pepper + BCrypt + salt)
 
     public List<Employee> findAll() {
         return this.employeeRepository.findAll();
@@ -51,18 +50,21 @@ public class EmployeeService {
             if (patch.getFirstName() != null) existing.setFirstName(patch.getFirstName());
             if (patch.getLastName() != null) existing.setLastName(patch.getLastName());
             if (patch.getEmail() != null) existing.setEmail(patch.getEmail());
-            if (patch.getLoginPassword() != null) existing.setLoginPassword(passwordEncoder.encode(patch.getLoginPassword()));
+            if (patch.getLoginPassword() != null)
+                existing.setLoginPassword(passwordEncoder.encode(patch.getLoginPassword()));
             if (patch.getUserRole() != null) existing.setUserRole(patch.getUserRole());
             if (patch.getPhoneNumber() != null) existing.setPhoneNumber(patch.getPhoneNumber());
             if (patch.getHireDate() != null) existing.setHireDate(patch.getHireDate());
             if (patch.getEmploymentStatus() != null) existing.setEmploymentStatus(patch.getEmploymentStatus());
-            if (patch.getPrimaryWorkLocationId() != null) existing.setPrimaryWorkLocationId(patch.getPrimaryWorkLocationId());
+            if (patch.getPrimaryWorkLocationId() != null)
+                existing.setPrimaryWorkLocationId(patch.getPrimaryWorkLocationId());
             return this.employeeRepository.save(existing);
         });
     }
 
     public void delete(Integer id) {
-        Employee employee = employeeRepository.findById(id)
+        Employee employee = employeeRepository
+                .findById(id)
                 .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with id: " + id));
         employeeRepository.delete(employee);
     }

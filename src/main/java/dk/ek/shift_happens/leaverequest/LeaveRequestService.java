@@ -1,11 +1,10 @@
 package dk.ek.shift_happens.leaverequest;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +27,8 @@ public class LeaveRequestService {
     public LeaveRequest create(LeaveRequest leaveRequest) {
         validateRequest(leaveRequest);
         leaveRequest.setLeaveRequestId(null);
-        if (leaveRequest.getRequestStatus() == null || leaveRequest.getRequestStatus().isBlank()) {
+        if (leaveRequest.getRequestStatus() == null
+                || leaveRequest.getRequestStatus().isBlank()) {
             leaveRequest.setRequestStatus("PENDING");
         }
         if (leaveRequest.getRequestedDatetime() == null) {

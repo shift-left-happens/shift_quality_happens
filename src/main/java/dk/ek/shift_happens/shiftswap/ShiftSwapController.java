@@ -1,14 +1,13 @@
 package dk.ek.shift_happens.shiftswap;
 
 import dk.ek.shift_happens.auth.AuthHelper;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/shiftswaps")
@@ -31,8 +30,8 @@ public class ShiftSwapController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ShiftSwap getShiftSwapById(@PathVariable Integer id, Authentication auth) {
-        ShiftSwap swap = shiftSwapRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        ShiftSwap swap =
+                shiftSwapRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (authHelper.isEmployee(auth)) {
             Integer self = authHelper.currentEmployeeId(auth);
             if (!self.equals(swap.getEmployeeFromId()) && !self.equals(swap.getEmployeeToId())) {

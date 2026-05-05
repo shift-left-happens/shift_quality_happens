@@ -2,6 +2,7 @@ package dk.ek.shift_happens.auth;
 
 import dk.ek.shift_happens.employee.Employee;
 import dk.ek.shift_happens.employee.EmployeeRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -9,8 +10,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 /**
  * Bridges our Employee database with Spring Security's authentication system.
@@ -36,17 +35,18 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         // Find the employee by email — this is our login identifier
-        Employee employee = employeeRepository.findByEmail(email)
+        Employee employee = employeeRepository
+                .findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Employee not found: " + email));
 
         // Get role name from enum (e.g., ADMINISTRATOR -> "Administrator")
-        String roleName = employee.getUserRole() != null ? employee.getUserRole().getRoleName() : "Employee";
+        String roleName =
+                employee.getUserRole() != null ? employee.getUserRole().getRoleName() : "Employee";
 
         // Build a Spring Security User with the employee's credentials and role
         return new User(
                 employee.getEmail(),
-                employee.getLoginPassword(),    // BCrypt+pepper hash from the database
-                List.of(new SimpleGrantedAuthority("ROLE_" + roleName.toUpperCase()))
-        );
+                employee.getLoginPassword(), // BCrypt+pepper hash from the database
+                List.of(new SimpleGrantedAuthority("ROLE_" + roleName.toUpperCase())));
     }
 }

@@ -1,11 +1,10 @@
 package dk.ek.shift_happens.department;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -18,9 +17,10 @@ public class DepartmentService {
     }
 
     public Department findById(Integer id) {
-        return departmentRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Department not found with id " + id));
+        return departmentRepository
+                .findById(id)
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found with id " + id));
     }
 
     public Department create(Department department) {

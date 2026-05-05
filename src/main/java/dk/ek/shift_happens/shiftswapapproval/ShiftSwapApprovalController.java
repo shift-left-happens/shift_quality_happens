@@ -1,11 +1,10 @@
 package dk.ek.shift_happens.shiftswapapproval;
 
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/shiftswapapprovals")
@@ -34,8 +33,10 @@ public class ShiftSwapApprovalController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
-    public ShiftSwapApproval updateShiftSwapApproval(@PathVariable Integer id, @RequestBody ShiftSwapApproval shiftSwapApprovalDetails) {
-        ShiftSwapApproval shiftSwapApproval = this.shiftSwapApprovalRepository.findById(id).orElseThrow();
+    public ShiftSwapApproval updateShiftSwapApproval(
+            @PathVariable Integer id, @RequestBody ShiftSwapApproval shiftSwapApprovalDetails) {
+        ShiftSwapApproval shiftSwapApproval =
+                this.shiftSwapApprovalRepository.findById(id).orElseThrow();
         shiftSwapApproval.setShiftSwapId(shiftSwapApprovalDetails.getShiftSwapId());
         shiftSwapApproval.setApproverEmployeeId(shiftSwapApprovalDetails.getApproverEmployeeId());
         shiftSwapApproval.setDecision(shiftSwapApprovalDetails.getDecision());

@@ -1,12 +1,11 @@
 package dk.ek.shift_happens.employeejobrole;
 
 import dk.ek.shift_happens.auth.AuthHelper;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/employeejobroles")
@@ -30,8 +29,7 @@ public class EmployeeJobRoleController {
     public EmployeeJobRole getById(@PathVariable Integer id, Authentication auth) {
         EmployeeJobRole role = service.getById(id);
 
-        if (authHelper.isEmployee(auth)
-                && !role.getEmployeeId().equals(authHelper.currentEmployeeId(auth))) {
+        if (authHelper.isEmployee(auth) && !role.getEmployeeId().equals(authHelper.currentEmployeeId(auth))) {
             throw authHelper.forbidden();
         }
         return role;

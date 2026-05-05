@@ -1,12 +1,11 @@
 package dk.ek.shift_happens.leavetype;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/leavetypes")
@@ -24,8 +23,7 @@ public class LeaveTypeController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public LeaveType getById(@PathVariable Integer id) {
-        return leaveTypeRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return leaveTypeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     @PostMapping
@@ -38,8 +36,8 @@ public class LeaveTypeController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public LeaveType update(@PathVariable Integer id, @RequestBody LeaveType details) {
-        LeaveType existing = leaveTypeRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        LeaveType existing =
+                leaveTypeRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         existing.setLeaveTypeName(details.getLeaveTypeName());
         existing.setLeaveTypeDescription(details.getLeaveTypeDescription());
         existing.setRequiresApproval(details.getRequiresApproval());

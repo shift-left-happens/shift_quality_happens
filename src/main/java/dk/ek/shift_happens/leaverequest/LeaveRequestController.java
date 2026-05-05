@@ -1,13 +1,12 @@
 package dk.ek.shift_happens.leaverequest;
 
 import dk.ek.shift_happens.auth.AuthHelper;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/leaverequests")
@@ -21,8 +20,7 @@ public class LeaveRequestController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<LeaveRequest>> getLeaveRequests(Authentication auth) {
         if (authHelper.isEmployee(auth)) {
-            return ResponseEntity.ok(
-                    this.leaveRequestService.findByEmployeeId(authHelper.currentEmployeeId(auth)));
+            return ResponseEntity.ok(this.leaveRequestService.findByEmployeeId(authHelper.currentEmployeeId(auth)));
         }
         return ResponseEntity.ok(this.leaveRequestService.findAll());
     }
@@ -30,7 +28,8 @@ public class LeaveRequestController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<LeaveRequest> getLeaveRequest(@PathVariable Integer id, Authentication auth) {
-        return this.leaveRequestService.findById(id)
+        return this.leaveRequestService
+                .findById(id)
                 .map(req -> {
                     if (authHelper.isEmployee(auth)
                             && !req.getEmployeeId().equals(authHelper.currentEmployeeId(auth))) {
@@ -49,8 +48,10 @@ public class LeaveRequestController {
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
-    public ResponseEntity<LeaveRequest> patchLeaveRequest(@PathVariable Integer id, @RequestBody LeaveRequest leaveRequest) {
-        return this.leaveRequestService.patch(id, leaveRequest)
+    public ResponseEntity<LeaveRequest> patchLeaveRequest(
+            @PathVariable Integer id, @RequestBody LeaveRequest leaveRequest) {
+        return this.leaveRequestService
+                .patch(id, leaveRequest)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

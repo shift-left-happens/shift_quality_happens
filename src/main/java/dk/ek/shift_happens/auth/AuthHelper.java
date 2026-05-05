@@ -39,7 +39,8 @@ public class AuthHelper {
     }
 
     public Integer getEmployeeIdFromEmail(String email) {
-        return employeeRepository.findByEmail(email)
+        return employeeRepository
+                .findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.UNAUTHORIZED, "Authenticated user has no matching employee record"))
                 .getEmployeeId();
@@ -50,7 +51,6 @@ public class AuthHelper {
     }
 
     private boolean hasRole(Authentication auth, String role) {
-        return auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(role));
+        return auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(role));
     }
 }

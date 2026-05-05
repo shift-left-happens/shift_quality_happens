@@ -1,14 +1,13 @@
 package dk.ek.shift_happens.leaveledger;
 
 import dk.ek.shift_happens.auth.AuthHelper;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/leaveledgers")
@@ -30,11 +29,10 @@ public class LeaveLedgerController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public LeaveLedger getById(@PathVariable Integer id, Authentication auth) {
-        LeaveLedger ledger = leaveLedgerRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        LeaveLedger ledger =
+                leaveLedgerRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-        if (authHelper.isEmployee(auth)
-                && !ledger.getEmployeeId().equals(authHelper.currentEmployeeId(auth))) {
+        if (authHelper.isEmployee(auth) && !ledger.getEmployeeId().equals(authHelper.currentEmployeeId(auth))) {
             throw authHelper.forbidden();
         }
         return ledger;
@@ -50,8 +48,8 @@ public class LeaveLedgerController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public LeaveLedger update(@PathVariable Integer id, @RequestBody LeaveLedger details) {
-        LeaveLedger existing = leaveLedgerRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        LeaveLedger existing =
+                leaveLedgerRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         existing.setEmployeeId(details.getEmployeeId());
         existing.setLeaveTypeId(details.getLeaveTypeId());
         existing.setChangeAmountDays(details.getChangeAmountDays());

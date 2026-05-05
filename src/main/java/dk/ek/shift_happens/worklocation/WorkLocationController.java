@@ -1,12 +1,11 @@
 package dk.ek.shift_happens.worklocation;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/worklocations")
@@ -24,8 +23,7 @@ public class WorkLocationController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public WorkLocation getById(@PathVariable Integer id) {
-        return workLocationRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return workLocationRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     @PostMapping
@@ -38,7 +36,8 @@ public class WorkLocationController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public WorkLocation update(@PathVariable Integer id, @RequestBody WorkLocation details) {
-        WorkLocation existing = workLocationRepository.findById(id)
+        WorkLocation existing = workLocationRepository
+                .findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         existing.setLocationName(details.getLocationName());
         existing.setAddressLine1(details.getAddressLine1());

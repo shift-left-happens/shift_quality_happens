@@ -17,8 +17,7 @@ public record EmployeeShiftOverviewDto(
         String assignmentStatus,
         LocalDateTime assignedDatetime,
         LocalDateTime checkInDatetime,
-        LocalDateTime checkOutDatetime
-) {
+        LocalDateTime checkOutDatetime) {
     public static EmployeeShiftOverviewDto from(EmployeeShiftOverviewView view) {
         return new EmployeeShiftOverviewDto(
                 view.getShiftAssignmentId(),
@@ -35,7 +34,6 @@ public record EmployeeShiftOverviewDto(
                 view.getAssignmentStatus(),
                 view.getAssignedDatetime(),
                 view.getCheckInDatetime(),
-                view.getCheckOutDatetime()
-        );
+                view.getCheckOutDatetime());
     }
 }

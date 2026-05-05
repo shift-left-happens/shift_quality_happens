@@ -1,13 +1,12 @@
 package dk.ek.shift_happens.employee;
 
 import dk.ek.shift_happens.auth.AuthHelper;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/employees")
@@ -34,7 +33,8 @@ public class EmployeeController {
         if (authHelper.isEmployee(auth) && !id.equals(authHelper.currentEmployeeId(auth))) {
             throw authHelper.forbidden();
         }
-        return this.employeeService.findById(id)
+        return this.employeeService
+                .findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -48,7 +48,8 @@ public class EmployeeController {
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public ResponseEntity<Employee> patchEmployee(@PathVariable Integer id, @RequestBody Employee employee) {
-        return this.employeeService.patch(id, employee)
+        return this.employeeService
+                .patch(id, employee)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
