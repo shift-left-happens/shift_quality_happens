@@ -11,7 +11,7 @@
 	<groupId>dk.ek</groupId>
 	<artifactId>shift-happens</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>shift-happens</name>
+	<name>shift-quality-happens</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>
