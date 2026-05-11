@@ -1,53 +1,53 @@
 package dk.ek.shift_happens.shiftswapapproval;
 
 import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/shiftswapapprovals")
 @RequiredArgsConstructor
 public class ShiftSwapApprovalController {
 
-    private final ShiftSwapApprovalRepository shiftSwapApprovalRepository;
+    private final ShiftSwapApprovalService shiftSwapApprovalService;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public List<ShiftSwapApproval> getShiftSwapApprovals() {
-        return this.shiftSwapApprovalRepository.findAll();
+        return shiftSwapApprovalService.findAll();
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
-    public Optional<ShiftSwapApproval> getShiftSwapApprovalById(@PathVariable Integer id) {
-        return this.shiftSwapApprovalRepository.findById(id);
+    public ShiftSwapApproval getShiftSwapApprovalById(@PathVariable Integer id) {
+        return shiftSwapApprovalService.findById(id);
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @ResponseStatus(HttpStatus.CREATED)
     public ShiftSwapApproval createShiftSwapApproval(@RequestBody ShiftSwapApproval shiftSwapApproval) {
-        return this.shiftSwapApprovalRepository.save(shiftSwapApproval);
+        return shiftSwapApprovalService.approve(shiftSwapApproval);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public ShiftSwapApproval updateShiftSwapApproval(
             @PathVariable Integer id, @RequestBody ShiftSwapApproval shiftSwapApprovalDetails) {
-        ShiftSwapApproval shiftSwapApproval =
-                this.shiftSwapApprovalRepository.findById(id).orElseThrow();
-        shiftSwapApproval.setShiftSwapId(shiftSwapApprovalDetails.getShiftSwapId());
-        shiftSwapApproval.setApproverEmployeeId(shiftSwapApprovalDetails.getApproverEmployeeId());
-        shiftSwapApproval.setDecision(shiftSwapApprovalDetails.getDecision());
-        shiftSwapApproval.setShiftSwapComment(shiftSwapApprovalDetails.getShiftSwapComment());
-        shiftSwapApproval.setDecisionDatetime(shiftSwapApprovalDetails.getDecisionDatetime());
-        return this.shiftSwapApprovalRepository.save(shiftSwapApproval);
+        return shiftSwapApprovalService
+                .update(id, shiftSwapApprovalDetails)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Approval not found"));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteShiftSwapApproval(@PathVariable Integer id) {
-        this.shiftSwapApprovalRepository.deleteById(id);
+        if (!shiftSwapApprovalService.delete(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
     }
 }
