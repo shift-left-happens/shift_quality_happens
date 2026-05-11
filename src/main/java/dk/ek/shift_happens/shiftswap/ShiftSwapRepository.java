@@ -9,4 +9,7 @@ public interface ShiftSwapRepository extends JpaRepository<ShiftSwap, Integer> {
     List<ShiftSwap> findAll();
 
     List<ShiftSwap> findByEmployeeFromIdOrEmployeeToId(Integer employeeFromId, Integer employeeToId);
+
+    List<ShiftSwap> findByOriginalShiftAssignmentIdAndSwapStatusIgnoreCase(
+            Integer originalShiftAssignmentId, String swapStatus);
 }

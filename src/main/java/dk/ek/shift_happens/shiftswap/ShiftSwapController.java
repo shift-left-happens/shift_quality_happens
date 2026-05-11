@@ -7,31 +7,28 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/shiftswaps")
 @RequiredArgsConstructor
 public class ShiftSwapController {
 
-    private final ShiftSwapRepository shiftSwapRepository;
+    private final ShiftSwapService shiftSwapService;
     private final AuthHelper authHelper;
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public List<ShiftSwap> getShiftSwaps(Authentication auth) {
         if (authHelper.isEmployee(auth)) {
-            Integer self = authHelper.currentEmployeeId(auth);
-            return shiftSwapRepository.findByEmployeeFromIdOrEmployeeToId(self, self);
+            return shiftSwapService.findByEmployee(authHelper.currentEmployeeId(auth));
         }
-        return this.shiftSwapRepository.findAll();
+        return shiftSwapService.findAll();
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ShiftSwap getShiftSwapById(@PathVariable Integer id, Authentication auth) {
-        ShiftSwap swap =
-                shiftSwapRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        ShiftSwap swap = shiftSwapService.findById(id);
         if (authHelper.isEmployee(auth)) {
             Integer self = authHelper.currentEmployeeId(auth);
             if (!self.equals(swap.getEmployeeFromId()) && !self.equals(swap.getEmployeeToId())) {
@@ -42,27 +39,29 @@ public class ShiftSwapController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("isAuthenticated()")
+    @ResponseStatus(HttpStatus.CREATED)
     public ShiftSwap createShiftSwap(@RequestBody ShiftSwap shiftSwap) {
-        return this.shiftSwapRepository.save(shiftSwap);
+        return shiftSwapService.create(shiftSwap);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public ShiftSwap updateShiftSwap(@PathVariable Integer id, @RequestBody ShiftSwap shiftSwapDetails) {
-        ShiftSwap shiftSwap = this.shiftSwapRepository.findById(id).orElseThrow();
-        shiftSwap.setOriginalShiftAssignmentId(shiftSwapDetails.getOriginalShiftAssignmentId());
-        shiftSwap.setEmployeeFromId(shiftSwapDetails.getEmployeeFromId());
-        shiftSwap.setEmployeeToId(shiftSwapDetails.getEmployeeToId());
-        shiftSwap.setSwapStatus(shiftSwapDetails.getSwapStatus());
-        shiftSwap.setRequestDatetime(shiftSwapDetails.getRequestDatetime());
-        shiftSwap.setReason(shiftSwapDetails.getReason());
-        return this.shiftSwapRepository.save(shiftSwap);
+        return shiftSwapService.update(id, shiftSwapDetails);
+    }
+
+    @PostMapping("/{id}/cancel")
+    @PreAuthorize("isAuthenticated()")
+    public ShiftSwap cancelShiftSwap(@PathVariable Integer id, Authentication auth) {
+        Integer cancellingEmployee = authHelper.isEmployee(auth) ? authHelper.currentEmployeeId(auth) : null;
+        return shiftSwapService.cancel(id, cancellingEmployee);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteShiftSwap(@PathVariable Integer id) {
-        this.shiftSwapRepository.deleteById(id);
+        shiftSwapService.delete(id);
     }
 }

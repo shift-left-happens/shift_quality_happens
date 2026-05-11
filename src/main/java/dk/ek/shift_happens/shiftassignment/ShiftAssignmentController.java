@@ -7,31 +7,28 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/shiftassignments")
 @RequiredArgsConstructor
 public class ShiftAssignmentController {
 
-    private final ShiftAssignmentRepository shiftAssignmentRepository;
+    private final ShiftAssignmentService shiftAssignmentService;
     private final AuthHelper authHelper;
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public List<ShiftAssignment> getShiftAssignments(Authentication auth) {
         if (authHelper.isEmployee(auth)) {
-            return shiftAssignmentRepository.findByEmployeeId(authHelper.currentEmployeeId(auth));
+            return shiftAssignmentService.findByEmployeeId(authHelper.currentEmployeeId(auth));
         }
-        return this.shiftAssignmentRepository.findAll();
+        return shiftAssignmentService.findAll();
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ShiftAssignment getShiftAssignmentById(@PathVariable Integer id, Authentication auth) {
-        ShiftAssignment assignment = shiftAssignmentRepository
-                .findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        ShiftAssignment assignment = shiftAssignmentService.findById(id);
         if (authHelper.isEmployee(auth) && !assignment.getEmployeeId().equals(authHelper.currentEmployeeId(auth))) {
             throw authHelper.forbidden();
         }
@@ -40,28 +37,22 @@ public class ShiftAssignmentController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @ResponseStatus(HttpStatus.CREATED)
     public ShiftAssignment createShiftAssignment(@RequestBody ShiftAssignment shiftAssignment) {
-        return this.shiftAssignmentRepository.save(shiftAssignment);
+        return shiftAssignmentService.assign(shiftAssignment);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public ShiftAssignment updateShiftAssignment(
             @PathVariable Integer id, @RequestBody ShiftAssignment shiftAssignmentDetails) {
-        ShiftAssignment shiftAssignment =
-                this.shiftAssignmentRepository.findById(id).orElseThrow();
-        shiftAssignment.setShiftId(shiftAssignmentDetails.getShiftId());
-        shiftAssignment.setEmployeeId(shiftAssignmentDetails.getEmployeeId());
-        shiftAssignment.setAssignmentStatus(shiftAssignmentDetails.getAssignmentStatus());
-        shiftAssignment.setAssignedDatetime(shiftAssignmentDetails.getAssignedDatetime());
-        shiftAssignment.setCheckInDatetime(shiftAssignmentDetails.getCheckInDatetime());
-        shiftAssignment.setCheckOutDatetime(shiftAssignmentDetails.getCheckOutDatetime());
-        return this.shiftAssignmentRepository.save(shiftAssignment);
+        return shiftAssignmentService.update(id, shiftAssignmentDetails);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteShiftAssignment(@PathVariable Integer id) {
-        this.shiftAssignmentRepository.deleteById(id);
+        shiftAssignmentService.delete(id);
     }
 }
