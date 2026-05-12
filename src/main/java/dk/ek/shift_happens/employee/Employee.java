@@ -44,6 +44,9 @@ public class Employee {
     @Column(name = "hire_date")
     private LocalDate hireDate;
 
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
+
     @Column(name = "employment_status")
     private String employmentStatus;
 

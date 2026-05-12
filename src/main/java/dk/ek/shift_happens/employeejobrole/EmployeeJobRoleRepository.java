@@ -10,4 +10,6 @@ public interface EmployeeJobRoleRepository extends JpaRepository<EmployeeJobRole
     List<EmployeeJobRole> findByEmployeeId(Integer employeeId);
 
     Optional<EmployeeJobRole> findByEmployeeIdAndJobRoleId(Integer employeeId, Integer jobRoleId);
+
+    boolean existsByJobRoleId(Integer jobRoleId);
 }

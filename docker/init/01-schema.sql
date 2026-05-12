@@ -29,6 +29,7 @@ CREATE TABLE employee
     email                    VARCHAR(255) NOT NULL,
     phone_number             VARCHAR(50)  NOT NULL,
     hire_date                DATE         NOT NULL,
+    birth_date               DATE,
     employment_status        VARCHAR(50)  NOT NULL,
     primary_work_location_id INT          NOT NULL,
     user_role ENUM('Administrator', 'Manager', 'Employee') DEFAULT 'EMPLOYEE',

@@ -1,5 +1,6 @@
 package dk.ek.shift_happens.jobrole;
 
+import dk.ek.shift_happens.employeejobrole.EmployeeJobRoleRepository;
 import dk.ek.shift_happens.shiftrequiredjobrole.ShiftRequiredJobRoleRepository;
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +22,7 @@ public class JobRoleService {
 
     private final JobRoleRepository jobRoleRepository;
     private final ShiftRequiredJobRoleRepository shiftRequiredJobRoleRepository;
+    private final EmployeeJobRoleRepository employeeJobRoleRepository;
 
     public List<JobRole> findAll() {
         return jobRoleRepository.findAll();
@@ -60,12 +62,18 @@ public class JobRoleService {
     public void delete(Integer id) {
         JobRole existing = findById(id);
 
+        // docx §"Deletion Constraints" case 1 — referenced by an active shift
         boolean usedByShift = !shiftRequiredJobRoleRepository.findAll().stream()
                 .filter(r -> existing.getJobRoleId().equals(r.getJobRoleId()))
                 .toList()
                 .isEmpty();
         if (usedByShift) {
             throw new IllegalArgumentException("Job role is referenced by one or more shifts and cannot be deleted");
+        }
+
+        // docx §"Deletion Constraints" case 2 — held by an active employee
+        if (employeeJobRoleRepository.existsByJobRoleId(existing.getJobRoleId())) {
+            throw new IllegalArgumentException("Job role is held by one or more employees and cannot be deleted");
         }
 
         jobRoleRepository.delete(existing);

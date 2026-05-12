@@ -46,6 +46,27 @@ db-shell:
 	docker exec -it shift-quality-happens-db mysql -u root -p$(MYSQL_ROOT_PASSWORD) $(MYSQL_DATABASE)
 
 # ──────────────────────────────────────────────────────────────
+# Tests
+# ──────────────────────────────────────────────────────────────
+
+## Run all unit tests (requires MySQL running for ShiftHappensApplicationTests.contextLoads)
+test:
+	./mvnw test
+
+## Run only the blackbox-derived unit tests (no Spring context, no DB needed)
+test-unit:
+	./mvnw test -Dtest='EmployeeServiceTest,ShiftServiceTest,ShiftAssignmentServiceTest,ShiftSwapApprovalServiceTest,JobRoleServiceTest'
+
+## Run a single test class. Usage: make test-one CLASS=EmployeeServiceTest
+test-one:
+	./mvnw test -Dtest=$(CLASS)
+
+## Open the JaCoCo coverage report in the default browser
+coverage:
+	./mvnw test
+	@open target/site/jacoco/index.html
+
+# ──────────────────────────────────────────────────────────────
 # Backups
 # ──────────────────────────────────────────────────────────────
 
