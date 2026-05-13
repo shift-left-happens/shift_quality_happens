@@ -151,9 +151,22 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('frontend/package-lock.json') }}
+
       - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         working-directory: frontend
         run: npx playwright install --with-deps
+
+      - name: Install Playwright dependencies (if cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        working-directory: frontend
+        run: npx playwright install-deps
 
       - name: Set up Java 21 (for Backend)
         uses: actions/setup-java@v4
@@ -173,21 +186,23 @@ jobs:
         run: |
           nohup ./mvnw spring-boot:run > backend.log 2>&1 &
           echo "Waiting for backend to be ready..."
-          timeout 60s bash -c 'until curl -s http://localhost:8080/auth/login > /dev/null; do sleep 5; done' || (cat backend.log && exit 1)
+          # Health check now hits /auth/login with a HEAD request or simple GET, it should return 405 or similar if alive
+          # Or better, just wait for the port to be open
+          timeout 60s bash -c 'until curl -s http://localhost:8080 > /dev/null; do sleep 5; done' || (echo "Backend failed to start. Logs:" && cat backend.log && exit 1)
         env:
           DB_URL: jdbc:mysql://127.0.0.1:3306/shift_happens
           DB_USERNAME: root
           DB_PASSWORD: ci_root
-          JWT_SECRET: testing-secret-key-at-least-32-chars-long-12345
-          PASSWORD_PEPPER: testing-pepper
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          PASSWORD_PEPPER: ${{ secrets.PASSWORD_PEPPER }}
           SERVER_PORT: 8080
 
       - name: Run Playwright tests
         working-directory: frontend
         run: npx playwright test
         env:
-          TEST_USER_EMAIL: sofie.jensen@hospital.dk
-          TEST_USER_PASSWORD: password123
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
           API_URL: http://localhost:8080
           BASE_URL: http://localhost:5173
           CI: true
