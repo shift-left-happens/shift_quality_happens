@@ -37,3 +37,7 @@ build/
 
 ### Backups ###
 backups/
+
+### PlayWright ###
+frontend/playwright-report
+frontend/test-results
