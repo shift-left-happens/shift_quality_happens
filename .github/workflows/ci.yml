@@ -84,11 +84,11 @@ jobs:
           name: coverage-report
           path: target/site/jacoco/jacoco.xml
 
-  # Job 3: SonarCloud Analysis (requires coverage from testsuite-java)
+  # Job 3: SonarCloud Analysis (requires coverage from testsuite-java and E2E results)
   sonarcloud:
     name: SonarCloud Scan
     runs-on: ubuntu-latest
-    needs: testsuite-java
+    needs: [testsuite-java, playwright-e2e]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -116,3 +116,101 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v7
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # Job 4: Run Playwright E2E tests
+  playwright-e2e:
+    name: Playwright E2E Tests
+    runs-on: ubuntu-latest
+    needs: testsuite-java
+    services:
+      db:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci_root
+          MYSQL_DATABASE: shift_happens
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        working-directory: frontend
+        run: npx playwright install --with-deps
+
+      - name: Install Playwright dependencies (if cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        working-directory: frontend
+        run: npx playwright install-deps
+
+      - name: Set up Java 21 (for Backend)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run DB init scripts
+        run: |
+          for f in docker/init/*.sql; do
+            echo "Running $f..."
+            mysql -h 127.0.0.1 -uroot -pci_root shift_happens < "$f"
+          done
+
+      - name: Build and Start Backend
+        run: |
+          nohup ./mvnw spring-boot:run > backend.log 2>&1 &
+          echo "Waiting for backend to be ready..."
+          # Health check now hits /auth/login with a HEAD request or simple GET, it should return 405 or similar if alive
+          # Or better, just wait for the port to be open
+          timeout 60s bash -c 'until curl -s http://localhost:8080 > /dev/null; do sleep 5; done' || (echo "Backend failed to start. Logs:" && cat backend.log && exit 1)
+        env:
+          DB_URL: jdbc:mysql://127.0.0.1:3306/shift_happens
+          DB_USERNAME: root
+          DB_PASSWORD: ci_root
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          PASSWORD_PEPPER: ${{ secrets.PASSWORD_PEPPER }}
+          SERVER_PORT: 8080
+
+      - name: Run Playwright tests
+        working-directory: frontend
+        run: npx playwright test
+        env:
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+          API_URL: http://localhost:8080
+          BASE_URL: http://localhost:5173
+          CI: true
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 30
