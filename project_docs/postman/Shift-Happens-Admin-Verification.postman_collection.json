@@ -1,0 +1,148 @@
+{
+  "info": {
+    "name": "Shift Happens - Admin Verification",
+    "description": "Collection for verifying seeded admin account and role-based access in Shift Happens API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "adminEmail", "value": "admin@shift.dk" },
+    { "key": "adminPassword", "value": "password123" },
+    { "key": "token", "value": "" },
+    { "key": "createdEmployeeEmail", "value": "" },
+    { "key": "createdEmployeeId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1) Login Admin",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Login status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const body = pm.response.json();",
+              "pm.environment.set('token', body.token || '');",
+              "",
+              "pm.test('Token exists', function () {",
+              "  pm.expect(body.token).to.be.a('string').and.not.empty;",
+              "});",
+              "",
+              "pm.test('Role is Administrator or Manager', function () {",
+              "  pm.expect(['Administrator', 'Manager']).to.include(body.roleName);",
+              "});",
+              "",
+              "console.log('Logged in roleName:', body.roleName);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2) List Employees (requires ADMINISTRATOR or MANAGER)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/employees",
+          "host": ["{{baseUrl}}"],
+          "path": ["employees"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3) Create Employee (realistic seed-inspired)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeNumber\": \"EMP-POSTMAN-{{$timestamp}}\",\n  \"firstName\": \"Sofie\",\n  \"lastName\": \"Jensen\",\n  \"email\": \"postman.sofie.{{$timestamp}}@hospital.dk\",\n  \"loginPassword\": \"password123\",\n  \"phoneNumber\": \"+45 50123456\",\n  \"hireDate\": \"2020-01-01\",\n  \"employmentStatus\": \"ACTIVE\",\n  \"primaryWorkLocationId\": 1,\n  \"userRole\": \"Employee\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/employees",
+          "host": ["{{baseUrl}}"],
+          "path": ["employees"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Create employee returns 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "const body = pm.response.json();",
+              "if (body && body.employeeId) {",
+              "  pm.collectionVariables.set('createdEmployeeId', String(body.employeeId));",
+              "}",
+              "if (body && body.email) {",
+              "  pm.collectionVariables.set('createdEmployeeEmail', body.email);",
+              "}",
+              "console.log('Created employeeId:', body.employeeId, 'email:', body.email);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4) Create Shift (seed-like values)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"departmentId\": 14,\n  \"workLocationId\": 1,\n  \"shiftName\": \"Shift Postman {{$timestamp}}\",\n  \"startDatetime\": \"2026-05-20T08:00:00\",\n  \"endDatetime\": \"2026-05-20T16:00:00\",\n  \"shiftStatus\": \"PLANNED\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/shifts",
+          "host": ["{{baseUrl}}"],
+          "path": ["shifts"]
+        }
+      }
+    }
+  ]
+}
