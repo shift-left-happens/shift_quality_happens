@@ -126,7 +126,8 @@ class ShiftSwapServiceTest {
                             ASSIGNMENT_ID, ShiftSwapService.STATUS_PENDING))
                     .thenReturn(Collections.singletonList(new ShiftSwap()));
 
-            assertThatThrownBy(() -> service.create(validSwap()))
+            ShiftSwap swap = validSwap();
+            assertThatThrownBy(() -> service.create(swap))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("pending swap already exists");
         }
@@ -135,7 +136,8 @@ class ShiftSwapServiceTest {
         void rejects_swap_when_assignment_is_cancelled() {
             assignment.setAssignmentStatus(ShiftAssignmentService.STATUS_CANCELLED);
 
-            assertThatThrownBy(() -> service.create(validSwap()))
+            ShiftSwap swap = validSwap();
+            assertThatThrownBy(() -> service.create(swap))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("cancelled assignment");
         }
@@ -145,7 +147,8 @@ class ShiftSwapServiceTest {
             // Relates to BR-AP-05 on the create side as well
             shift.setShiftStatus(ShiftService.STATUS_CANCELLED);
 
-            assertThatThrownBy(() -> service.create(validSwap()))
+            ShiftSwap swap = validSwap();
+            assertThatThrownBy(() -> service.create(swap))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("cancelled shift");
         }
@@ -154,7 +157,8 @@ class ShiftSwapServiceTest {
         void rejects_swap_when_shift_has_already_started() {
             shift.setStartDatetime(LocalDateTime.now().minusHours(1));
 
-            assertThatThrownBy(() -> service.create(validSwap()))
+            ShiftSwap swap = validSwap();
+            assertThatThrownBy(() -> service.create(swap))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("started");
         }
@@ -183,7 +187,8 @@ class ShiftSwapServiceTest {
         void rejects_swap_when_target_employee_is_inactive() {
             employeeTo.setEmploymentStatus("Inactive");
 
-            assertThatThrownBy(() -> service.create(validSwap()))
+            ShiftSwap swap = validSwap();
+            assertThatThrownBy(() -> service.create(swap))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("not active");
         }
