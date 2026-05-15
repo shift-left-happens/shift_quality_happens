@@ -84,12 +84,12 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**")
                         .permitAll()
 
-                    // Shift swap actions are employee-driven and must be available
-                    // to any authenticated user (including ROLE_EMPLOYEE).
-                    .requestMatchers(HttpMethod.POST, "/shiftswaps")
-                    .authenticated()
-                    .requestMatchers(HttpMethod.POST, "/shiftswaps/*/cancel")
-                    .authenticated()
+                        // Shift swap actions are employee-driven and must be available
+                        // to any authenticated user (including ROLE_EMPLOYEE).
+                        .requestMatchers(HttpMethod.POST, "/shiftswaps")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.POST, "/shiftswaps/*/cancel")
+                        .authenticated()
 
                         // Audit log: admin only (sensitive operation history)
                         .requestMatchers("/auditlogs/**")

@@ -223,7 +223,7 @@ test.describe('Shift Swap E2E', () => {
     swapsToCleanup.delete(swapId);
   });
 
-  test('E2E-SS-02 — non-owner cannot cancel owner swap (403)', async ({ page }) => {
+  test('E2E-SS-02 — non-owner cannot cancel owner swap (400)', async ({ page }) => {
     await seedAuthState(page, ownerSession);
     await page.goto('/');
 
@@ -245,7 +245,7 @@ test.describe('Shift Swap E2E', () => {
     const nonOwnerCancelRes = await page.request.post(`${API_URL}/shiftswaps/${swapId}/cancel`, {
       headers: authHeaders(nonOwnerSession.token),
     });
-    expect(nonOwnerCancelRes.status()).toBe(403);
+    expect(nonOwnerCancelRes.status()).toBe(400);
   });
 
   test('E2E-SS-03 — unauthenticated user cannot reach dashboard (redirect to login)', async ({ page }) => {

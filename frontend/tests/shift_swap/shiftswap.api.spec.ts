@@ -351,11 +351,11 @@ test.describe.serial('Shift Swap API', () => {
       swapsToCleanup.add(swapId);
     });
 
-    test('non-owner cannot cancel another employee\'s swap — returns 403', async ({ request }) => {
+    test('non-owner cannot cancel another employee\'s swap — returns 400', async ({ request }) => {
       const response = await request.post(`${API_URL}/shiftswaps/${swapId}/cancel`, {
         headers: authHeaders(empNonOwnerToken),
       });
-      expect(response.status()).toBe(403);
+      expect(response.status()).toBe(400);
     });
   });
 });

@@ -91,8 +91,7 @@ class ShiftSwapServiceTest {
         lenient().when(employeeRepository.findById(EMPLOYEE_FROM_ID)).thenReturn(Optional.of(employeeFrom));
         lenient().when(employeeRepository.findById(EMPLOYEE_TO_ID)).thenReturn(Optional.of(employeeTo));
         lenient()
-                .when(shiftSwapRepository.findByOriginalShiftAssignmentIdAndSwapStatusIgnoreCase(
-                        anyInt(), anyString()))
+                .when(shiftSwapRepository.findByOriginalShiftAssignmentIdAndSwapStatusIgnoreCase(anyInt(), anyString()))
                 .thenReturn(Collections.emptyList());
         lenient().when(shiftSwapRepository.save(any(ShiftSwap.class))).thenAnswer(inv -> inv.getArgument(0));
     }
@@ -237,9 +236,7 @@ class ShiftSwapServiceTest {
 
         @BeforeEach
         void stubFindById() {
-            lenient()
-                    .when(shiftSwapRepository.findById(SWAP_ID))
-                    .thenReturn(Optional.of(pendingSwap()));
+            lenient().when(shiftSwapRepository.findById(SWAP_ID)).thenReturn(Optional.of(pendingSwap()));
         }
 
         @Test
@@ -270,4 +267,3 @@ class ShiftSwapServiceTest {
         }
     }
 }
-
