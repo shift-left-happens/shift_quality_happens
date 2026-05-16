@@ -123,7 +123,7 @@ export default function EmployeeFormPage() {
       <form className="form-grid" onSubmit={handleSubmit}>
         <label className="form-field">
           <span>Employee number</span>
-          <input
+          <input name="employeeNumber"
             value={form.employeeNumber ?? ''}
             onChange={(e) => update('employeeNumber', e.target.value)}
             disabled={!mayWrite}
@@ -131,7 +131,7 @@ export default function EmployeeFormPage() {
         </label>
         <label className="form-field">
           <span>First name</span>
-          <input
+          <input name="firstName"
             value={form.firstName ?? ''}
             onChange={(e) => update('firstName', e.target.value)}
             disabled={!mayWrite}
@@ -139,7 +139,7 @@ export default function EmployeeFormPage() {
         </label>
         <label className="form-field">
           <span>Last name</span>
-          <input
+          <input name="lastName"
             value={form.lastName ?? ''}
             onChange={(e) => update('lastName', e.target.value)}
             disabled={!mayWrite}
@@ -147,7 +147,7 @@ export default function EmployeeFormPage() {
         </label>
         <label className="form-field">
           <span>Email</span>
-          <input
+          <input name="email"
             type="email"
             required
             value={form.email ?? ''}
@@ -157,7 +157,7 @@ export default function EmployeeFormPage() {
         </label>
         <label className="form-field">
           <span>Phone</span>
-          <input
+          <input name="phoneNumber"
             value={form.phoneNumber ?? ''}
             onChange={(e) => update('phoneNumber', e.target.value)}
             disabled={!mayWrite}
@@ -165,7 +165,7 @@ export default function EmployeeFormPage() {
         </label>
         <label className="form-field">
           <span>Birth date</span>
-          <input
+          <input name="birthDate"
             type="date"
             required
             value={form.birthDate ?? ''}
@@ -175,7 +175,7 @@ export default function EmployeeFormPage() {
         </label>
         <label className="form-field">
           <span>Role</span>
-          <select
+          <select name="userRole"
             value={form.userRole ?? 'Employee'}
             onChange={(e) => update('userRole', e.target.value as NewEmployee['userRole'])}
             disabled={!mayWrite}
@@ -189,7 +189,7 @@ export default function EmployeeFormPage() {
         </label>
         <label className="form-field">
           <span>Primary work location</span>
-          <select
+          <select name="primaryWorkLocationId"
             value={form.primaryWorkLocationId ?? ''}
             onChange={(e) =>
               update(
@@ -209,7 +209,7 @@ export default function EmployeeFormPage() {
         </label>
         <label className="form-field">
           <span>Hire date</span>
-          <input
+          <input name="hireDate"
             type="date"
             value={form.hireDate ?? ''}
             onChange={(e) => update('hireDate', e.target.value || null)}
@@ -218,7 +218,7 @@ export default function EmployeeFormPage() {
         </label>
         <label className="form-field">
           <span>Employment status</span>
-          <select
+          <select name="employmentStatus"
             value={form.employmentStatus ?? ''}
             onChange={(e) => update('employmentStatus', e.target.value)}
             disabled={!mayWrite}
@@ -230,7 +230,7 @@ export default function EmployeeFormPage() {
         </label>
         <label className="form-field">
           <span>{isNew ? 'Password' : 'New password (leave blank to keep)'}</span>
-          <input
+          <input name="loginPassword"
             type="password"
             value={form.loginPassword ?? ''}
             onChange={(e) => update('loginPassword', e.target.value)}
