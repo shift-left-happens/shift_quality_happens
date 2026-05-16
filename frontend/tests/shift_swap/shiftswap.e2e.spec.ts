@@ -66,12 +66,30 @@ async function seedAuthState(page: Page, session: LoginResponse) {
   );
 }
 
-async function ensureBrowserAuthenticated(page: Page, email: string, password: string) {
+async function ensureBrowserAuthenticated(page: Page, session: LoginResponse) {
   await page.goto('/');
   if (/\/login/.test(page.url())) {
-    await page.locator('input[type="email"]').fill(email);
-    await page.locator('input[type="password"]').fill(password);
-    await page.locator('button[type="submit"]').click();
+    // Firefox in CI can occasionally miss early init-script storage writes.
+    // Re-seed on-origin and reload to make auth state deterministic.
+    await page.evaluate(
+      ({ token, user }) => {
+        localStorage.setItem('shift_happens_token', token);
+        localStorage.setItem('shift_happens_user', JSON.stringify(user));
+      },
+      {
+        token: session.token,
+        user: {
+          employeeId: session.employeeId,
+          employeeNumber: session.employeeNumber,
+          firstName: session.firstName,
+          lastName: session.lastName,
+          email: session.email,
+          roleId: session.roleId,
+          roleName: session.roleName,
+        },
+      },
+    );
+    await page.goto('/');
   }
   await expect(page).not.toHaveURL(/\/login/);
 }
@@ -244,7 +262,7 @@ test.describe('Shift Swap E2E', () => {
 
   test('E2E-SS-01 — browser auth session can create and cancel a swap', async ({ page }) => {
     await seedAuthState(page, ownerSession);
-    await ensureBrowserAuthenticated(page, ownerSession.email, TEST_EMPLOYEE_PASSWORD);
+    await ensureBrowserAuthenticated(page, ownerSession);
 
     const createResponse = await page.request.post(`${API_URL}/shiftswaps`, {
       headers: authHeaders(ownerSession.token),
