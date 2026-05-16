@@ -23,6 +23,7 @@ type LoginResponse = {
   firstName: string;
   lastName: string;
   email: string;
+  roleId: number;
   roleName: string;
 };
 
@@ -43,10 +44,10 @@ async function login(
 }
 
 async function seedAuthState(page: Page, session: LoginResponse) {
-  // Seed on an actual app-origin page to keep behavior deterministic in CI browsers.
-  await page.goto('/login');
-  await page.evaluate(
+  await page.addInitScript(
     ({ token, user }) => {
+      localStorage.removeItem('shift_happens_token');
+      localStorage.removeItem('shift_happens_user');
       localStorage.setItem('shift_happens_token', token);
       localStorage.setItem('shift_happens_user', JSON.stringify(user));
     },
@@ -58,7 +59,8 @@ async function seedAuthState(page: Page, session: LoginResponse) {
         firstName: session.firstName,
         lastName: session.lastName,
         email: session.email,
-        role: session.roleName,
+        roleId: session.roleId,
+        roleName: session.roleName,
       },
     },
   );
