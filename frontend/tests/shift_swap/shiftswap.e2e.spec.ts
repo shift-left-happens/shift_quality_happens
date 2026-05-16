@@ -66,6 +66,16 @@ async function seedAuthState(page: Page, session: LoginResponse) {
   );
 }
 
+async function ensureBrowserAuthenticated(page: Page, email: string, password: string) {
+  await page.goto('/');
+  if (/\/login/.test(page.url())) {
+    await page.locator('input[type="email"]').fill(email);
+    await page.locator('input[type="password"]').fill(password);
+    await page.locator('button[type="submit"]').click();
+  }
+  await expect(page).not.toHaveURL(/\/login/);
+}
+
 function futureShiftWindow(daysFromNow: number) {
   const start = new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000);
   const end = new Date(start.getTime() + 8 * 60 * 60 * 1000);
@@ -234,9 +244,7 @@ test.describe('Shift Swap E2E', () => {
 
   test('E2E-SS-01 — browser auth session can create and cancel a swap', async ({ page }) => {
     await seedAuthState(page, ownerSession);
-
-    await page.goto('/');
-    await expect(page).not.toHaveURL(/\/login/);
+    await ensureBrowserAuthenticated(page, ownerSession.email, TEST_EMPLOYEE_PASSWORD);
 
     const createResponse = await page.request.post(`${API_URL}/shiftswaps`, {
       headers: authHeaders(ownerSession.token),
