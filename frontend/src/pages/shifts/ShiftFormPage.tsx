@@ -13,7 +13,7 @@ import { ApiError } from '../../api/types';
 import { useAuth } from '../../auth/useAuth';
 import { canWrite } from '../../auth/roles';
 
-const STATUSES = ['SCHEDULED', 'COMPLETED', 'CANCELLED'] as const;
+const STATUSES = ['Assigned', 'Pending Swap', 'Cancelled', 'Open', 'Completed'] as const;
 
 function buildEmpty(dateISO: string | null): NewShift {
   const baseDate = dateISO ?? new Date().toISOString().slice(0, 10);

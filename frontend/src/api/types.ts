@@ -19,8 +19,10 @@ export interface Employee {
   firstName: string | null;
   lastName: string | null;
   email: string;
-  fkUserRoleId: number;
+  userRole?: 'Administrator' | 'Manager' | 'Employee' | null;
+  fkUserRoleId?: number;
   phoneNumber: string | null;
+  birthDate: string | null;
   hireDate: string | null;
   employmentStatus: string | null;
   primaryWorkLocationId: number | null;

@@ -18,13 +18,7 @@ import { useAuth } from '../../auth/useAuth';
 import { canWrite } from '../../auth/roles';
 
 const STATUSES = [
-  'ASSIGNED',
-  'CONFIRMED',
-  'CHECKED_IN',
-  'CHECKED_OUT',
-  'COMPLETED',
-  'CANCELLED',
-  'NO_SHOW',
+  'Cancelled', 'Assigned', 'Completed'
 ] as const;
 
 function nowLocalDatetime(): string {
@@ -40,7 +34,7 @@ function buildEmpty(): NewShiftAssignment {
   return {
     shiftId: 0,
     employeeId: 0,
-    assignmentStatus: 'ASSIGNED',
+    assignmentStatus: 'Assigned',
     assignedDatetime: `${nowLocalDatetime()}:00`,
     checkInDatetime: null,
     checkOutDatetime: null,
