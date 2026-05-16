@@ -43,7 +43,9 @@ async function login(
 }
 
 async function seedAuthState(page: Page, session: LoginResponse) {
-  await page.addInitScript(
+  // Seed on an actual app-origin page to keep behavior deterministic in CI browsers.
+  await page.goto('/login');
+  await page.evaluate(
     ({ token, user }) => {
       localStorage.setItem('shift_happens_token', token);
       localStorage.setItem('shift_happens_user', JSON.stringify(user));

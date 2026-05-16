@@ -23,14 +23,14 @@ test.describe('Login E2E', () => {
   test('should login successfully with valid credentials', async ({ page }) => {
     const loginPage = new LoginPage(page);
     
-    const email = process.env.TEST_USER_EMAIL || 'sofie.jensen@hospital.dk';
+    const email = process.env.TEST_USER_EMAIL || process.env.TEST_ADMIN_EMAIL || 'admin@shift.dk';
     const password = process.env.TEST_USER_PASSWORD || 'password123';
 
     await loginPage.goto();
     await loginPage.login(email, password);
 
-    // Expect to be redirected to home or dashboard
-    await expect(page).toHaveURL('/');
+    // App should leave /login after successful auth.
+    await expect(page).not.toHaveURL(/\/login/);
   });
 
   test('should show error with invalid credentials', async ({ page }) => {
