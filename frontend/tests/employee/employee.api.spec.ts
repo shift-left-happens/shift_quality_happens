@@ -1,10 +1,17 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Employee API', () => {
+  test.describe.configure({ mode: 'serial' });
+
   const api_url = process.env.API_URL || 'http://localhost:8080';
   const email = process.env.TEST_ADMIN_EMAIL || 'admin@shift.dk';
   const password = process.env.TEST_USER_PASSWORD || 'password123';
   let adminToken: string;
+
+  const getResponseDetails = async (response: { status: () => number; text: () => Promise<string> }) => {
+    const text = await response.text();
+    return `status=${response.status()} body=${text || '<empty>'}`;
+  };
 
   const buildEmployeePayload = (overrides: Record<string, unknown> = {}) => {
     const now = Date.now();
@@ -33,7 +40,7 @@ test.describe('Employee API', () => {
         password: password
       }
     });
-    expect(loginResponse.status(), `Expected successful login for ${email}`).toBe(200);
+    expect(loginResponse.status(), `Expected successful login for ${email}. ${await getResponseDetails(loginResponse)}`).toBe(200);
     const body = await loginResponse.json();
     expect(['Administrator', 'Manager']).toContain(body.roleName);
     adminToken = body.token;
@@ -146,7 +153,7 @@ test.describe('Employee API', () => {
       headers: authHeader(),
       data: buildEmployeePayload({ email: sharedEmail })
     });
-    expect(firstCreate.status()).toBe(201);
+    expect(firstCreate.status(), await getResponseDetails(firstCreate)).toBe(201);
     const firstCreatedEmployee = await firstCreate.json();
 
     const duplicate = await request.post(`${api_url}/employees`, {

@@ -23,7 +23,7 @@ function buildEmpty(dateISO: string | null): NewShift {
     shiftName: '',
     startDatetime: `${baseDate}T09:00:00`,
     endDatetime: `${baseDate}T17:00:00`,
-    shiftStatus: 'SCHEDULED',
+    shiftStatus: 'Open',
   };
 }
 
