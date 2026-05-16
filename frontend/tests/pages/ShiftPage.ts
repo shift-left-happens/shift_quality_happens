@@ -33,13 +33,11 @@ export class ShiftPage {
     end: string;
   }) {
     await this.newButton.click();
+    await this.departmentSelect.waitFor({ state: 'visible' });
+    await this.locationSelect.waitFor({ state: 'visible' });
     await this.shiftNameInput.fill(data.shiftName);
-    if (data.departmentId) {
-        await this.departmentSelect.selectOption({ index: 1 }); // Just pick the first available for now if not specified or try to match
-    }
-    if (data.locationId) {
-        await this.locationSelect.selectOption({ index: 1 });
-    }
+    await this.departmentSelect.selectOption({ index: 1 });
+    await this.locationSelect.selectOption({ index: 1 });
     await this.startInput.fill(data.start);
     await this.endInput.fill(data.end);
     await this.submitButton.click();

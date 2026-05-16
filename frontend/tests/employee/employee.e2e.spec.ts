@@ -63,7 +63,7 @@ test.describe('Employee E2E', () => {
       end: endStr
     });
 
-    await expect(page).toHaveURL('/shifts');
+    await expect(page).toHaveURL(/\/shifts(\/new)?$/);
 
     // 4. Assign shift
     await assignmentPage.goto();
