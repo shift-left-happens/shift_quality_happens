@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import dk.ek.shift_happens.employee.Employee;
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Unit tests for ShiftAssignmentService validation, derived from
@@ -143,6 +145,104 @@ class ShiftAssignmentServiceTest {
         List<ShiftAssignment> current = new ArrayList<>(shiftAssignmentRepository.findByEmployeeId(EMPLOYEE_ID));
         current.add(a);
         when(shiftAssignmentRepository.findByEmployeeId(EMPLOYEE_ID)).thenReturn(current);
+    }
+
+    // -----------------------------------------------------------------------
+    // CRUD coverage for ShiftAssignmentService
+    // -----------------------------------------------------------------------
+    @Nested
+    class CrudOperations {
+
+        @Test
+        void should_create_assignment_and_apply_defaults() {
+            ShiftAssignment create = candidateAssignment();
+            create.setShiftAssignmentId(999);
+            create.setAssignmentStatus(null);
+            create.setAssignedDatetime(null);
+
+            ShiftAssignment saved = service.assign(create);
+
+            assertThat(saved.getShiftAssignmentId()).isNull();
+            assertThat(saved.getAssignmentStatus()).isEqualTo(ShiftAssignmentService.STATUS_ASSIGNED);
+            assertThat(saved.getAssignedDatetime()).isNotNull();
+        }
+
+        @Test
+        void should_read_all_assignments() {
+            ShiftAssignment a1 = new ShiftAssignment();
+            a1.setShiftAssignmentId(1);
+            ShiftAssignment a2 = new ShiftAssignment();
+            a2.setShiftAssignmentId(2);
+            when(shiftAssignmentRepository.findAll()).thenReturn(List.of(a1, a2));
+
+            List<ShiftAssignment> result = service.findAll();
+
+            assertThat(result).hasSize(2);
+            assertThat(result).extracting(ShiftAssignment::getShiftAssignmentId).containsExactly(1, 2);
+        }
+
+        @Test
+        void should_read_assignments_by_employee_id() {
+            ShiftAssignment a1 = new ShiftAssignment();
+            a1.setEmployeeId(EMPLOYEE_ID);
+            when(shiftAssignmentRepository.findByEmployeeId(EMPLOYEE_ID)).thenReturn(List.of(a1));
+
+            List<ShiftAssignment> result = service.findByEmployeeId(EMPLOYEE_ID);
+
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getEmployeeId()).isEqualTo(EMPLOYEE_ID);
+        }
+
+        @Test
+        void should_read_assignment_by_id() {
+            ShiftAssignment existing = candidateAssignment();
+            existing.setShiftAssignmentId(77);
+            when(shiftAssignmentRepository.findById(77)).thenReturn(Optional.of(existing));
+
+            ShiftAssignment result = service.findById(77);
+
+            assertThat(result.getShiftAssignmentId()).isEqualTo(77);
+        }
+
+        @Test
+        void should_throw_not_found_when_assignment_id_missing() {
+            when(shiftAssignmentRepository.findById(404)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.findById(404))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("404 NOT_FOUND")
+                    .hasMessageContaining("Assignment not found with id 404");
+        }
+
+        @Test
+        void should_update_assignment_status_and_check_times() {
+            ShiftAssignment existing = candidateAssignment();
+            existing.setShiftAssignmentId(88);
+            existing.setAssignmentStatus(ShiftAssignmentService.STATUS_ASSIGNED);
+            when(shiftAssignmentRepository.findById(88)).thenReturn(Optional.of(existing));
+
+            ShiftAssignment updates = new ShiftAssignment();
+            updates.setAssignmentStatus(ShiftAssignmentService.STATUS_COMPLETED);
+            updates.setCheckInDatetime(LocalDateTime.of(2026, 5, 12, 9, 0));
+            updates.setCheckOutDatetime(LocalDateTime.of(2026, 5, 12, 15, 0));
+
+            ShiftAssignment result = service.update(88, updates);
+
+            assertThat(result.getAssignmentStatus()).isEqualTo(ShiftAssignmentService.STATUS_COMPLETED);
+            assertThat(result.getCheckInDatetime()).isEqualTo(LocalDateTime.of(2026, 5, 12, 9, 0));
+            assertThat(result.getCheckOutDatetime()).isEqualTo(LocalDateTime.of(2026, 5, 12, 15, 0));
+        }
+
+        @Test
+        void should_delete_assignment() {
+            ShiftAssignment existing = candidateAssignment();
+            existing.setShiftAssignmentId(99);
+            when(shiftAssignmentRepository.findById(99)).thenReturn(Optional.of(existing));
+
+            service.delete(99);
+
+            verify(shiftAssignmentRepository).delete(existing);
+        }
     }
 
     // -----------------------------------------------------------------------

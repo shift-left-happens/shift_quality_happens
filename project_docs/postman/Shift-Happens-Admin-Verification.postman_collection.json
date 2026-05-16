@@ -9,6 +9,7 @@
     { "key": "adminEmail", "value": "admin@shift.dk" },
     { "key": "adminPassword", "value": "password123" },
     { "key": "token", "value": "" },
+    { "key": "createdShiftId", "value": "" },
     { "key": "createdEmployeeEmail", "value": "" },
     { "key": "createdEmployeeId", "value": "" }
   ],
@@ -135,14 +136,87 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"departmentId\": 14,\n  \"workLocationId\": 1,\n  \"shiftName\": \"Shift Postman {{$timestamp}}\",\n  \"startDatetime\": \"2026-05-20T08:00:00\",\n  \"endDatetime\": \"2026-05-20T16:00:00\",\n  \"shiftStatus\": \"PLANNED\"\n}"
+          "raw": "{\n  \"departmentId\": 14,\n  \"workLocationId\": 1,\n  \"shiftName\": \"Shift Postman {{$timestamp}}\",\n  \"startDatetime\": \"2026-05-20T08:00:00\",\n  \"endDatetime\": \"2026-05-20T16:00:00\",\n  \"shiftStatus\": \"Open\"\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/shifts",
           "host": ["{{baseUrl}}"],
           "path": ["shifts"]
         }
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Create shift returns 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "const body = pm.response.json();",
+              "if (body && body.shiftId) {",
+              "  pm.collectionVariables.set('createdShiftId', String(body.shiftId));",
+              "}",
+              "console.log('Created shiftId:', body.shiftId);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5) Delete Shift (by createdShiftId)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/shifts/{{createdShiftId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["shifts", "{{createdShiftId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Delete shift returns 204 or 404', function () {",
+              "  pm.expect([204, 404]).to.include(pm.response.code);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6) Delete Employee (by createdEmployeeId)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/employees/{{createdEmployeeId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["employees", "{{createdEmployeeId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Delete employee returns 204 or 404', function () {",
+              "  pm.expect([204, 404]).to.include(pm.response.code);",
+              "});"
+            ]
+          }
+        }
+      ]
     }
   ]
 }

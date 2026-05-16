@@ -1,6 +1,7 @@
 package dk.ek.shift_happens.auth;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -108,6 +110,21 @@ public class SecurityConfig {
                         // All other requests (GETs): any authenticated user
                         .anyRequest()
                         .authenticated())
+
+                // Return explicit JSON for auth failures so API clients/tests can see why access failed.
+                .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.getWriter()
+                                    .write("{\"error\":\"UNAUTHORIZED\",\"message\":\"Authentication is required\"}");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.getWriter()
+                                    .write(
+                                            "{\"error\":\"FORBIDDEN\",\"message\":\"You do not have permission for this operation\"}");
+                        }))
 
                 // Use our custom auth provider (BCrypt + pepper verification)
                 .authenticationProvider(authenticationProvider())
