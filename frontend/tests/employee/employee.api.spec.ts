@@ -18,7 +18,7 @@ test.describe('Employee API', () => {
 
   test.beforeAll(async ({ request }) => {
     const loginResponse = await loginAndGetToken(request, email, password);
-    expect(['Administrator', 'Manager']).toContain(loginResponse.roleName);
+    expect('Administrator').toBe(loginResponse.roleName);
     adminToken = loginResponse.token;
     expect(adminToken).toBeTruthy();
   });

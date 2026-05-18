@@ -29,10 +29,7 @@ test.describe.serial('Job Role API', () => {
   test.beforeAll(async ({ request }) => {
     const adminLogin = await loginAndGetToken(request, ADMIN_EMAIL);
     adminToken = adminLogin.token;
-    expect(
-      ['Administrator', 'Manager'],
-      `User ${ADMIN_EMAIL} must be Administrator or Manager to manage job roles`,
-    ).toContain(adminLogin.roleName ?? '');
+    expect(adminLogin.roleName).toBe('Administrator');
 
     const suffix = Date.now().toString(36);
     const createManagerResponse = await request.post(`${API_URL}/employees`, {
@@ -97,10 +94,9 @@ test.describe.serial('Job Role API', () => {
       return;
     }
 
-    const deleteIfExists = async (url: string) => {
+    const deleteIfExists = async (url: string, http_code: number = 204) => {
       const res = await request.delete(url, { headers: authHeaders(adminToken) });
-      // 200/204 = deleted, 404 = already gone, 400 = dependency/permission during teardown.
-      expect([200, 204, 400, 404]).toContain(res.status());
+      expect(res.status()).toBe(http_code);
     };
 
     // Delete any job roles that weren't cleaned up by individual tests
@@ -108,7 +104,7 @@ test.describe.serial('Job Role API', () => {
       await deleteIfExists(`${API_URL}/shiftrequiredjobroles/${linkId}`);
     }
     for (const linkId of Array.from(employeeJobRolesToCleanup).reverse()) {
-      await deleteIfExists(`${API_URL}/employeejobroles/${linkId}`);
+      await deleteIfExists(`${API_URL}/employeejobroles/${linkId}`, 200);
     }
     for (const shiftId of Array.from(shiftsToCleanup).reverse()) {
       await deleteIfExists(`${API_URL}/shifts/${shiftId}`);
@@ -121,14 +117,14 @@ test.describe.serial('Job Role API', () => {
       const deleteManagerRes = await request.delete(`${API_URL}/employees/${managerEmployeeId}`, {
         headers: authHeaders(adminToken),
       });
-      expect([204, 404]).toContain(deleteManagerRes.status());
+      expect(deleteManagerRes.status()).toBe(204);
     }
 
     if (employeeEmployeeId) {
       const deleteEmployeeRes = await request.delete(`${API_URL}/employees/${employeeEmployeeId}`, {
         headers: authHeaders(adminToken),
       });
-      expect([204, 404]).toContain(deleteEmployeeRes.status());
+      expect(deleteEmployeeRes.status()).toBe(204);
     }
   });
 
@@ -234,7 +230,7 @@ test.describe.serial('Job Role API', () => {
       const getResponse = await request.get(`${API_URL}/jobroles/${createdJobRoleId}`, {
         headers: authHeaders(adminToken),
       });
-      expect([404, 500]).toContain(getResponse.status());
+      expect(getResponse.status()).toBe(404);
     });
 
     test('BR-API-JR-06B — manager can create, update and delete a job role', async ({ request }) => {
@@ -283,7 +279,7 @@ test.describe.serial('Job Role API', () => {
       headers: authHeaders(adminToken),
     });
 
-    expect([404]).toContain(response.status());
+    expect(response.status()).toBe(404);
   });
 
   test('BR-API-JR-07 — delete non-existent job role returns 404', async ({ request }) => {
@@ -291,7 +287,7 @@ test.describe.serial('Job Role API', () => {
       headers: authHeaders(adminToken),
     });
 
-    expect([404]).toContain(response.status());
+    expect(response.status()).toBe(404);
   });
 
   // ── BR-API-JR-08 — employee cannot write job roles ──────────────────────

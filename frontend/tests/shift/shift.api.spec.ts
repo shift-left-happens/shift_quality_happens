@@ -58,10 +58,7 @@ test.describe.serial('Shift API', () => {
   test.beforeAll(async ({ request }) => {
     const adminLogin = await loginAndGetToken(request, ADMIN_EMAIL);
     adminToken = adminLogin.token;
-    expect(
-      ['Administrator', 'Manager'],
-      `${ADMIN_EMAIL} must be Administrator or Manager`,
-    ).toContain(adminLogin.roleName ?? '');
+    expect(adminLogin.roleName).toBe('Administrator');
 
     // Pick real department + work location so reference validation passes.
     const deptRes = await request.get(`${API_URL}/departments`, {
@@ -106,12 +103,13 @@ test.describe.serial('Shift API', () => {
     if (!adminToken) return;
     const deleteIfExists = async (url: string) => {
       const res = await request.delete(url, { headers: authHeaders(adminToken) });
-      // 204 = deleted, 404 = already gone, 400 = dependency during teardown.
-      expect([204, 400, 404]).toContain(res.status());
+      expect(res.status()).toBe(204);
     };
+    //Delete all shifts in reverse order, so that the first shift is deleted first.
     for (const id of [...shiftIds].reverse()) {
       await deleteIfExists(`${API_URL}/shifts/${id}`);
     }
+    //Delete the test employee, if it exists.
     if (employeeId) {
       await deleteIfExists(`${API_URL}/employees/${employeeId}`);
     }

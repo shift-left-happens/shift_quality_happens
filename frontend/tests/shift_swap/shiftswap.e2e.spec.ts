@@ -32,7 +32,7 @@ test.describe('Shift Swap E2E', () => {
   test.beforeAll(async ({ request }) => {
     const adminLogin = await login(request, ADMIN_EMAIL);
     adminToken = adminLogin.token;
-    expect(['Administrator', 'Manager']).toContain(adminLogin.roleName);
+    expect(adminLogin.roleName).toBe('Administrator');
 
     const suffix = Date.now().toString(36);
     const fmt = (d: Date) => d.toISOString().slice(0, 19);
@@ -149,15 +149,15 @@ test.describe('Shift Swap E2E', () => {
     const deleteSwapIfExists = async (swapId: number) => {
       // Pending swaps often must be cancelled before delete. Non-pending may return 400 here.
       const cancelRes = await adminPostWithRetry(`${API_URL}/shiftswaps/${swapId}/cancel`);
-      expect([200, 400, 404], `Cancel swap ${swapId} during teardown`).toContain(cancelRes.status());
+      // expect(cancelRes.status()).toBe(200);
 
       const deleteRes = await adminDeleteWithRetry(`${API_URL}/shiftswaps/${swapId}`);
-      expect([204, 404], `Delete swap ${swapId} during teardown`).toContain(deleteRes.status());
+      expect(deleteRes.status()).toBe(204);
     };
 
     const deleteIfExists = async (url: string) => {
       const res = await adminDeleteWithRetry(url);
-      expect([204, 401, 404], `Delete ${url} during teardown`).toContain(res.status());
+      expect(res.status()).toBe(204);
     };
 
     for (const swapId of Array.from(swapsToCleanup).reverse()) {
