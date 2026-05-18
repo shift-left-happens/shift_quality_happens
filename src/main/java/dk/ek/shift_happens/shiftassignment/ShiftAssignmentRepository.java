@@ -9,6 +9,4 @@ public interface ShiftAssignmentRepository extends JpaRepository<ShiftAssignment
     List<ShiftAssignment> findAll();
 
     List<ShiftAssignment> findByEmployeeId(Integer employeeId);
-
-    List<ShiftAssignment> findByShiftId(Integer shiftId);
 }

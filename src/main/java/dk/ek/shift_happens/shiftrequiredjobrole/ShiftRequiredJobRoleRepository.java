@@ -12,6 +12,4 @@ public interface ShiftRequiredJobRoleRepository extends JpaRepository<ShiftRequi
     List<ShiftRequiredJobRole> findByShiftId(Integer shiftId);
 
     Optional<ShiftRequiredJobRole> findByShiftIdAndJobRoleId(Integer shiftId, Integer jobRoleId);
-
-    boolean existsByShiftIdAndJobRoleId(Integer shiftId, Integer jobRoleId);
 }
