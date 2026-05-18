@@ -10,6 +10,4 @@ public interface JobRoleRepository extends JpaRepository<JobRole, Integer> {
     List<JobRole> findAll();
 
     Optional<JobRole> findByRoleNameIgnoreCase(String roleName);
-
-    boolean existsByRoleNameIgnoreCase(String roleName);
 }

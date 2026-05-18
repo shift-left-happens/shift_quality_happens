@@ -24,10 +24,6 @@ public class ShiftRequiredJobRoleService {
         return shiftRequiredJobRoleRepository.findAll();
     }
 
-    public List<ShiftRequiredJobRole> findByShiftId(Integer shiftId) {
-        return shiftRequiredJobRoleRepository.findByShiftId(shiftId);
-    }
-
     public ShiftRequiredJobRole findById(Integer id) {
         return shiftRequiredJobRoleRepository
                 .findById(id)

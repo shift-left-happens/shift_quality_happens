@@ -30,11 +30,6 @@ export interface Employee {
 
 export type NewEmployee = Omit<Employee, 'employeeId'> & { loginPassword?: string };
 
-export interface UserRole {
-  userRoleId: number;
-  userRoleName: string;
-}
-
 export interface Department {
   departmentId: number;
   departmentName: string | null;

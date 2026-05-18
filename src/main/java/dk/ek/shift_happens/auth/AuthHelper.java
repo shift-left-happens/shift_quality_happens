@@ -22,18 +22,6 @@ public class AuthHelper {
         return hasRole(auth, "ROLE_EMPLOYEE");
     }
 
-    public boolean isManager(Authentication auth) {
-        return hasRole(auth, "ROLE_MANAGER");
-    }
-
-    public boolean isAdministrator(Authentication auth) {
-        return hasRole(auth, "ROLE_ADMINISTRATOR");
-    }
-
-    public boolean isManagerOrAdmin(Authentication auth) {
-        return isManager(auth) || isAdministrator(auth);
-    }
-
     public Integer currentEmployeeId(Authentication auth) {
         return getEmployeeIdFromEmail(auth.getName());
     }
