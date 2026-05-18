@@ -80,9 +80,7 @@ class HolidayApiClientTest {
         assertThat(result).hasSize(2);
         assertThat(result.getFirst())
                 .isEqualTo(new Holiday(LocalDate.of(2026, 6, 5), "Grundlovsdag", "Constitution Day", "DK", true));
-        assertThat(result)
-                .extracting(Holiday::name)
-                .containsExactly("Constitution Day", "Christmas Day");
+        assertThat(result).extracting(Holiday::name).containsExactly("Constitution Day", "Christmas Day");
     }
 
     @Test
