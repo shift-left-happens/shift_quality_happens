@@ -34,6 +34,7 @@ build/
 
 ### Environment ###
 .env
+.env.test
 
 ### Backups ###
 backups/
@@ -44,3 +45,7 @@ frontend/test-results
 
 ### Postman ###
 project_docs/postman/
+
+### Performance Reports ###
+performance/reports/*.html
+performance/reports/*.json
