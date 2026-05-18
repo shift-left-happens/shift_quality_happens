@@ -99,6 +99,14 @@ export interface LeaveRequest {
 
 export type NewLeaveRequest = Omit<LeaveRequest, 'leaveRequestId'>;
 
+export interface Holiday {
+  date: string; // ISO date (YYYY-MM-DD)
+  localName: string | null;
+  name: string | null;
+  countryCode: string | null;
+  global: boolean;
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,

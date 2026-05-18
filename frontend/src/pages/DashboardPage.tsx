@@ -8,6 +8,7 @@ import { listShiftAssignments } from '../api/shiftAssignments';
 import { listLeaveRequests } from '../api/leaveRequests';
 import type { Shift, ShiftAssignment } from '../api/types';
 import { canWrite } from '../auth/roles';
+import UpcomingHolidaysWidget from '../components/UpcomingHolidaysWidget';
 
 interface DashboardData {
   employees: number | null;
@@ -217,6 +218,8 @@ export default function DashboardPage() {
           )}
         </section>
       )}
+
+      <UpcomingHolidaysWidget />
 
       <section className="page-section">
         <h2 className="page-section-title">Quick actions</h2>
