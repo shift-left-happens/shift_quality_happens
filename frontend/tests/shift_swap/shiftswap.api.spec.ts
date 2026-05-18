@@ -400,6 +400,7 @@ test.describe.serial('Shift Swap API', () => {
     });
     expect(secondCancel.status()).toBe(400);
   });
+
   test('BR-API-SS-07 — non-owner cannot create swap for another employee assignment', async ({ request }) => {
     const response = await request.post(`${API_URL}/shiftswaps`, {
       headers: authHeaders(empNonOwnerToken),
@@ -411,8 +412,8 @@ test.describe.serial('Shift Swap API', () => {
         reason: 'Non-owner create attempt',
       },
     });
-
     expect([403]).toContain(response.status());
+    
   });
   test('BR-API-SS-08 — creating swap with non-existing assignment returns 400 or 404', async ({ request }) => {
     const response = await request.post(`${API_URL}/shiftswaps`, {
