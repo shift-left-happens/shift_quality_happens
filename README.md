@@ -87,7 +87,7 @@ If you have `make` installed, these wrap the docker/maven commands above:
 All database access goes through Spring Data JPA repositories (`JpaRepository`) and named JPQL parameters. Queries are never built by string concatenation — the framework compiles them into parameterized prepared statements, so user input cannot alter query structure.
 
 ### Database Users & Privileges
-The application connects as `app_user`, a least-privilege account defined in [`src/main/resources/db/mysql/migrations/v6_users_privileges.sql`](src/main/resources/db/mysql/migrations/v6_users_privileges.sql). It holds:
+The application connects as `app_user`, a least-privilege account defined in [`docker/init/09-create-app-user.sh`](docker/init/09-create-app-user.sh). It holds:
 - **`SELECT` only** on `audit_log` (no writes)
 - **`SELECT, INSERT` only** on `leave_ledger` (double-entry ledger, no updates/deletes)
 - **Full CRUD** on all other operational tables
