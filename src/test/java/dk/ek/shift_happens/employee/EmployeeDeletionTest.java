@@ -36,25 +36,33 @@ class EmployeeDeletionTest {
     private static final int EMPLOYEE_ID = 42;
     private static final Clock FIXED_CLOCK = Clock.fixed(Instant.parse("2026-05-12T12:00:00Z"), ZoneOffset.UTC);
 
-    @Mock private EmployeeRepository repo;
-    @Mock private PasswordEncoder passwordEncoder;
-    @Mock private ShiftAssignmentRepository shiftAssignmentRepository;
-    @Mock private ShiftRepository shiftRepository;
+    @Mock
+    private EmployeeRepository repo;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private ShiftAssignmentRepository shiftAssignmentRepository;
+
+    @Mock
+    private ShiftRepository shiftRepository;
 
     private EmployeeService service;
 
     @BeforeEach
     void setUp() {
         EmployeeValidator validator = new EmployeeValidator(FIXED_CLOCK);
-        service = new EmployeeService(repo, passwordEncoder, validator, shiftAssignmentRepository, shiftRepository, FIXED_CLOCK);
-        
+        service = new EmployeeService(
+                repo, passwordEncoder, validator, shiftAssignmentRepository, shiftRepository, FIXED_CLOCK);
+
         Employee existing = new Employee();
         existing.setEmployeeId(EMPLOYEE_ID);
         existing.setFirstName("Jensen");
         existing.setLastName("Jensen");
         existing.setEmail("a@a.dk");
         existing.setBirthDate(LocalDate.of(1990, 1, 1));
-        
+
         when(repo.findById(EMPLOYEE_ID)).thenReturn(Optional.of(existing));
     }
 

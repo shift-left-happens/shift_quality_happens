@@ -14,10 +14,10 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,17 +32,25 @@ class EmployeeAgeTest {
     private static final LocalDate TODAY = LocalDate.of(2026, 5, 12);
     private static final Clock FIXED_CLOCK = Clock.fixed(Instant.parse("2026-05-12T12:00:00Z"), ZoneOffset.UTC);
 
-    @Mock private EmployeeRepository repo;
-    @Mock private PasswordEncoder passwordEncoder;
-    @Mock private ShiftAssignmentRepository shiftAssignmentRepository;
-    @Mock private ShiftRepository shiftRepository;
+    @Mock
+    private EmployeeRepository repo;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private ShiftAssignmentRepository shiftAssignmentRepository;
+
+    @Mock
+    private ShiftRepository shiftRepository;
 
     private EmployeeService service;
 
     @BeforeEach
     void setUp() {
         EmployeeValidator validator = new EmployeeValidator(FIXED_CLOCK);
-        service = new EmployeeService(repo, passwordEncoder, validator, shiftAssignmentRepository, shiftRepository, FIXED_CLOCK);
+        service = new EmployeeService(
+                repo, passwordEncoder, validator, shiftAssignmentRepository, shiftRepository, FIXED_CLOCK);
         lenient().when(passwordEncoder.encode(anyString())).thenReturn("HASHED");
         lenient().when(repo.save(any(Employee.class))).thenAnswer(inv -> inv.getArgument(0));
     }
@@ -59,16 +67,7 @@ class EmployeeAgeTest {
     }
 
     @ParameterizedTest(name = "Should validate age: {0} years old -> {1}")
-    @CsvSource({
-        "14, false",
-        "15, false",
-        "16, true",
-        "17, true",
-        "99, true",
-        "100, true",
-        "101, false",
-        "102, false"
-    })
+    @CsvSource({"14, false", "15, false", "16, true", "17, true", "99, true", "100, true", "101, false", "102, false"})
     void should_validate_age_boundaries(int age, boolean expectedValid) {
         // §"Age & Birth Date" 3-point BVA for age
         Employee e = valid();
@@ -89,15 +88,7 @@ class EmployeeAgeTest {
     }
 
     @ParameterizedTest(name = "Should validate birth year: {0} -> {1}")
-    @CsvSource({
-        "1924, false",
-        "1925, false",
-        "1926, true",
-        "1927, true",
-        "2009, true",
-        "2010, true",
-        "2011, false"
-    })
+    @CsvSource({"1924, false", "1925, false", "1926, true", "1927, true", "2009, true", "2010, true", "2011, false"})
     void should_validate_birth_year_boundaries(int year, boolean expectedValid) {
         // §"Age & Birth Date" 3-point BVA for birth year
         // Use Jan 1st to avoid birthday timing issues

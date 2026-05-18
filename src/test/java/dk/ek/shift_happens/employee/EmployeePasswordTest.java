@@ -15,10 +15,10 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,17 +32,25 @@ class EmployeePasswordTest {
 
     private static final Clock FIXED_CLOCK = Clock.fixed(Instant.parse("2026-05-12T12:00:00Z"), ZoneOffset.UTC);
 
-    @Mock private EmployeeRepository repo;
-    @Mock private PasswordEncoder passwordEncoder;
-    @Mock private ShiftAssignmentRepository shiftAssignmentRepository;
-    @Mock private ShiftRepository shiftRepository;
+    @Mock
+    private EmployeeRepository repo;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private ShiftAssignmentRepository shiftAssignmentRepository;
+
+    @Mock
+    private ShiftRepository shiftRepository;
 
     private EmployeeService service;
 
     @BeforeEach
     void setUp() {
         EmployeeValidator validator = new EmployeeValidator(FIXED_CLOCK);
-        service = new EmployeeService(repo, passwordEncoder, validator, shiftAssignmentRepository, shiftRepository, FIXED_CLOCK);
+        service = new EmployeeService(
+                repo, passwordEncoder, validator, shiftAssignmentRepository, shiftRepository, FIXED_CLOCK);
         lenient().when(passwordEncoder.encode(anyString())).thenReturn("HASHED");
         lenient().when(repo.save(any(Employee.class))).thenAnswer(inv -> inv.getArgument(0));
     }
@@ -78,14 +86,7 @@ class EmployeePasswordTest {
     }
 
     @ParameterizedTest(name = "Should validate length boundary for password: {0} chars -> {1}")
-    @CsvSource({
-        "7, false",
-        "8, true",
-        "9, true",
-        "63, true",
-        "64, true",
-        "65, false"
-    })
+    @CsvSource({"7, false", "8, true", "9, true", "63, true", "64, true", "65, false"})
     void should_validate_password_length_boundaries(int length, boolean expectedValid) {
         // §"3-Point BVA – Password Length"
         Employee e = valid();

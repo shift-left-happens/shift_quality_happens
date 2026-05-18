@@ -3,7 +3,6 @@ package dk.ek.shift_happens.employee;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 
@@ -14,10 +13,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,17 +30,25 @@ class EmployeeNameTest {
 
     private static final Clock FIXED_CLOCK = Clock.fixed(Instant.parse("2026-05-12T12:00:00Z"), ZoneOffset.UTC);
 
-    @Mock private EmployeeRepository repo;
-    @Mock private PasswordEncoder passwordEncoder;
-    @Mock private ShiftAssignmentRepository shiftAssignmentRepository;
-    @Mock private ShiftRepository shiftRepository;
+    @Mock
+    private EmployeeRepository repo;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private ShiftAssignmentRepository shiftAssignmentRepository;
+
+    @Mock
+    private ShiftRepository shiftRepository;
 
     private EmployeeService service;
 
     @BeforeEach
     void setUp() {
         EmployeeValidator validator = new EmployeeValidator(FIXED_CLOCK);
-        service = new EmployeeService(repo, passwordEncoder, validator, shiftAssignmentRepository, shiftRepository, FIXED_CLOCK);
+        service = new EmployeeService(
+                repo, passwordEncoder, validator, shiftAssignmentRepository, shiftRepository, FIXED_CLOCK);
         lenient().when(passwordEncoder.encode(anyString())).thenReturn("HASHED");
         lenient().when(repo.save(any(Employee.class))).thenAnswer(inv -> inv.getArgument(0));
     }
@@ -77,11 +84,7 @@ class EmployeeNameTest {
     }
 
     @ParameterizedTest(name = "Should validate length boundary for firstName: {0} chars -> {1}")
-    @CsvSource({
-        "1, true",
-        "100, true",
-        "101, false"
-    })
+    @CsvSource({"1, true", "100, true", "101, false"})
     void should_validate_name_length_boundaries(int length, boolean expectedValid) {
         // §1 BVA — name length 1-100 is Valid
         Employee e = valid();

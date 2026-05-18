@@ -140,7 +140,7 @@ public class EmployeeValidator {
             throw new IllegalArgumentException("hireDate is required");
         }
         // Requirement: ISO standard (LocalDate handles this).
-        // Common sense: should not be in the future (though not explicitly requested, 
+        // Common sense: should not be in the future (though not explicitly requested,
         // usually hire date is past or today). But let's stick to "general tests".
     }
 
@@ -148,9 +148,9 @@ public class EmployeeValidator {
         if (status == null || status.trim().isEmpty()) {
             throw new IllegalArgumentException("employment status is required");
         }
-        if (!status.equalsIgnoreCase(STATUS_ACTIVE) &&
-            !status.equalsIgnoreCase(STATUS_INACTIVE) &&
-            !status.equalsIgnoreCase(STATUS_TERMINATED)) {
+        if (!status.equalsIgnoreCase(STATUS_ACTIVE)
+                && !status.equalsIgnoreCase(STATUS_INACTIVE)
+                && !status.equalsIgnoreCase(STATUS_TERMINATED)) {
             throw new IllegalArgumentException("employment status must be ACTIVE, INACTIVE, or TERMINATED");
         }
     }

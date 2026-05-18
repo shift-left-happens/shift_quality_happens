@@ -13,10 +13,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,17 +29,25 @@ class EmployeePhoneTest {
 
     private static final Clock FIXED_CLOCK = Clock.fixed(Instant.parse("2026-05-12T12:00:00Z"), ZoneOffset.UTC);
 
-    @Mock private EmployeeRepository repo;
-    @Mock private PasswordEncoder passwordEncoder;
-    @Mock private ShiftAssignmentRepository shiftAssignmentRepository;
-    @Mock private ShiftRepository shiftRepository;
+    @Mock
+    private EmployeeRepository repo;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private ShiftAssignmentRepository shiftAssignmentRepository;
+
+    @Mock
+    private ShiftRepository shiftRepository;
 
     private EmployeeService service;
 
     @BeforeEach
     void setUp() {
         EmployeeValidator validator = new EmployeeValidator(FIXED_CLOCK);
-        service = new EmployeeService(repo, passwordEncoder, validator, shiftAssignmentRepository, shiftRepository, FIXED_CLOCK);
+        service = new EmployeeService(
+                repo, passwordEncoder, validator, shiftAssignmentRepository, shiftRepository, FIXED_CLOCK);
         lenient().when(passwordEncoder.encode(anyString())).thenReturn("HASHED");
         lenient().when(repo.save(any(Employee.class))).thenAnswer(inv -> inv.getArgument(0));
     }
@@ -83,12 +90,7 @@ class EmployeePhoneTest {
     }
 
     @ParameterizedTest(name = "BVA: local phone number length {0} -> valid={1}")
-    @CsvSource({
-        "3, false",
-        "4, true",
-        "15, true",
-        "16, false"
-    })
+    @CsvSource({"3, false", "4, true", "15, true", "16, false"})
     void should_validate_local_phone_length_bva(int digits, boolean expectedValid) {
         // §"Phone number" BVA Local phone number length 4-15
         Employee e = valid();
@@ -101,11 +103,7 @@ class EmployeePhoneTest {
     }
 
     @ParameterizedTest(name = "BVA: international phone number total digits valid={1}")
-    @CsvSource({
-        "'+998 12345678901', true",
-        "'+998 123456789012', true",
-        "'+998 1234567890123', false"
-    })
+    @CsvSource({"'+998 12345678901', true", "'+998 123456789012', true", "'+998 1234567890123', false"})
     void should_validate_international_phone_total_digits_bva(String phone, boolean expectedValid) {
         // §"Phone number" BVA International number total digits 2-15
         Employee e = valid();
@@ -118,13 +116,7 @@ class EmployeePhoneTest {
     }
 
     @ParameterizedTest(name = "BVA: country code length valid={1}")
-    @CsvSource({
-        "'+ 1234', false",
-        "'+1 1234', true",
-        "'+12 1234', true",
-        "'+998 1234', true",
-        "'+9999 1234', false"
-    })
+    @CsvSource({"'+ 1234', false", "'+1 1234', true", "'+12 1234', true", "'+998 1234', true", "'+9999 1234', false"})
     void should_validate_country_code_length_bva(String phone, boolean expectedValid) {
         // §"Phone number" BVA Country code length 1-3
         Employee e = valid();
@@ -137,12 +129,7 @@ class EmployeePhoneTest {
     }
 
     @ParameterizedTest(name = "Additional cases: phone={0} -> valid={1}")
-    @CsvSource({
-        "123 4567, false",
-        "'+1 123', true",
-        "'+45', false",
-        "'+45 ', false"
-    })
+    @CsvSource({"123 4567, false", "'+1 123', true", "'+45', false", "'+45 ', false"})
     void should_validate_additional_phone_cases(String phone, boolean expectedValid) {
         // §"Phone number" BVA additional cases
         Employee e = valid();

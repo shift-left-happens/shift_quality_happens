@@ -15,10 +15,10 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,17 +32,25 @@ class EmployeeEmailTest {
 
     private static final Clock FIXED_CLOCK = Clock.fixed(Instant.parse("2026-05-12T12:00:00Z"), ZoneOffset.UTC);
 
-    @Mock private EmployeeRepository repo;
-    @Mock private PasswordEncoder passwordEncoder;
-    @Mock private ShiftAssignmentRepository shiftAssignmentRepository;
-    @Mock private ShiftRepository shiftRepository;
+    @Mock
+    private EmployeeRepository repo;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private ShiftAssignmentRepository shiftAssignmentRepository;
+
+    @Mock
+    private ShiftRepository shiftRepository;
 
     private EmployeeService service;
 
     @BeforeEach
     void setUp() {
         EmployeeValidator validator = new EmployeeValidator(FIXED_CLOCK);
-        service = new EmployeeService(repo, passwordEncoder, validator, shiftAssignmentRepository, shiftRepository, FIXED_CLOCK);
+        service = new EmployeeService(
+                repo, passwordEncoder, validator, shiftAssignmentRepository, shiftRepository, FIXED_CLOCK);
         lenient().when(passwordEncoder.encode(anyString())).thenReturn("HASHED");
         lenient().when(repo.save(any(Employee.class))).thenAnswer(inv -> inv.getArgument(0));
         lenient().when(repo.existsByEmail(anyString())).thenReturn(false);
@@ -89,13 +97,7 @@ class EmployeeEmailTest {
     }
 
     @ParameterizedTest(name = "Should validate length boundary for email: {0} chars -> {1}")
-    @CsvSource({
-        "5, true",
-        "6, true",
-        "319, true",
-        "320, true",
-        "321, false"
-    })
+    @CsvSource({"5, true", "6, true", "319, true", "320, true", "321, false"})
     void should_validate_email_length_boundaries(int length, boolean expectedValid) {
         // §1 BVA — email length 5-320
         Employee e = valid();
