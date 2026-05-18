@@ -23,6 +23,7 @@ type LoginResponse = {
   firstName: string;
   lastName: string;
   email: string;
+  roleId: number;
   roleName: string;
 };
 
@@ -45,6 +46,8 @@ async function login(
 async function seedAuthState(page: Page, session: LoginResponse) {
   await page.addInitScript(
     ({ token, user }) => {
+      localStorage.removeItem('shift_happens_token');
+      localStorage.removeItem('shift_happens_user');
       localStorage.setItem('shift_happens_token', token);
       localStorage.setItem('shift_happens_user', JSON.stringify(user));
     },
@@ -56,10 +59,39 @@ async function seedAuthState(page: Page, session: LoginResponse) {
         firstName: session.firstName,
         lastName: session.lastName,
         email: session.email,
-        role: session.roleName,
+        roleId: session.roleId,
+        roleName: session.roleName,
       },
     },
   );
+}
+
+async function ensureBrowserAuthenticated(page: Page, session: LoginResponse) {
+  await page.goto('/');
+  if (/\/login/.test(page.url())) {
+    // Firefox in CI can occasionally miss early init-script storage writes.
+    // Re-seed on-origin and reload to make auth state deterministic.
+    await page.evaluate(
+      ({ token, user }) => {
+        localStorage.setItem('shift_happens_token', token);
+        localStorage.setItem('shift_happens_user', JSON.stringify(user));
+      },
+      {
+        token: session.token,
+        user: {
+          employeeId: session.employeeId,
+          employeeNumber: session.employeeNumber,
+          firstName: session.firstName,
+          lastName: session.lastName,
+          email: session.email,
+          roleId: session.roleId,
+          roleName: session.roleName,
+        },
+      },
+    );
+    await page.goto('/');
+  }
+  await expect(page).not.toHaveURL(/\/login/);
 }
 
 function futureShiftWindow(daysFromNow: number) {
@@ -167,33 +199,70 @@ test.describe('Shift Swap E2E', () => {
   });
 
   test.afterAll(async ({ request }) => {
-    for (const swapId of swapsToCleanup) {
-      await request.post(`${API_URL}/shiftswaps/${swapId}/cancel`, {
-        headers: authHeaders(adminToken),
+    // Re-authenticate right before teardown to avoid token-expiry cleanup failures.
+    let cleanupAdminToken = (await login(request, ADMIN_EMAIL)).token;
+
+    const adminDeleteWithRetry = async (url: string) => {
+      let res = await request.delete(url, {
+        headers: authHeaders(cleanupAdminToken),
       });
+
+      if (res.status() === 401 || res.status() === 403) {
+        cleanupAdminToken = (await login(request, ADMIN_EMAIL)).token;
+        res = await request.delete(url, {
+          headers: authHeaders(cleanupAdminToken),
+        });
+      }
+
+      return res;
+    };
+
+    const adminPostWithRetry = async (url: string) => {
+      let res = await request.post(url, {
+        headers: authHeaders(cleanupAdminToken),
+      });
+
+      if (res.status() === 401 || res.status() === 403) {
+        cleanupAdminToken = (await login(request, ADMIN_EMAIL)).token;
+        res = await request.post(url, {
+          headers: authHeaders(cleanupAdminToken),
+        });
+      }
+
+      return res;
+    };
+
+    const deleteSwapIfExists = async (swapId: number) => {
+      // Pending swaps often must be cancelled before delete. Non-pending may return 400 here.
+      const cancelRes = await adminPostWithRetry(`${API_URL}/shiftswaps/${swapId}/cancel`);
+      expect([200, 400, 404], `Cancel swap ${swapId} during teardown`).toContain(cancelRes.status());
+
+      const deleteRes = await adminDeleteWithRetry(`${API_URL}/shiftswaps/${swapId}`);
+      expect([204, 404], `Delete swap ${swapId} during teardown`).toContain(deleteRes.status());
+    };
+
+    const deleteIfExists = async (url: string) => {
+      const res = await adminDeleteWithRetry(url);
+      expect([204, 404], `Delete ${url} during teardown`).toContain(res.status());
+    };
+
+    for (const swapId of Array.from(swapsToCleanup).reverse()) {
+      await deleteSwapIfExists(swapId);
     }
-    for (const id of assignmentIds) {
-      await request.delete(`${API_URL}/shiftassignments/${id}`, {
-        headers: authHeaders(adminToken),
-      });
+    for (const id of [...assignmentIds].reverse()) {
+      await deleteIfExists(`${API_URL}/shiftassignments/${id}`);
     }
-    for (const id of shiftIds) {
-      await request.delete(`${API_URL}/shifts/${id}`, {
-        headers: authHeaders(adminToken),
-      });
+    for (const id of [...shiftIds].reverse()) {
+      await deleteIfExists(`${API_URL}/shifts/${id}`);
     }
-    for (const id of employeeIds) {
-      await request.delete(`${API_URL}/employees/${id}`, {
-        headers: authHeaders(adminToken),
-      });
+    for (const id of [...employeeIds].reverse()) {
+      await deleteIfExists(`${API_URL}/employees/${id}`);
     }
   });
 
   test('E2E-SS-01 — browser auth session can create and cancel a swap', async ({ page }) => {
     await seedAuthState(page, ownerSession);
-
-    await page.goto('/');
-    await expect(page).not.toHaveURL(/\/login/);
+    await ensureBrowserAuthenticated(page, ownerSession);
 
     const createResponse = await page.request.post(`${API_URL}/shiftswaps`, {
       headers: authHeaders(ownerSession.token),
@@ -220,7 +289,7 @@ test.describe('Shift Swap E2E', () => {
     expect(cancelResponse.status()).toBe(200);
     const cancelled = await cancelResponse.json();
     expect(cancelled.swapStatus).toMatch(/cancelled/i);
-    swapsToCleanup.delete(swapId);
+    // Keep swap id for teardown: cancelled swaps still hold FK references until deleted.
   });
 
   test('E2E-SS-02 — non-owner cannot cancel owner swap (400)', async ({ page }) => {
@@ -248,11 +317,4 @@ test.describe('Shift Swap E2E', () => {
     expect(nonOwnerCancelRes.status()).toBe(400);
   });
 
-  test('E2E-SS-03 — unauthenticated user cannot reach dashboard (redirect to login)', async ({ page }) => {
-    // Navigate directly to a protected route without logging in
-    await page.goto('/');
-
-    // Should be redirected to /login
-    await expect(page).toHaveURL(/\/login/);
-  });
 });

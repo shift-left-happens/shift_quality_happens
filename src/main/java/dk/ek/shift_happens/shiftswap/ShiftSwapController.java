@@ -41,7 +41,13 @@ public class ShiftSwapController {
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     @ResponseStatus(HttpStatus.CREATED)
-    public ShiftSwap createShiftSwap(@RequestBody ShiftSwap shiftSwap) {
+    public ShiftSwap createShiftSwap(@RequestBody ShiftSwap shiftSwap, Authentication auth) {
+        if (authHelper.isEmployee(auth)) {
+            Integer self = authHelper.currentEmployeeId(auth);
+            if (!self.equals(shiftSwap.getEmployeeFromId())) {
+                throw authHelper.forbidden();
+            }
+        }
         return shiftSwapService.create(shiftSwap);
     }
 
