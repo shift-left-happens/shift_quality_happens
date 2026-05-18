@@ -13,7 +13,15 @@ import { ApiError } from '../../api/types';
 import { useAuth } from '../../auth/useAuth';
 import { canWrite } from '../../auth/roles';
 
-const STATUSES = ['SCHEDULED', 'COMPLETED', 'CANCELLED'] as const;
+// Must match ShiftService.VALID_STATUSES on the backend — sending any other
+// value makes POST/PUT /shifts fail validation with 400.
+const STATUSES = [
+  'Open',
+  'Assigned',
+  'Pending Swap',
+  'Cancelled',
+  'Completed',
+] as const;
 
 function buildEmpty(dateISO: string | null): NewShift {
   const baseDate = dateISO ?? new Date().toISOString().slice(0, 10);
@@ -23,7 +31,7 @@ function buildEmpty(dateISO: string | null): NewShift {
     shiftName: '',
     startDatetime: `${baseDate}T09:00:00`,
     endDatetime: `${baseDate}T17:00:00`,
-    shiftStatus: 'SCHEDULED',
+    shiftStatus: 'Open',
   };
 }
 
@@ -149,7 +157,7 @@ export default function ShiftFormPage() {
           >
             {STATUSES.map((s) => (
               <option key={s} value={s}>
-                {s.charAt(0) + s.slice(1).toLowerCase()}
+                {s}
               </option>
             ))}
           </select>
