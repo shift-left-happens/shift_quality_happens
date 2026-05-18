@@ -41,3 +41,6 @@ backups/
 ### PlayWright ###
 frontend/playwright-report
 frontend/test-results
+
+### Postman ###
+project_docs/postman/
