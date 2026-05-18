@@ -1,30 +1,112 @@
 import { Page, Locator } from '@playwright/test';
 
+/**
+ * Page object for the Shift planner (/shifts) and the Shift create/edit
+ * form (/shifts/new, /shifts/:id), backed by ShiftPlannerPage.tsx and
+ * ShiftFormPage.tsx.
+ *
+ * Form inputs are matched by their wrapping <label> text — the labels in
+ * ShiftFormPage wrap their controls, giving each input an accessible name.
+ */
 export class ShiftPage {
   readonly page: Page;
-  readonly newButton: Locator;
-  readonly shiftNameInput: Locator;
+
+  // Planner (/shifts)
+  readonly plannerHeading: Locator;
+  readonly newShiftLink: Locator;
+  readonly plannerBlocks: Locator;
+
+  // Form (/shifts/new, /shifts/:id)
+  readonly formHeading: Locator;
+  readonly nameInput: Locator;
+  readonly statusSelect: Locator;
   readonly departmentSelect: Locator;
-  readonly locationSelect: Locator;
+  readonly workLocationSelect: Locator;
   readonly startInput: Locator;
   readonly endInput: Locator;
   readonly submitButton: Locator;
+  readonly deleteButton: Locator;
+  readonly errorAlert: Locator;
 
   constructor(page: Page) {
     this.page = page;
-    this.newButton = page.getByRole('link', { name: 'New shift' });
-    this.shiftNameInput = page.locator('label:has-text("Shift name") input');
-    this.departmentSelect = page.locator('label:has-text("Department") select');
-    this.locationSelect = page.locator('label:has-text("Work location") select');
-    this.startInput = page.locator('label:has-text("Start") input');
-    this.endInput = page.locator('label:has-text("End") input');
-    this.submitButton = page.getByRole('button', { name: 'Create' });
+
+    this.plannerHeading = page.getByRole('heading', { name: 'Shifts' });
+    this.newShiftLink = page.getByRole('link', { name: 'New shift' });
+    this.plannerBlocks = page.locator('.planner-block');
+
+    // ShiftFormPage wraps each control in a <label class="form-field"> whose
+    // first <span> holds the field name. getByLabel is unreliable here: for a
+    // <select> the label text gets polluted with the <option> texts, so an
+    // exact match never lands. Resolve the control via its label's <span>.
+    const field = (label: string) =>
+      page
+        .locator('label.form-field')
+        .filter({ has: page.getByText(label, { exact: true }) });
+
+    this.formHeading = page.locator('.page-title');
+    this.nameInput = field('Shift name').locator('input');
+    this.statusSelect = field('Status').locator('select');
+    this.departmentSelect = field('Department').locator('select');
+    this.workLocationSelect = field('Work location').locator('select');
+    this.startInput = field('Start').locator('input');
+    this.endInput = field('End').locator('input');
+    this.submitButton = page.locator('button[type="submit"]');
+    this.deleteButton = page.getByRole('button', { name: 'Delete' });
+    this.errorAlert = page.locator('.alert-error');
   }
 
+  /** Navigate to the shift planner. */
   async goto() {
     await this.page.goto('/shifts');
   }
 
+  /** Alias of goto() — kept for call-site clarity in shift specs. */
+  async gotoPlanner() {
+    await this.page.goto('/shifts');
+  }
+
+  async gotoNew() {
+    await this.page.goto('/shifts/new');
+  }
+
+  async gotoEdit(id: number) {
+    await this.page.goto(`/shifts/${id}`);
+  }
+
+  /**
+   * Fill the shift form. Department / work location default to the first
+   * loaded option; pass `pickReferences` to select them explicitly (needed
+   * when creating a shift from scratch).
+   */
+  async fillForm(opts: {
+    name?: string;
+    status?: string;
+    start?: string;
+    end?: string;
+    pickReferences?: boolean;
+  }) {
+    if (opts.pickReferences) {
+      // index 0 is the disabled "Select…" placeholder
+      await this.departmentSelect.selectOption({ index: 1 });
+      await this.workLocationSelect.selectOption({ index: 1 });
+    }
+    if (opts.name !== undefined) await this.nameInput.fill(opts.name);
+    if (opts.status !== undefined) await this.statusSelect.selectOption(opts.status);
+    if (opts.start !== undefined) await this.startInput.fill(opts.start);
+    if (opts.end !== undefined) await this.endInput.fill(opts.end);
+  }
+
+  async submit() {
+    await this.submitButton.click();
+  }
+
+  /**
+   * Create a shift end-to-end from the planner: open the New shift form,
+   * fill it and submit. Department / work location default to the first
+   * available option (the `departmentId` / `locationId` fields are accepted
+   * for call-site readability but the form picks the first option).
+   */
   async createShift(data: {
     shiftName: string;
     departmentId?: number;
@@ -32,14 +114,19 @@ export class ShiftPage {
     start: string;
     end: string;
   }) {
-    await this.newButton.click();
+    await this.newShiftLink.click();
     await this.departmentSelect.waitFor({ state: 'visible' });
-    await this.locationSelect.waitFor({ state: 'visible' });
-    await this.shiftNameInput.fill(data.shiftName);
-    await this.departmentSelect.selectOption({ index: 1 });
-    await this.locationSelect.selectOption({ index: 1 });
-    await this.startInput.fill(data.start);
-    await this.endInput.fill(data.end);
-    await this.submitButton.click();
+    await this.workLocationSelect.waitFor({ state: 'visible' });
+    await this.fillForm({
+      name: data.shiftName,
+      start: data.start,
+      end: data.end,
+      pickReferences: true,
+    });
+    await this.submit();
+  }
+
+  async isErrorVisible(): Promise<boolean> {
+    return this.errorAlert.isVisible();
   }
 }
