@@ -14,39 +14,10 @@
  */
 
 import { test, expect, type APIRequestContext } from '@playwright/test';
+import { API_URL, loginAndGetToken, authHeaders, fmt, shiftWindow } from '../pages/helper/api-helpers';
 
-const API_URL = process.env.API_URL || 'http://localhost:8080';
 const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || 'admin@shift.dk';
-const ADMIN_PASSWORD = process.env.TEST_USER_PASSWORD || 'password123';
 const TEST_EMPLOYEE_PASSWORD = process.env.TEST_EMPLOYEE_PASSWORD || 'TestPass123';
-
-async function loginAndGetToken(
-  request: APIRequestContext,
-  email: string,
-  password: string = ADMIN_PASSWORD,
-): Promise<{ token: string; roleName?: string }> {
-  const response = await request.post(`${API_URL}/auth/login`, {
-    data: { email, password },
-  });
-  expect(response.status(), `Expected successful login for ${email}`).toBe(200);
-  const body = await response.json();
-  expect(body).toHaveProperty('token');
-  return { token: body.token as string, roleName: body.roleName as string | undefined };
-}
-
-function authHeaders(token: string) {
-  return { Authorization: `Bearer ${token}` };
-}
-
-const fmt = (d: Date) => d.toISOString().slice(0, 19);
-
-/** A future shift window `minutes` long, `daysFromNow` ahead. */
-function shiftWindow(daysFromNow: number, minutes: number) {
-  const start = new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000);
-  start.setSeconds(0, 0);
-  const end = new Date(start.getTime() + minutes * 60 * 1000);
-  return { startDatetime: fmt(start), endDatetime: fmt(end) };
-}
 
 test.describe.serial('Shift API', () => {
   let adminToken: string;

@@ -8,37 +8,12 @@
  * The only seed assumption is a running admin account (admin@shift.dk).
  */
 
-import { test, expect, type APIRequestContext } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { API_URL, loginAndGetToken, authHeaders, randomLetters } from '../pages/helper/api-helpers';
 
-const API_URL = process.env.API_URL || 'http://localhost:8080';
 const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || 'admin@shift.dk';
-const ADMIN_PASSWORD = process.env.TEST_USER_PASSWORD || 'password123';
 const TEST_MANAGER_PASSWORD = process.env.TEST_MANAGER_PASSWORD || 'TestPass123';
 const TEST_EMPLOYEE_PASSWORD = process.env.TEST_EMPLOYEE_PASSWORD || 'TestPass123';
-
-async function loginAndGetToken(
-  request: APIRequestContext,
-  email: string,
-  password: string = ADMIN_PASSWORD,
-): Promise<{ token: string; roleName?: string }> {
-  const response = await request.post(`${API_URL}/auth/login`, {
-    data: { email, password },
-  });
-  expect(response.status(), `Expected successful login for ${email}`).toBe(200);
-  const body = await response.json();
-  expect(body).toHaveProperty('token');
-  expect(typeof body.token).toBe('string');
-  return { token: body.token as string, roleName: body.roleName as string | undefined };
-}
-
-function authHeaders(token: string) {
-  return { Authorization: `Bearer ${token}` };
-}
-
-function randomLetters(length: number = 8): string {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-  return Array.from({ length }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
-}
 
 test.describe.serial('Job Role API', () => {
   let adminToken: string;

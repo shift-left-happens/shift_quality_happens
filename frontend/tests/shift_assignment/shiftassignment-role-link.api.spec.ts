@@ -1,49 +1,18 @@
 import { test, expect, type APIRequestContext } from '@playwright/test';
+import { API_URL, loginAndGetToken, authHeaders, futureShiftWindow, randomLetters } from '../pages/helper/api-helpers';
 
-const API_URL = process.env.API_URL || 'http://localhost:8080';
 const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || 'admin@shift.dk';
-const ADMIN_PASSWORD = process.env.TEST_USER_PASSWORD || 'password123';
 const TEST_EMPLOYEE_PASSWORD = process.env.TEST_EMPLOYEE_PASSWORD || 'TestPass123';
 const TEST_EMAIL_DOMAIN = '@shifthappens.dk';
 const TEST_EMAIL_PREFIX = 'sa.';
 const TEST_SHIFT_PREFIX = 'SA role-link';
 const TEST_JOBROLE_DESC_MARKER = 'assignment-role relation tests';
 
-async function loginAndGetToken(
-  request: APIRequestContext,
-  email: string,
-  password: string = ADMIN_PASSWORD,
-): Promise<string> {
-  const response = await request.post(`${API_URL}/auth/login`, {
-    data: { email, password },
-  });
-  expect(response.status(), `Expected successful login for ${email}`).toBe(200);
-  const body = await response.json();
-  expect(typeof body.token).toBe('string');
-  return body.token as string;
-}
-
-function authHeaders(token: string) {
-  return { Authorization: `Bearer ${token}` };
-}
-
-function futureShiftWindow(daysFromNow: number) {
-  const start = new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000);
-  const end = new Date(start.getTime() + 8 * 60 * 60 * 1000);
-  const fmt = (d: Date) => d.toISOString().slice(0, 19);
-  return { startDatetime: fmt(start), endDatetime: fmt(end) };
-}
-
-function randomLetters(length: number = 6): string {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-  return Array.from({ length }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
-}
-
 async function cleanupRoleLinkTestData(request: APIRequestContext, token: string): Promise<void> {
   let activeToken = token;
 
   const refreshToken = async () => {
-    activeToken = await loginAndGetToken(request, ADMIN_EMAIL);
+    activeToken = (await loginAndGetToken(request, ADMIN_EMAIL)).token;
   };
 
   const getArray = async (path: string): Promise<any[]> => {
@@ -184,13 +153,13 @@ test.describe.serial('Shift Assignment Role Link API', () => {
   const shiftAssignmentIds: number[] = [];
 
   test.beforeAll(async ({ request }) => {
-    adminToken = await loginAndGetToken(request, ADMIN_EMAIL);
+    adminToken = (await loginAndGetToken(request, ADMIN_EMAIL)).token;
     await cleanupRoleLinkTestData(request, adminToken);
   });
 
   test.afterAll(async ({ request }) => {
     if (!adminToken) return;
-    const cleanupToken = await loginAndGetToken(request, ADMIN_EMAIL);
+    const cleanupToken = (await loginAndGetToken(request, ADMIN_EMAIL)).token;
 
     const deleteIfExists = async (url: string) => {
       const res = await request.delete(url, { headers: authHeaders(cleanupToken) });
