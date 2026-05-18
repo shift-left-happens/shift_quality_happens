@@ -5,20 +5,22 @@ import {
   getEmployee,
   updateEmployee,
 } from '../../api/employees';
-import { listUserRoles } from '../../api/userRoles';
 import { listWorkLocations } from '../../api/workLocations';
-import type { NewEmployee, UserRole, WorkLocation } from '../../api/types';
+import type { NewEmployee, WorkLocation } from '../../api/types';
 import { ApiError } from '../../api/types';
 import { useAuth } from '../../auth/useAuth';
 import { canWrite } from '../../auth/roles';
+
+const USER_ROLES = ['Administrator', 'Manager', 'Employee'] as const;
 
 const EMPTY_FORM: NewEmployee = {
   employeeNumber: '',
   firstName: '',
   lastName: '',
   email: '',
-  fkUserRoleId: 2,
+  userRole: 'Manager',
   phoneNumber: '',
+  birthDate: null,
   hireDate: null,
   employmentStatus: 'ACTIVE',
   primaryWorkLocationId: null,
@@ -35,7 +37,6 @@ export default function EmployeeFormPage() {
   const mayWrite = canWrite(user?.roleName);
 
   const [form, setForm] = useState<NewEmployee>(EMPTY_FORM);
-  const [roles, setRoles] = useState<UserRole[]>([]);
   const [locations, setLocations] = useState<WorkLocation[]>([]);
   const [loading, setLoading] = useState(!isNew);
   const [submitting, setSubmitting] = useState(false);
@@ -43,10 +44,9 @@ export default function EmployeeFormPage() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([listUserRoles(), listWorkLocations()])
-      .then(([rs, ls]) => {
+    listWorkLocations()
+      .then((ls) => {
         if (cancelled) return;
-        setRoles(rs);
         setLocations(ls);
       })
       .catch(() => {
@@ -69,8 +69,9 @@ export default function EmployeeFormPage() {
           firstName: emp.firstName,
           lastName: emp.lastName,
           email: emp.email,
-          fkUserRoleId: emp.fkUserRoleId,
+          userRole: emp.userRole ?? 'Employee',
           phoneNumber: emp.phoneNumber,
+          birthDate: emp.birthDate,
           hireDate: emp.hireDate,
           employmentStatus: emp.employmentStatus,
           primaryWorkLocationId: emp.primaryWorkLocationId,
@@ -122,7 +123,7 @@ export default function EmployeeFormPage() {
       <form className="form-grid" onSubmit={handleSubmit}>
         <label className="form-field">
           <span>Employee number</span>
-          <input
+          <input name="employeeNumber"
             value={form.employeeNumber ?? ''}
             onChange={(e) => update('employeeNumber', e.target.value)}
             disabled={!mayWrite}
@@ -130,7 +131,7 @@ export default function EmployeeFormPage() {
         </label>
         <label className="form-field">
           <span>First name</span>
-          <input
+          <input name="firstName"
             value={form.firstName ?? ''}
             onChange={(e) => update('firstName', e.target.value)}
             disabled={!mayWrite}
@@ -138,7 +139,7 @@ export default function EmployeeFormPage() {
         </label>
         <label className="form-field">
           <span>Last name</span>
-          <input
+          <input name="lastName"
             value={form.lastName ?? ''}
             onChange={(e) => update('lastName', e.target.value)}
             disabled={!mayWrite}
@@ -146,7 +147,7 @@ export default function EmployeeFormPage() {
         </label>
         <label className="form-field">
           <span>Email</span>
-          <input
+          <input name="email"
             type="email"
             required
             value={form.email ?? ''}
@@ -156,29 +157,39 @@ export default function EmployeeFormPage() {
         </label>
         <label className="form-field">
           <span>Phone</span>
-          <input
+          <input name="phoneNumber"
             value={form.phoneNumber ?? ''}
             onChange={(e) => update('phoneNumber', e.target.value)}
             disabled={!mayWrite}
           />
         </label>
         <label className="form-field">
+          <span>Birth date</span>
+          <input name="birthDate"
+            type="date"
+            required
+            value={form.birthDate ?? ''}
+            onChange={(e) => update('birthDate', e.target.value || null)}
+            disabled={!mayWrite}
+          />
+        </label>
+        <label className="form-field">
           <span>Role</span>
-          <select
-            value={form.fkUserRoleId}
-            onChange={(e) => update('fkUserRoleId', Number(e.target.value))}
+          <select name="userRole"
+            value={form.userRole ?? 'Employee'}
+            onChange={(e) => update('userRole', e.target.value as NewEmployee['userRole'])}
             disabled={!mayWrite}
           >
-            {roles.map((r) => (
-              <option key={r.userRoleId} value={r.userRoleId}>
-                {r.userRoleName}
+            {USER_ROLES.map((r) => (
+              <option key={r} value={r}>
+                {r.charAt(0) + r.slice(1).toLowerCase()}
               </option>
             ))}
           </select>
         </label>
         <label className="form-field">
           <span>Primary work location</span>
-          <select
+          <select name="primaryWorkLocationId"
             value={form.primaryWorkLocationId ?? ''}
             onChange={(e) =>
               update(
@@ -198,7 +209,7 @@ export default function EmployeeFormPage() {
         </label>
         <label className="form-field">
           <span>Hire date</span>
-          <input
+          <input name="hireDate"
             type="date"
             value={form.hireDate ?? ''}
             onChange={(e) => update('hireDate', e.target.value || null)}
@@ -207,7 +218,7 @@ export default function EmployeeFormPage() {
         </label>
         <label className="form-field">
           <span>Employment status</span>
-          <select
+          <select name="employmentStatus"
             value={form.employmentStatus ?? ''}
             onChange={(e) => update('employmentStatus', e.target.value)}
             disabled={!mayWrite}
@@ -219,7 +230,7 @@ export default function EmployeeFormPage() {
         </label>
         <label className="form-field">
           <span>{isNew ? 'Password' : 'New password (leave blank to keep)'}</span>
-          <input
+          <input name="loginPassword"
             type="password"
             value={form.loginPassword ?? ''}
             onChange={(e) => update('loginPassword', e.target.value)}

@@ -31,6 +31,10 @@ public class EmployeeValidator {
     public static final int AGE_MIN = 16;
     public static final int AGE_MAX = 100;
 
+    public static final String STATUS_ACTIVE = "ACTIVE";
+    public static final String STATUS_INACTIVE = "INACTIVE";
+    public static final String STATUS_TERMINATED = "TERMINATED";
+
     private final Clock clock;
 
     public void validateForCreate(Employee employee, boolean emailAlreadyTaken) {
@@ -38,7 +42,24 @@ public class EmployeeValidator {
         validateName(employee.getLastName(), "lastName");
         validatePassword(employee.getLoginPassword());
         validateEmail(employee.getEmail(), emailAlreadyTaken);
+        validatePhoneNumber(employee.getPhoneNumber());
         validateBirthDate(employee.getBirthDate());
+        validateHireDate(employee.getHireDate());
+        validateEmploymentStatus(employee.getEmploymentStatus());
+    }
+
+    public void validatePhoneNumber(String phoneNumber) {
+        if (phoneNumber == null) {
+            return;
+        }
+        if (phoneNumber.trim().isEmpty()) {
+            throw new IllegalArgumentException("phone number must not be empty");
+        }
+        // ^(\d{4,15}|\+\d{1,3} \d{1,12})$
+        // Note: total digits max 15. The regex \+\d{1,3} \d{1,12} ensures max 3+12 = 15 digits.
+        if (!phoneNumber.matches("^(\\d{4,15}|\\+\\d{1,3} \\d{1,12})$")) {
+            throw new IllegalArgumentException("phone number is invalid");
+        }
     }
 
     public void validateName(String name, String field) {
@@ -111,6 +132,26 @@ public class EmployeeValidator {
         }
         if (age > AGE_MAX) {
             throw new IllegalArgumentException("employee must not be older than " + AGE_MAX + " years");
+        }
+    }
+
+    public void validateHireDate(LocalDate hireDate) {
+        if (hireDate == null) {
+            throw new IllegalArgumentException("hireDate is required");
+        }
+        // Requirement: ISO standard (LocalDate handles this).
+        // Common sense: should not be in the future (though not explicitly requested,
+        // usually hire date is past or today). But let's stick to "general tests".
+    }
+
+    public void validateEmploymentStatus(String status) {
+        if (status == null || status.trim().isEmpty()) {
+            throw new IllegalArgumentException("employment status is required");
+        }
+        if (!status.equalsIgnoreCase(STATUS_ACTIVE)
+                && !status.equalsIgnoreCase(STATUS_INACTIVE)
+                && !status.equalsIgnoreCase(STATUS_TERMINATED)) {
+            throw new IllegalArgumentException("employment status must be ACTIVE, INACTIVE, or TERMINATED");
         }
     }
 }

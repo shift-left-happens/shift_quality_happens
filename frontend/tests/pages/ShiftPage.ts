@@ -56,6 +56,12 @@ export class ShiftPage {
     this.errorAlert = page.locator('.alert-error');
   }
 
+  /** Navigate to the shift planner. */
+  async goto() {
+    await this.page.goto('/shifts');
+  }
+
+  /** Alias of goto() — kept for call-site clarity in shift specs. */
   async gotoPlanner() {
     await this.page.goto('/shifts');
   }
@@ -93,6 +99,31 @@ export class ShiftPage {
 
   async submit() {
     await this.submitButton.click();
+  }
+
+  /**
+   * Create a shift end-to-end from the planner: open the New shift form,
+   * fill it and submit. Department / work location default to the first
+   * available option (the `departmentId` / `locationId` fields are accepted
+   * for call-site readability but the form picks the first option).
+   */
+  async createShift(data: {
+    shiftName: string;
+    departmentId?: number;
+    locationId?: number;
+    start: string;
+    end: string;
+  }) {
+    await this.newShiftLink.click();
+    await this.departmentSelect.waitFor({ state: 'visible' });
+    await this.workLocationSelect.waitFor({ state: 'visible' });
+    await this.fillForm({
+      name: data.shiftName,
+      start: data.start,
+      end: data.end,
+      pickReferences: true,
+    });
+    await this.submit();
   }
 
   async isErrorVisible(): Promise<boolean> {

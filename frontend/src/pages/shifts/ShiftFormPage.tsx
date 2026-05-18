@@ -14,7 +14,8 @@ import { useAuth } from '../../auth/useAuth';
 import { canWrite } from '../../auth/roles';
 
 // Must match ShiftService.VALID_STATUSES on the backend — sending any other
-// value makes POST/PUT /shifts fail validation with 400.
+// value makes POST/PUT /shifts fail validation with 400. Ordered to follow
+// the shift lifecycle (SRS FR-SH-05).
 const STATUSES = [
   'Open',
   'Assigned',

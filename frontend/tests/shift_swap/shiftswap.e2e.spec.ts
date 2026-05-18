@@ -103,7 +103,7 @@ test.describe('Shift Swap E2E', () => {
         userRole: 'Employee' as const,
         email: `e2e.${label}.${suffix}@shifthappens.dk`,
         loginPassword: TEST_EMPLOYEE_PASSWORD,
-        phoneNumber: '+4512345678',
+        phoneNumber: '+45 12345678',
         hireDate: '2026-01-15',
         birthDate: '2000-01-01',
         employmentStatus: 'ACTIVE' as const,
