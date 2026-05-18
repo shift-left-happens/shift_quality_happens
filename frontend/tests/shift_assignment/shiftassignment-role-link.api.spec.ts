@@ -15,7 +15,7 @@ async function cleanupRoleLinkTestData(request: APIRequestContext, token: string
     activeToken = (await loginAndGetToken(request, ADMIN_EMAIL)).token;
   };
 
-  const getArray = async (path: string): Promise<unknown[]> => {
+  const getArray = async (path: string): Promise<Record<string, unknown>[]> => {
     let res = await request.get(`${API_URL}${path}`, { headers: authHeaders(activeToken) });
     if (res.status() === 401 || res.status() === 403) {
       await refreshToken();
@@ -24,7 +24,7 @@ async function cleanupRoleLinkTestData(request: APIRequestContext, token: string
     expect(res.status(), `GET ${path} should return 200 during cleanup`).toBe(200);
     const body = await res.json();
     expect(Array.isArray(body), `GET ${path} should return an array`).toBe(true);
-    return body as unknown[];
+    return body as Record<string, unknown>[];
   };
 
   const deleteByPath = async (path: string) => {
@@ -220,7 +220,7 @@ test.describe.serial('Shift Assignment Role Link API', () => {
     return id;
   };
 
-  const createJobRole = async (request: APIRequestContext, suffix: string, label: string): Promise<number> => {
+  const createJobRole = async (request: APIRequestContext, label: string): Promise<number> => {
     const res = await request.post(`${API_URL}/jobroles`, {
       headers: authHeaders(adminToken),
       data: {
@@ -320,8 +320,8 @@ test.describe.serial('Shift Assignment Role Link API', () => {
   test('assign succeeds when employee holds one of shift required roles', async ({ request }) => {
     const suffix = Date.now().toString(36);
     const employeeId = await createEmployee(request, suffix, 'rolematch');
-    const jobRoleA = await createJobRole(request, suffix, 'A');
-    const jobRoleB = await createJobRole(request, suffix, 'B');
+    const jobRoleA = await createJobRole(request, 'A');
+    const jobRoleB = await createJobRole(request, 'B');
     const shiftId = await createShift(request, suffix, 8);
 
     await createShiftRequiredJobRole(request, shiftId, jobRoleA);
@@ -335,7 +335,7 @@ test.describe.serial('Shift Assignment Role Link API', () => {
   test('assign fails when shift requires roles employee does not hold', async ({ request }) => {
     const suffix = (Date.now() + 1).toString(36);
     const employeeId = await createEmployee(request, suffix, 'norole');
-    const requiredRoleId = await createJobRole(request, suffix, 'REQ');
+    const requiredRoleId = await createJobRole(request, 'REQ');
     const shiftId = await createShift(request, suffix, 10);
 
     await createShiftRequiredJobRole(request, shiftId, requiredRoleId);
