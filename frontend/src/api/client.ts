@@ -5,6 +5,39 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 let tokenGetter: () => string | null = () => null;
 let unauthorizedHandler: () => void = () => {};
 
+function extractErrorMessage(payload: unknown): string | null {
+  if (!payload) return null;
+  if (typeof payload === 'string') {
+    return payload.trim() || null;
+  }
+
+  if (typeof payload === 'object') {
+    const candidate = payload as Record<string, unknown>;
+    const directKeys = ['message', 'error', 'reason', 'detail', 'title'];
+    for (const key of directKeys) {
+      const value = candidate[key];
+      if (typeof value === 'string' && value.trim()) {
+        return value;
+      }
+    }
+
+    const errors = candidate['errors'];
+    if (Array.isArray(errors) && errors.length > 0) {
+      const first = errors[0];
+      if (typeof first === 'string' && first.trim()) return first;
+      if (first && typeof first === 'object') {
+        const firstObj = first as Record<string, unknown>;
+        const firstMessage = firstObj['defaultMessage'] ?? firstObj['message'];
+        if (typeof firstMessage === 'string' && firstMessage.trim()) {
+          return firstMessage;
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
 export function configureApiClient(opts: {
   getToken: () => string | null;
   onUnauthorized: () => void;
@@ -51,9 +84,8 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     const message =
-      (payload && typeof payload === 'object' && 'error' in payload
-        ? String((payload as { error: unknown }).error)
-        : null) ?? `Request failed: ${response.status}`;
+      extractErrorMessage(payload) ??
+      `${response.status} ${response.statusText || 'Request failed'}`;
     throw new ApiError(response.status, payload, message);
   }
 

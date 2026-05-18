@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listEmployees, deleteEmployee } from '../../api/employees';
-import { listUserRoles } from '../../api/userRoles';
-import type { Employee, UserRole } from '../../api/types';
+import type { Employee } from '../../api/types';
 import { ApiError } from '../../api/types';
 import { useAuth } from '../../auth/useAuth';
 import { canWrite } from '../../auth/roles';
@@ -49,16 +48,14 @@ export default function EmployeesListPage() {
   const { user } = useAuth();
   const mayWrite = canWrite(user?.roleName);
   const [employees, setEmployees] = useState<Employee[] | null>(null);
-  const [roles, setRoles] = useState<UserRole[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([listEmployees(), listUserRoles()])
-      .then(([es, rs]) => {
+    listEmployees()
+      .then((es) => {
         if (cancelled) return;
         setEmployees(es);
-        setRoles(rs);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -69,8 +66,13 @@ export default function EmployeesListPage() {
     };
   }, []);
 
-  const roleName = (id: number) =>
-    roles.find((r) => r.userRoleId === id)?.userRoleName ?? `#${id}`;
+  const roleName = (role: Employee['userRole']) => {
+    if (!role) return 'Unknown';
+    if (role === 'Administrator') return 'Administrator';
+    if (role === 'Manager') return 'Manager';
+    if (role === 'Employee') return 'Employee';
+    return role;
+  };
 
   async function handleDelete(id: number, label: string) {
     if (!confirm(`Delete employee "${label}"? This cannot be undone.`)) return;
@@ -126,7 +128,7 @@ export default function EmployeesListPage() {
                 </tr>
               )}
               {employees.map((e) => {
-                const rName = roleName(e.fkUserRoleId);
+                const rName = roleName(e.userRole);
                 return (
                   <tr key={e.employeeId}>
                     <td>

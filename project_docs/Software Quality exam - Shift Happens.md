@@ -93,23 +93,34 @@ Stack: Java 21, Spring Boot, MySQL, React \+ TypeScript
 
 [**Quality gates	13**](#quality-gates)
 
+# Vi mangler shift swap 
+
+- analyse . 
+
+# 
+
 # Employes blackbox analyse {#employes-blackbox-analyse}
 
 **BVA and equivalence partitions for employee fields**
 
-The minimum length for names is 1, for example the Danish name Ø.  
-The minimum length for an e-mail is 5 because it needs to consist of a letter, followed by a @ and a domain. Minimum domain length is 3\. Example: a@a.dk
+* The minimum length for names is 1\. Example: Ø. (Danish name). The maximum is set to 100\.  
+* The minimum length for an e-mail is 6 because it needs to consist of a letter, followed by a @ and a domain. Minimum domain length is 4\. Example: [a@a.dk](mailto:a@a.dk)  
+* The password length should be between 8 and 255  
+* Phone numbers range from 4 to 17 chars, we follow the ITU E.164 standard, however we added a space between the country code and the local number for easier separation. The \+ and extra space is why it’s up to 17 chars instead of 15\.
 
 | Value | Partition type | Partitions | Test case values | Boundary values | Test case values |
 | ----- | ----- | ----- | ----- | ----- | ----- |
-| Email length | Invalid | 0-4 | 3 | 0 4 | 0 1 3 4 5 |
-|  | Valid | 5 \- 320 | 150 | 5 320 | 4 5 6 319 320 321 |
+| Email length | Invalid | 0-5 | 3 | 0 5 | 0 1 4 5 6 |
+|  | Valid | 6 \- 320 | 150 | 5 320 | 5 6 7 319 320 321 |
+|  | Invalid | 321 \- MAX INT | 400 | 321 | 320 321 322 |
 | Password length | Invalid | 0-7 | 4 | 0 7 | 0 1 6 7 8 |
-|  | Valid | 8-255 | 125 | 8 255 | 7 8 9 254 255 256 |
-|  | Invalid | 256-MAX INT | 300 | 256 | 255 256 257 |
+|  | Valid | 8 \- 255 | 125 | 8 255 | 7 8 9 254 255 256 |
+|  | Invalid | 256 \- MAX INT | 300 | 256 | 255 256 257 |
 | First name \+ last name length | Invalid | 0 | 0 | 0 | 0 1 |
 |  | Valid | 1-100 | 50 | 0 100 | 0 1 2 99 100 101 |
 |  | Invalid | 101-MAX INT | 150 | 101 | 100 101 102 |
+| Phone number | Invalid | 0-3 | 2 | 0 3 | 0 1 2 3 4 |
+|  | Valid | 4 \- 17 | 10 | 4 17 | 3 4 5 16 17 18 |
 
 ## First Name & last name {#first-name-&-last-name}
 
@@ -127,7 +138,7 @@ Minimum length name is based on the Danish name Ø.
 | 4 | No | No (symbols) | Invalid | Jensen@ |
 | 5 | No | No (space) | Valid | Jensen Jens |
 
-### Password black box tests {#password-black-box-tests}
+## Password black box tests {#password-black-box-tests}
 
 The password must be at least 8 characters and can at most be 64 characters long.  
 Must contain at least one of each:  
@@ -139,7 +150,7 @@ Lowercase letter, an uppercase letter, a number
 
 ###  **Decision table** {#decision-table-1}
 
-| Case | Length 8 | Uppercase | Lowercase | Number | Test | Result |
+| Case | Length | Uppercase | Lowercase | Number | Test | Result |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
 | 1 | False | \- | \- | \- | pass | Error |
 | 2 | \- | False | \- | \- | password | Error |
@@ -150,6 +161,8 @@ Lowercase letter, an uppercase letter, a number
 **Email decision table:**
 
 E-mails follow the format of length 320 and has a valid local part and domain, one @. We don’t verify the domain exists or the TLD. Just that the TLD is at least 2 letters long and the domain is at least one letter long.
+
+* The local part before the @ can at most be 64
 
 **FR-EMP-06**: Each employee must have a unique email address.Since uniqueness is a boolean state (exists / doesn't exist), a simple decision table is sufficient.
 
@@ -193,7 +206,91 @@ E-mails follow the format of length 320 and has a valid local part and domain, o
 |  | Valid | 1926 – 2010 | 1980 | 1926, 2010 | 1925, 1926, 1927, 2009, 2010, 2011 |
 |  | Invalid (Too old) | \< 1926 | 1900 | 1925, 1926 | 1924, 1925, 1926 |
 
-## Shift Duration & Timing
+## Phone number
+
+The system supports international phone numbers.  
+Under the international International Telecommunication Union E.164 standard, a full international phone number can contain **at most 15 digits** total (country code \+ national number). The leading \+ is not counted as a digit.
+
+Assumptions / Validation Rules
+
+**The following rules are assumed for the validation system:**
+
+1. A phone number may:  
+   1. contain only digits  
+   2. OR start with a \+ country code  
+2. If a country code is used:  
+   1. it MUST start with exactly one \+  
+   2. the country code MUST be followed by exactly one space  
+3. Allowed format:  
+   1. 1234  
+   2. \+45 987654321  
+4. Invalid examples:  
+   1. \+2222222 → missing space after country code  
+   2. \++213123 → invalid double plus  
+5. Length constraints:  
+   1. Minimum local number length: 4  
+   2. Maximum total digits (excluding \+ and space): 15  
+   3. Maximum visible string length with \+ and space: 17  
+6. Allowed characters:  
+   1. digits 0-9  
+   2. optional leading \+  
+   3. one optional space after country code  
+7. No additional spaces allowed.
+
+**Validation Regex (Suggested)**  
+^(\\d{4,15}|\\+\\d{1,3} \\d{1,12})$
+
+Explanation:
+
+| Part | Meaning |
+| ----- | ----- |
+| \\d{4,15} | local numbers without country code |
+| \\+\\d{1,3} \\d{1,12} | international format |
+| \\d{1,3} | country code |
+|  | mandatory space |
+| \\d{1,12} | remaining digits |
+| total max digits | 15 |
+
+**Decision table**
+
+| Rule ID | Starts With `+` | Country Code Present | Space After CC | Digits Only Otherwise | Total \#  ≤ 15 | Len ≥ 4 | Result | Test case |
+| ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- |
+| R1 | No | No | N/A | Yes | Yes | Yes | Valid | 12345 |
+| R2 | Yes | Yes | Yes | Yes | Yes | Yes | Valid | \+12 123456 |
+| R2.1 | Multiple | Yes | Yes | Yes | Yes | Yes | Invalid | \++12 123456 |
+| R3 | Yes | Yes | No | Yes | Yes | Yes | Invalid | \+12345678 |
+| R4 | Yes | Invalid | N/A | Yes | Yes | Yes | Invalid | \+ 123456 |
+| R5 | Any | Any | Any | No | N/A | N/A | Invalid | 123aaa |
+| R6 | Any | Any | Any | Yes | No | N/A | Invalid | \+123 1234567890123 |
+| R7 | Any | Any | Any | Yes | Yes | No | Invalid | 123 |
+| R8 | Yes | Yes | Multiple Spaces | Yes | Yes | Yes | Invalid | \+45  123 |
+| R9 | Yes | Yes | Yes | Contains Symbols | N/A | N/A | Invalid | \+45-1234 |
+| R10 | Empty | N/A | N/A | N/A | N/A | N/A | Invalid | “ “ |
+
+| Field | Partition Type | Range | Test Value | Boundary | Test Case Values |
+| ----- | ----- | ----- | ----- | ----- | ----- |
+| Local phone number length | Invalid | 0–3 digits | 123 | 0 & 4 digits | “”, 1, 12, 123, 1234 |
+| Local phone number length | Valid | 4–15 digits | 12345678 | 4 digits | 123, 1234, 12345 |
+| Local phone number length | Valid | 4–15 digits | 123456789012345 | 15 digits | 123456789012344, 123456789012345, 1234567890123456 |
+| Local phone number length | Invalid | More than 15 digits | 1234567890123456 | 15 digits | 123456789012344, 123456789012345, 1234567890123456 |
+| International number total digits | Valid | 2–15 digits total | \+45 987654321 | 15 digits | \+998 12345678901, \+998 123456789012, \+998 1234567890123 |
+| International number total digits | Invalid | More than 15 digits | \+998 1234567890123 | 15 digits | \+998 12345678901, \+998 123456789012, \+998 1234567890123 |
+| Country code length | Invalid | 0 digits | \+ 1234 | 1 digit | \+ 1234, \+1 1234, \+12 1234 |
+| Country code length | Valid | 1–3 digits | \+45 1234 | 1 digit | \+ 1234, \+1 1234, \+12 1234 |
+| Country code length | Valid | 1–3 digits | \+998 123456789012 | 3 digits | \+99 1234, \+998 1234, \+9999 1234 |
+| Country code length | Invalid | More than 3 digits | \+9999 1234 | 3 digits | \+99 1234, \+998 1234, \+9999 1234 |
+| Space after country code | Invalid | No space | \+451234567 | 1 space required | \+451234, \+45 1234, \+45 1234 |
+| Space after country code | Valid | Exactly 1 space | \+45 1234 | 1 space required | \+451234, \+45 1234, \+45 1234 |
+| Space after country code | Invalid | More than 1 space | \+45  1234 | 1 space required | \+45 1234, \+45  1234, \+45  1234 |
+| Plus sign usage | Valid | Single leading plus | \+45 1234 | Single \+ | 45 1234, \+45 1234, \++45 1234 |
+| Plus sign usage | Invalid | Multiple plus signs | \++45 1234 | Single \+ | \+45 1234, \++45 1234, \+++45 1234 |
+| Empty input | Invalid | Empty string | “ “ | Minimum 1 character | “ “, 1, 12 |
+| Country code without local number | Invalid | Missing local number | \+45 | Requires digits after space | \+45, \+45 , \+45 123 |
+| Local number with internal spaces | Invalid | Embedded spaces | 123 4567 | No spaces allowed | 1234567, 123 4567, 123  4567 |
+| Minimal valid international number | Valid | Smallest international format | \+1 123 | 3 digits after CC | \+1 12, \+1 123, \+1 1234 |
+| Maximal valid international number | Valid | Largest E.164-compatible format | \+998 123456789012 | 15 digits total | \+123 12345678901, \+123 123456789012, \+123 1234567890123 |
+
+# Shift Duration & Timing
 
 **Based on:**
 
@@ -327,9 +424,13 @@ Working at least 3 hours between the timeframe 22:00 \- 05:00
 
 **Based on:**.
 
-* **BR-EM-04**: Birth dates must follow ISO 8601 format (YYYY-MM-DDTHH:MM).
+* **BR-EM-04**: Birth dates must follow ISO 8601 format (YYYY-MM-DD).
 
 * **BR-EM-05**: Date must be a real calendar date.
+
+An employee hire date is an ISO 8601 date, but only contains date, not the time.
+
+On the other hand, a shift start, end, check-in & check-out dates require a time element
 
 ### Equivalence Partitioning — Date & Time Formats
 
@@ -338,6 +439,7 @@ Working at least 3 hours between the timeframe 22:00 \- 05:00
 | **Date Format** | Valid ISO 8601 | 2024-05-12T00:00 | Valid |
 |  | Invalid format | 12-05-2024T00:00 | Invalid |
 |  | Invalid date | 2024-02-29T00:00  | Invalid (non-existent date) |
+|  | Date only | 2025-01-01 | Valid |
 
 # Whitebox   {#whitebox}
 

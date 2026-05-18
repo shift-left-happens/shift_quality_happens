@@ -18,13 +18,7 @@ import { useAuth } from '../../auth/useAuth';
 import { canWrite } from '../../auth/roles';
 
 const STATUSES = [
-  'ASSIGNED',
-  'CONFIRMED',
-  'CHECKED_IN',
-  'CHECKED_OUT',
-  'COMPLETED',
-  'CANCELLED',
-  'NO_SHOW',
+  'Cancelled', 'Assigned', 'Completed'
 ] as const;
 
 function nowLocalDatetime(): string {
@@ -40,7 +34,7 @@ function buildEmpty(): NewShiftAssignment {
   return {
     shiftId: 0,
     employeeId: 0,
-    assignmentStatus: 'ASSIGNED',
+    assignmentStatus: 'Assigned',
     assignedDatetime: `${nowLocalDatetime()}:00`,
     checkInDatetime: null,
     checkOutDatetime: null,
@@ -178,7 +172,7 @@ export default function ShiftAssignmentFormPage() {
       <form className="form-grid" onSubmit={handleSubmit}>
         <label className="form-field">
           <span>Employee</span>
-          <select
+          <select name="employeeId"
             required
             value={form.employeeId}
             onChange={(e) => update('employeeId', Number(e.target.value))}
@@ -198,7 +192,7 @@ export default function ShiftAssignmentFormPage() {
 
         <label className="form-field">
           <span>Shift</span>
-          <select
+          <select name="shiftId"
             required
             value={form.shiftId}
             onChange={(e) => update('shiftId', Number(e.target.value))}
@@ -217,7 +211,7 @@ export default function ShiftAssignmentFormPage() {
 
         <label className="form-field">
           <span>Status</span>
-          <select
+          <select name="assignmentStatus"
             value={form.assignmentStatus ?? ''}
             onChange={(e) => update('assignmentStatus', e.target.value)}
             disabled={!mayWrite}
@@ -236,7 +230,7 @@ export default function ShiftAssignmentFormPage() {
 
         <label className="form-field">
           <span>Assigned at</span>
-          <input
+          <input name="assignedDatetime"
             type="datetime-local"
             value={(form.assignedDatetime ?? '').slice(0, 16)}
             onChange={(e) => updateDatetime('assignedDatetime', e.target.value)}
@@ -246,7 +240,7 @@ export default function ShiftAssignmentFormPage() {
 
         <label className="form-field">
           <span>Check-in</span>
-          <input
+          <input name="checkInDatetime"
             type="datetime-local"
             value={(form.checkInDatetime ?? '').slice(0, 16)}
             onChange={(e) => updateDatetime('checkInDatetime', e.target.value)}
@@ -256,7 +250,7 @@ export default function ShiftAssignmentFormPage() {
 
         <label className="form-field">
           <span>Check-out</span>
-          <input
+          <input name="checkOutDatetime"
             type="datetime-local"
             value={(form.checkOutDatetime ?? '').slice(0, 16)}
             onChange={(e) => updateDatetime('checkOutDatetime', e.target.value)}

@@ -78,13 +78,22 @@ public class EmployeeService {
                 existing.setLoginPassword(passwordEncoder.encode(patch.getLoginPassword()));
             }
             if (patch.getUserRole() != null) existing.setUserRole(patch.getUserRole());
-            if (patch.getPhoneNumber() != null) existing.setPhoneNumber(patch.getPhoneNumber());
-            if (patch.getHireDate() != null) existing.setHireDate(patch.getHireDate());
+            if (patch.getPhoneNumber() != null) {
+                employeeValidator.validatePhoneNumber(patch.getPhoneNumber());
+                existing.setPhoneNumber(patch.getPhoneNumber());
+            }
+            if (patch.getHireDate() != null) {
+                employeeValidator.validateHireDate(patch.getHireDate());
+                existing.setHireDate(patch.getHireDate());
+            }
             if (patch.getBirthDate() != null) {
                 employeeValidator.validateBirthDate(patch.getBirthDate());
                 existing.setBirthDate(patch.getBirthDate());
             }
-            if (patch.getEmploymentStatus() != null) existing.setEmploymentStatus(patch.getEmploymentStatus());
+            if (patch.getEmploymentStatus() != null) {
+                employeeValidator.validateEmploymentStatus(patch.getEmploymentStatus());
+                existing.setEmploymentStatus(patch.getEmploymentStatus());
+            }
             if (patch.getPrimaryWorkLocationId() != null)
                 existing.setPrimaryWorkLocationId(patch.getPrimaryWorkLocationId());
             return this.employeeRepository.save(existing);
