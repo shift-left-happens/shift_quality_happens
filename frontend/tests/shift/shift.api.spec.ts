@@ -148,14 +148,14 @@ test.describe.serial('Shift API', () => {
 
   // ── SH-API-01 — Authentication ────────────────────────────────────────────
 
-  test('SH-API-01 — unauthenticated GET /shifts returns 403', async ({ request }) => {
+  test('SH-API-01 — unauthenticated GET /shifts returns 401', async ({ request }) => {
     const res = await request.get(`${API_URL}/shifts`);
-    expect(res.status()).toBe(403);
+    expect(res.status()).toBe(401);
   });
 
-  test('SH-API-01 — unauthenticated POST /shifts returns 403', async ({ request }) => {
+  test('SH-API-01 — unauthenticated POST /shifts returns 401', async ({ request }) => {
     const res = await request.post(`${API_URL}/shifts`, { data: validShiftPayload() });
-    expect(res.status()).toBe(403);
+    expect(res.status()).toBe(401);
   });
 
   // ── SH-API-02 — Authorization (role) ──────────────────────────────────────

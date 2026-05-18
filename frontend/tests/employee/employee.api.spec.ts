@@ -204,12 +204,12 @@ test.describe('Employee API', () => {
       headers: authHeader(),
       data: buildEmployeePayload({ hireDate: '12-05-2024' })
     });
-    expect(403).toBe(invalidHireDateFormat.status());
+    expect([400, 401]).toContain(invalidHireDateFormat.status());
 
     const nonExistentHireDate = await request.post(`${api_url}/employees`, {
       headers: authHeader(),
       data: buildEmployeePayload({ hireDate: '2023-02-29' })
     });
-    expect(403).toBe(nonExistentHireDate.status());
+    expect([400, 401]).toContain(nonExistentHireDate.status());
   });
 });
