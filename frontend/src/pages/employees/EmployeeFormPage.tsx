@@ -60,7 +60,6 @@ export default function EmployeeFormPage() {
   useEffect(() => {
     if (isNew || numericId === null) return;
     let cancelled = false;
-    setLoading(true);
     getEmployee(numericId)
       .then((emp) => {
         if (cancelled) return;

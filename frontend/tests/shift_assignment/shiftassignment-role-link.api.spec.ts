@@ -15,7 +15,7 @@ async function cleanupRoleLinkTestData(request: APIRequestContext, token: string
     activeToken = (await loginAndGetToken(request, ADMIN_EMAIL)).token;
   };
 
-  const getArray = async (path: string): Promise<any[]> => {
+  const getArray = async (path: string): Promise<unknown[]> => {
     let res = await request.get(`${API_URL}${path}`, { headers: authHeaders(activeToken) });
     if (res.status() === 401 || res.status() === 403) {
       await refreshToken();
@@ -24,7 +24,7 @@ async function cleanupRoleLinkTestData(request: APIRequestContext, token: string
     expect(res.status(), `GET ${path} should return 200 during cleanup`).toBe(200);
     const body = await res.json();
     expect(Array.isArray(body), `GET ${path} should return an array`).toBe(true);
-    return body as any[];
+    return body as unknown[];
   };
 
   const deleteByPath = async (path: string) => {

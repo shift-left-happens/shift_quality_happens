@@ -78,7 +78,6 @@ export default function ShiftFormPage() {
   useEffect(() => {
     if (isNew || numericId === null) return;
     let cancelled = false;
-    setLoading(true);
     getShift(numericId)
       .then((s) => {
         if (cancelled) return;

@@ -136,7 +136,6 @@ export default function ShiftPlannerPage() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
     Promise.all([
       listShifts(),
       listShiftAssignments(),

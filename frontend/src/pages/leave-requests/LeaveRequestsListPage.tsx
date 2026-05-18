@@ -122,13 +122,14 @@ export default function LeaveRequestsListPage() {
     return m;
   }, [leaveTypes]);
 
+  const myEmployeeId = user?.employeeId;
   const visible = useMemo(() => {
     if (!requests) return null;
-    if (isEmployee && user?.employeeId !== undefined) {
-      return requests.filter((r) => r.employeeId === user.employeeId);
+    if (isEmployee && myEmployeeId !== undefined) {
+      return requests.filter((r) => r.employeeId === myEmployeeId);
     }
     return requests;
-  }, [requests, isEmployee, user?.employeeId]);
+  }, [requests, isEmployee, myEmployeeId]);
 
   async function handleDelete(id: number, label: string) {
     if (!confirm(`Delete leave request for "${label}"?`)) return;

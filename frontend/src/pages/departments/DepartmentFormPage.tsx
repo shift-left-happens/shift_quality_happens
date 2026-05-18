@@ -32,7 +32,6 @@ export default function DepartmentFormPage() {
   useEffect(() => {
     if (isNew || numericId === null) return;
     let cancelled = false;
-    setLoading(true);
     getDepartment(numericId)
       .then((d) => {
         if (cancelled) return;

@@ -193,10 +193,9 @@ test.describe.serial('Shift Swap API', () => {
 
     const deleteSwapIfExists = async (swapId: number) => {
       // Pending swaps often must be cancelled before delete. Non-pending may return 400 here.
-      const cancelRes = await request.post(`${API_URL}/shiftswaps/${swapId}/cancel`, {
+      await request.post(`${API_URL}/shiftswaps/${swapId}/cancel`, {
         headers: authHeaders(cleanupAdminToken),
       });
-      // expect(cancelRes.status()).toBe(200);
 
       const deleteRes = await request.delete(`${API_URL}/shiftswaps/${swapId}`, {
         headers: authHeaders(cleanupAdminToken),
