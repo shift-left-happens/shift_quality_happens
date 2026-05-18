@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     configureApiClient({
-      getToken: () => state.token,
+      getToken: () => state.token ?? localStorage.getItem(TOKEN_KEY),
       onUnauthorized: logout,
     });
   }, [state.token, logout]);

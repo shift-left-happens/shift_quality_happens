@@ -237,7 +237,7 @@ test.describe.serial('Shift Assignment Role Link API', () => {
         userRole: 'Employee',
         email: `sa.${label}.${suffix}@shifthappens.dk`,
         loginPassword: TEST_EMPLOYEE_PASSWORD,
-        phoneNumber: '+4512345678',
+        phoneNumber: '+45 12345678',
         hireDate: '2026-01-15',
         birthDate: '1999-01-01',
         employmentStatus: 'ACTIVE',
