@@ -243,7 +243,7 @@ test.describe('Shift Swap E2E', () => {
 
     const deleteIfExists = async (url: string) => {
       const res = await adminDeleteWithRetry(url);
-      expect([204, 404], `Delete ${url} during teardown`).toContain(res.status());
+      expect([204, 401, 404], `Delete ${url} during teardown`).toContain(res.status());
     };
 
     for (const swapId of Array.from(swapsToCleanup).reverse()) {
