@@ -9,97 +9,11 @@
  */
 
 import { test, expect } from '@playwright/test';
-import type { APIRequestContext, Page } from '@playwright/test';
+import { API_URL, login, authHeaders, futureShiftWindow, type LoginResponse } from '../pages/helper/api-helpers';
+import { seedAuthState, ensureBrowserAuthenticated } from '../pages/helper/browser-auth';
 
-const API_URL = process.env.API_URL || 'http://localhost:8080';
 const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || 'admin@shift.dk';
-const ADMIN_PASSWORD = process.env.TEST_USER_PASSWORD || 'password123';
 const TEST_EMPLOYEE_PASSWORD = process.env.TEST_EMPLOYEE_PASSWORD || 'TestPass123';
-
-type LoginResponse = {
-  token: string;
-  employeeId: number;
-  employeeNumber: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  roleId: number;
-  roleName: string;
-};
-
-function authHeaders(token: string) {
-  return { Authorization: `Bearer ${token}` };
-}
-
-async function login(
-  request: APIRequestContext,
-  email: string,
-  password: string = ADMIN_PASSWORD,
-): Promise<LoginResponse> {
-  const res = await request.post(`${API_URL}/auth/login`, {
-    data: { email, password },
-  });
-  expect(res.status(), `Expected successful login for ${email}`).toBe(200);
-  return (await res.json()) as LoginResponse;
-}
-
-async function seedAuthState(page: Page, session: LoginResponse) {
-  await page.addInitScript(
-    ({ token, user }) => {
-      localStorage.removeItem('shift_happens_token');
-      localStorage.removeItem('shift_happens_user');
-      localStorage.setItem('shift_happens_token', token);
-      localStorage.setItem('shift_happens_user', JSON.stringify(user));
-    },
-    {
-      token: session.token,
-      user: {
-        employeeId: session.employeeId,
-        employeeNumber: session.employeeNumber,
-        firstName: session.firstName,
-        lastName: session.lastName,
-        email: session.email,
-        roleId: session.roleId,
-        roleName: session.roleName,
-      },
-    },
-  );
-}
-
-async function ensureBrowserAuthenticated(page: Page, session: LoginResponse) {
-  await page.goto('/');
-  if (/\/login/.test(page.url())) {
-    // Firefox in CI can occasionally miss early init-script storage writes.
-    // Re-seed on-origin and reload to make auth state deterministic.
-    await page.evaluate(
-      ({ token, user }) => {
-        localStorage.setItem('shift_happens_token', token);
-        localStorage.setItem('shift_happens_user', JSON.stringify(user));
-      },
-      {
-        token: session.token,
-        user: {
-          employeeId: session.employeeId,
-          employeeNumber: session.employeeNumber,
-          firstName: session.firstName,
-          lastName: session.lastName,
-          email: session.email,
-          roleId: session.roleId,
-          roleName: session.roleName,
-        },
-      },
-    );
-    await page.goto('/');
-  }
-  await expect(page).not.toHaveURL(/\/login/);
-}
-
-function futureShiftWindow(daysFromNow: number) {
-  const start = new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000);
-  const end = new Date(start.getTime() + 8 * 60 * 60 * 1000);
-  const fmt = (d: Date) => d.toISOString().slice(0, 19);
-  return { startDatetime: fmt(start), endDatetime: fmt(end) };
-}
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
 

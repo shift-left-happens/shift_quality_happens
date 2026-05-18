@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { API_URL as api_url, loginAndGetToken } from '../pages/helper/api-helpers';
+import { buildEmployeePayload } from '../pages/helper/employee-helpers';
 
 test.describe('Employee API', () => {
   test.describe.configure({ mode: 'serial' });
 
-  const api_url = process.env.API_URL || 'http://localhost:8080';
   const email = process.env.TEST_ADMIN_EMAIL || 'admin@shift.dk';
   const password = process.env.TEST_USER_PASSWORD || 'password123';
   let adminToken: string;
@@ -13,37 +14,12 @@ test.describe('Employee API', () => {
     return `status=${response.status()} body=${text || '<empty>'}`;
   };
 
-  const buildEmployeePayload = (overrides: Record<string, unknown> = {}) => {
-    const now = Date.now();
-    return {
-      firstName: 'API',
-      lastName: 'TestUser',
-      employeeNumber: `EMP-${now}`,
-      email: `api.test.${now}@hospital.dk`,
-      loginPassword: 'Password123',
-      birthDate: '1995-01-01',
-      hireDate: '2024-01-01',
-      employmentStatus: 'ACTIVE',
-      userRole: 'Employee',
-      primaryWorkLocationId: 1,
-      phoneNumber: '12345678',
-      ...overrides
-    };
-  };
-
-  const authHeader = () => ({ 'Authorization': `Bearer ${adminToken}` });
+  const authHeader = () => ({ Authorization: `Bearer ${adminToken}` });
 
   test.beforeAll(async ({ request }) => {
-    const loginResponse = await request.post(`${api_url}/auth/login`, {
-      data: {
-        email: email,
-        password: password
-      }
-    });
-    expect(loginResponse.status(), `Expected successful login for ${email}. ${await getResponseDetails(loginResponse)}`).toBe(200);
-    const body = await loginResponse.json();
-    expect(['Administrator', 'Manager']).toContain(body.roleName);
-    adminToken = body.token;
+    const loginResponse = await loginAndGetToken(request, email, password);
+    expect(['Administrator', 'Manager']).toContain(loginResponse.roleName);
+    adminToken = loginResponse.token;
     expect(adminToken).toBeTruthy();
   });
 
