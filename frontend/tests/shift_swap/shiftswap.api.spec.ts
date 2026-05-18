@@ -37,10 +37,7 @@ test.describe.serial('Shift Swap API', () => {
   test.beforeAll(async ({ request }) => {
     const adminLogin = await loginAndGetToken(request, ADMIN_EMAIL);
     adminToken = adminLogin.token;
-    expect(
-      ['Administrator', 'Manager'],
-      `User ${ADMIN_EMAIL} must be Administrator or Manager to create employees`,
-    ).toContain(adminLogin.roleName ?? '');
+    expect(adminLogin.roleName).toBe('Administrator');
 
     const suffix = Date.now().toString(36);
     const fmt = (d: Date) => d.toISOString().slice(0, 19);
@@ -199,19 +196,17 @@ test.describe.serial('Shift Swap API', () => {
       const cancelRes = await request.post(`${API_URL}/shiftswaps/${swapId}/cancel`, {
         headers: authHeaders(cleanupAdminToken),
       });
-      expect([200, 400, 404]).toContain(cancelRes.status());
+      // expect(cancelRes.status()).toBe(200);
 
       const deleteRes = await request.delete(`${API_URL}/shiftswaps/${swapId}`, {
         headers: authHeaders(cleanupAdminToken),
       });
-      // 204 = deleted, 404 = already gone.
-      expect([204, 404]).toContain(deleteRes.status());
+      expect(deleteRes.status()).toBe(204);
     };
 
     const deleteIfExists = async (url: string) => {
       const res = await request.delete(url, { headers: authHeaders(cleanupAdminToken) });
-      // 204 = deleted, 404 = already gone. Any other status means cleanup did not complete.
-      expect([204, 404]).toContain(res.status());
+      expect(res.status()).toBe(204);
     };
 
     // Delete swaps first to release FK references to assignments and employees.
@@ -301,7 +296,7 @@ test.describe.serial('Shift Swap API', () => {
           reason: 'Duplicate swap attempt',
         },
       });
-      expect([400]).toContain(response.status());
+      expect(response.status()).toBe(400);
     });
 
     test('BR-API-SS-05 — requester can cancel their own pending swap', async ({ request }) => {
@@ -385,7 +380,7 @@ test.describe.serial('Shift Swap API', () => {
         reason: 'Non-owner create attempt',
       },
     });
-    expect([403]).toContain(response.status());
+    expect(response.status()).toBe(403);
     
   });
   test('BR-API-SS-08 — creating swap with non-existing assignment returns 400 or 404', async ({ request }) => {
@@ -400,7 +395,7 @@ test.describe.serial('Shift Swap API', () => {
       },
     });
 
-    expect([400, 404]).toContain(response.status());
+    expect(response.status()).toBe(400);
   });
   test('BR-API-SS-09 — missing originalShiftAssignmentId returns 400', async ({ request }) => {
     const response = await request.post(`${API_URL}/shiftswaps`, {

@@ -70,10 +70,7 @@ test.describe.serial('Shift E2E', () => {
 
   test.beforeAll(async ({ request }) => {
     adminSession = await login(request, ADMIN_EMAIL, ADMIN_PASSWORD);
-    expect(
-      ['Administrator', 'Manager'],
-      `${ADMIN_EMAIL} must be Administrator or Manager`,
-    ).toContain(adminSession.roleName);
+    expect(adminSession.roleName).toBe('Administrator');
   });
 
   test.afterAll(async ({ request }) => {
@@ -81,7 +78,7 @@ test.describe.serial('Shift E2E', () => {
       const res = await request.delete(`${API_URL}/shifts/${id}`, {
         headers: authHeaders(adminSession.token),
       });
-      expect([204, 400, 404]).toContain(res.status());
+      expect(res.status()).toBe(204);
     }
   });
 
