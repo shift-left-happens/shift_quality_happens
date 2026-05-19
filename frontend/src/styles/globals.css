@@ -684,6 +684,7 @@ button {
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
 .planner-nav {
@@ -789,10 +790,26 @@ button {
   white-space: nowrap;
 }
 
+/* Horizontal scroll wrapper: the 7-day grid keeps a readable minimum
+   width and scrolls within the card instead of clipping on narrow screens. */
+.planner-scroll {
+  overflow-x: auto;
+}
+
 .planner {
   display: grid;
-  grid-template-columns: 240px repeat(7, minmax(150px, 1fr));
+  grid-template-columns: 200px repeat(7, minmax(140px, 1fr));
+  min-width: 1180px;
   background: var(--color-surface);
+}
+
+/* Tighter columns on smaller screens so the week fits without scrolling
+   more often; the scroll wrapper still covers anything narrower. */
+@media (max-width: 1100px) {
+  .planner {
+    grid-template-columns: 150px repeat(7, minmax(116px, 1fr));
+    min-width: 962px;
+  }
 }
 
 .planner-cell {
@@ -1027,6 +1044,76 @@ button {
   text-align: center;
   color: var(--color-muted);
   font-size: 0.9rem;
+}
+
+/* ---------- Planner: department filter ---------- */
+
+.planner-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.planner-filter-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.planner-filter-select {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.4rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+
+/* ---------- Planner: unassigned lane ---------- */
+
+.planner-week-stat--warn {
+  background: #fef3c7;
+  border-color: #fcd34d;
+  color: #92400e;
+}
+
+.planner-unassigned-head {
+  background: #fffbeb;
+}
+
+.planner-unassigned-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f59e0b;
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(245, 158, 11, 0.25);
+}
+
+.planner-block--unassigned {
+  background: #fffbeb;
+  border-style: dashed;
+  border-color: #fcd34d;
+}
+
+.planner-block--unassigned:hover {
+  border-color: #f59e0b;
+}
+
+.planner-block-assign {
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #b45309;
 }
 
 /* ---------- Pills / badges ---------- */
