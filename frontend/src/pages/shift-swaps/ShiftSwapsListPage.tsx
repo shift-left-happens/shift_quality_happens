@@ -5,6 +5,7 @@ import {
   cancelShiftSwap,
   deleteShiftSwap,
 } from '../../api/shiftSwaps';
+import { createShiftSwapApproval } from '../../api/shiftSwapApprovals';
 import { listShiftAssignments } from '../../api/shiftAssignments';
 import { listShifts } from '../../api/shifts';
 import { listEmployees } from '../../api/employees';
@@ -21,7 +22,7 @@ import { canWrite } from '../../auth/roles';
 function statusPillClass(status: string | null): string {
   const s = (status ?? '').toLowerCase();
   if (s === 'approved' || s === 'completed') return 'pill pill-success';
-  if (s === 'rejected' || s === 'denied' || s === 'cancelled')
+  if (s === 'rejected' || s === 'denied' || s === 'declined' || s === 'cancelled')
     return 'pill pill-danger';
   if (s === 'pending') return 'pill pill-brand';
   return 'pill pill-neutral';
@@ -129,6 +130,27 @@ export default function ShiftSwapsListPage() {
     }
   }
 
+  async function handleDecision(swapId: number, decision: 'Approved' | 'Declined') {
+    if (user?.employeeId === undefined) return;
+    const verb = decision === 'Approved' ? 'Approve' : 'Decline';
+    if (!confirm(`${verb} this swap request?`)) return;
+    try {
+      await createShiftSwapApproval({
+        shiftSwapId: swapId,
+        approverEmployeeId: user.employeeId,
+        decision,
+        shiftSwapComment: null,
+        decisionDatetime: null,
+      });
+      // Approval mutates the swap (status, and on approval the underlying
+      // assignment), so re-fetch to reflect the new state.
+      const fresh = await listShiftSwaps();
+      setSwaps(fresh);
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : `${verb} failed`);
+    }
+  }
+
   return (
     <div className="page">
       <div className="page-header">
@@ -184,7 +206,12 @@ export default function ShiftSwapsListPage() {
                   : undefined;
                 const isPending = (s.swapStatus ?? '').toLowerCase() === 'pending';
                 const isRequester = s.employeeFromId === user?.employeeId;
-                const canCancel = isPending && (mayWrite || isRequester);
+                const isParty =
+                  isRequester || s.employeeToId === user?.employeeId;
+                // Managers/admins review swaps they are not a party to;
+                // the requester can withdraw their own pending request.
+                const canReview = mayWrite && isPending && !isParty;
+                const canCancel = isPending && isRequester;
                 return (
                   <tr key={s.shiftSwapId}>
                     <td>
@@ -202,6 +229,28 @@ export default function ShiftSwapsListPage() {
                     </td>
                     <td className="text-slate-500">{s.reason ?? '—'}</td>
                     <td className="data-table-actions">
+                      {canReview && (
+                        <>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-primary"
+                            onClick={() =>
+                              handleDecision(s.shiftSwapId, 'Approved')
+                            }
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-sm"
+                            onClick={() =>
+                              handleDecision(s.shiftSwapId, 'Declined')
+                            }
+                          >
+                            Decline
+                          </button>
+                        </>
+                      )}
                       {canCancel && (
                         <button
                           type="button"

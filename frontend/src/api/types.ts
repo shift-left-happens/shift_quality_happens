@@ -94,6 +94,17 @@ export interface ShiftSwap {
 
 export type NewShiftSwap = Omit<ShiftSwap, 'shiftSwapId'>;
 
+export interface ShiftSwapApproval {
+  shiftSwapApprovalId: number;
+  shiftSwapId: number;
+  approverEmployeeId: number;
+  decision: string | null;
+  shiftSwapComment: string | null;
+  decisionDatetime: string | null;
+}
+
+export type NewShiftSwapApproval = Omit<ShiftSwapApproval, 'shiftSwapApprovalId'>;
+
 export interface LeaveType {
   leaveTypeId: number;
   leaveTypeName: string | null;
