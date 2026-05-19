@@ -1,4 +1,5 @@
 USE shift_happens;
+SET NAMES utf8mb4;
 SET @entities_to_generate = 100;
 START TRANSACTION;
 -- =========================================

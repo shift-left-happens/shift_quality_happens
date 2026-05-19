@@ -1,4 +1,5 @@
 USE shift_happens;
+SET NAMES utf8mb4;
 # DELIMITER $$
 #
 # CREATE TRIGGER trg_leaveapproval_before_insert

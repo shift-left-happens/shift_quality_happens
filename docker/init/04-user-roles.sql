@@ -1,4 +1,5 @@
 USE shift_happens;
+SET NAMES utf8mb4;
 -- Indsæt roller
 # INSERT INTO user_role (`user_role_id`, `user_role_name`)
 # VALUES (1, 'Administrator'),
