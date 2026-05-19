@@ -1,4 +1,5 @@
 USE shift_happens;
+SET NAMES utf8mb4;
 
 -- =========================================
 -- Test accounts with known passwords

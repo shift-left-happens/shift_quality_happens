@@ -38,6 +38,15 @@ export interface Department {
 
 export type NewDepartment = Omit<Department, 'departmentId'>;
 
+export interface JobRole {
+  jobRoleId: number;
+  roleName: string | null;
+  jobRoleDescription: string | null;
+  isCertificationRequired: boolean | null;
+}
+
+export type NewJobRole = Omit<JobRole, 'jobRoleId'>;
+
 export interface WorkLocation {
   workLocationId: number;
   locationName: string | null;
@@ -72,6 +81,29 @@ export interface ShiftAssignment {
 }
 
 export type NewShiftAssignment = Omit<ShiftAssignment, 'shiftAssignmentId'>;
+
+export interface ShiftSwap {
+  shiftSwapId: number;
+  originalShiftAssignmentId: number;
+  employeeFromId: number;
+  employeeToId: number;
+  swapStatus: string | null;
+  requestDatetime: string | null;
+  reason: string | null;
+}
+
+export type NewShiftSwap = Omit<ShiftSwap, 'shiftSwapId'>;
+
+export interface ShiftSwapApproval {
+  shiftSwapApprovalId: number;
+  shiftSwapId: number;
+  approverEmployeeId: number;
+  decision: string | null;
+  shiftSwapComment: string | null;
+  decisionDatetime: string | null;
+}
+
+export type NewShiftSwapApproval = Omit<ShiftSwapApproval, 'shiftSwapApprovalId'>;
 
 export interface LeaveType {
   leaveTypeId: number;

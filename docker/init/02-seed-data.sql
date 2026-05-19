@@ -1,4 +1,5 @@
 USE shift_happens;
+SET NAMES utf8mb4;
 SET @entities_to_generate = 100;
 START TRANSACTION;
 -- =========================================
@@ -266,7 +267,7 @@ INSERT INTO shift_swap (original_shift_assignment_id,
 SELECT sa.shift_assignment_id,
        sa.employee_id                                                               AS employee_from_id,
        1 + MOD(sa.employee_id + 5, @entities_to_generate)                           AS employee_to_id, -- simple offset to avoid same employee
-       ELT(1 + MOD(sa.shift_assignment_id, 3), 'REQUESTED', 'APPROVED', 'DECLINED') AS swap_status,
+       ELT(1 + MOD(sa.shift_assignment_id, 3), 'Pending', 'Approved', 'Declined') AS swap_status,
        NOW() - INTERVAL MOD(sa.shift_assignment_id, 5) DAY                          AS request_datetime,
        'Personal reason'                                                            AS reason
 FROM shift_assignment sa
