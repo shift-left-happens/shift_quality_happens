@@ -4,6 +4,10 @@
  * These tests talk directly to the Spring Boot backend using Playwright's
  * request fixture. They validate the HTTP contract for /shiftswaps.
  *
+ * BR-API-SS-03 walks one flow: create a swap, have a duplicate rejected, then
+ * cancel it. The remaining tests are independent guards: authentication,
+ * listing, and the negative authorization / validation cases.
+ *
  * Fully self-contained: all employees, shifts and assignments are created
  * and deleted by the suite itself. The only seed assumption is a running
  * admin account (admin@shift.dk).
@@ -15,7 +19,7 @@ import { API_URL, loginAndGetToken, authHeaders, futureShiftWindow } from '../pa
 const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || 'admin@shift.dk';
 const TEST_EMPLOYEE_PASSWORD = process.env.TEST_EMPLOYEE_PASSWORD || 'TestPass123';
 
-// The outer describe is serial so the nested lifecycle group and SS-06 group
+// The outer describe is serial so the lifecycle flow and the SS-06 group
 // do not race over the same shared assignment.
 test.describe.serial('Shift Swap API', () => {
   let adminToken: string;
@@ -193,10 +197,9 @@ test.describe.serial('Shift Swap API', () => {
 
     const deleteSwapIfExists = async (swapId: number) => {
       // Pending swaps often must be cancelled before delete. Non-pending may return 400 here.
-      const cancelRes = await request.post(`${API_URL}/shiftswaps/${swapId}/cancel`, {
+      await request.post(`${API_URL}/shiftswaps/${swapId}/cancel`, {
         headers: authHeaders(cleanupAdminToken),
       });
-      // expect(cancelRes.status()).toBe(200);
 
       const deleteRes = await request.delete(`${API_URL}/shiftswaps/${swapId}`, {
         headers: authHeaders(cleanupAdminToken),
@@ -226,7 +229,7 @@ test.describe.serial('Shift Swap API', () => {
     }
   });
 
-  // ── BR-API-SS-01 ──────────────────────────────────────────────────────────
+  // ── BR-API-SS-01 — Authentication ─────────────────────────────────────────
 
   test('BR-API-SS-01 — unauthenticated GET /shiftswaps returns 401', async ({ request }) => {
     const response = await request.get(`${API_URL}/shiftswaps`);
@@ -246,7 +249,7 @@ test.describe.serial('Shift Swap API', () => {
     expect(response.status()).toBe(401);
   });
 
-  // ── BR-API-SS-02 ──────────────────────────────────────────────────────────
+  // ── BR-API-SS-02 — Listing ────────────────────────────────────────────────
 
   test('BR-API-SS-02 — authenticated employee can list swaps', async ({ request }) => {
     const response = await request.get(`${API_URL}/shiftswaps`, {
@@ -257,60 +260,47 @@ test.describe.serial('Shift Swap API', () => {
     expect(Array.isArray(body)).toBe(true);
   });
 
-  // ── BR-API-SS-03 / 04 / 05 — Swap lifecycle ───────────────────────────────
+  // ── BR-API-SS-03 — Swap lifecycle (create → duplicate → cancel) ──────────
 
-  test.describe.serial('Swap lifecycle (create → duplicate → cancel)', () => {
-    let createdSwapId: number;
-
-    test('BR-API-SS-03 — valid swap is created with status Pending (FR-SW-02)', async ({ request }) => {
-      const response = await request.post(`${API_URL}/shiftswaps`, {
-        headers: authHeaders(empOwnerToken),
-        data: {
-          originalShiftAssignmentId: assignmentLifecycleId,
-          employeeFromId: empOwnerId,
-          employeeToId: empTargetId,
-          requestDatetime: new Date(Date.now() - 60_000).toISOString().slice(0, 19),
-          reason: 'Playwright API test swap',
-        },
-      });
-
-      expect(response.status()).toBe(201);
-      const body = await response.json();
-      expect(body).toHaveProperty('shiftSwapId');
-      expect(body.swapStatus).toMatch(/pending/i);
-      expect(body.employeeFromId).toBe(empOwnerId);
-      expect(body.employeeToId).toBe(empTargetId);
-
-      createdSwapId = body.shiftSwapId as number;
-      swapsToCleanup.add(createdSwapId);
+  test('BR-API-SS-03 — owner creates a swap, a duplicate is rejected, then cancels it (FR-SW-02, FR-SW-07)', async ({
+    request,
+  }) => {
+    const swapPayload = (reason: string) => ({
+      originalShiftAssignmentId: assignmentLifecycleId,
+      employeeFromId: empOwnerId,
+      employeeToId: empTargetId,
+      requestDatetime: new Date(Date.now() - 60_000).toISOString().slice(0, 19),
+      reason,
     });
 
-    test('BR-API-SS-04 — duplicate pending swap for same assignment returns 400 (FR-SW-07)', async ({ request }) => {
-      const response = await request.post(`${API_URL}/shiftswaps`, {
-        headers: authHeaders(empOwnerToken),
-        data: {
-          originalShiftAssignmentId: assignmentLifecycleId,
-          employeeFromId: empOwnerId,
-          employeeToId: empTargetId,
-          requestDatetime: new Date(Date.now() - 60_000).toISOString().slice(0, 19),
-          reason: 'Duplicate swap attempt',
-        },
-      });
-      expect(response.status()).toBe(400);
+    // 1. A valid swap is created with status Pending (FR-SW-02)
+    const createResponse = await request.post(`${API_URL}/shiftswaps`, {
+      headers: authHeaders(empOwnerToken),
+      data: swapPayload('Playwright API test swap'),
     });
+    expect(createResponse.status()).toBe(201);
+    const created = await createResponse.json();
+    expect(created).toHaveProperty('shiftSwapId');
+    expect(created.swapStatus).toMatch(/pending/i);
+    expect(created.employeeFromId).toBe(empOwnerId);
+    expect(created.employeeToId).toBe(empTargetId);
+    const swapId = created.shiftSwapId as number;
+    swapsToCleanup.add(swapId);
 
-    test('BR-API-SS-05 — requester can cancel their own pending swap', async ({ request }) => {
-      expect(createdSwapId).toBeDefined();
-
-      const response = await request.post(`${API_URL}/shiftswaps/${createdSwapId}/cancel`, {
-        headers: authHeaders(empOwnerToken),
-      });
-
-      expect(response.status()).toBe(200);
-      const body = await response.json();
-      expect(body.swapStatus).toMatch(/cancelled/i);
-      // Keep swap id for teardown: cancelled swaps still hold FK references until deleted.
+    // 2. A duplicate pending swap for the same assignment is rejected (FR-SW-07)
+    const duplicateResponse = await request.post(`${API_URL}/shiftswaps`, {
+      headers: authHeaders(empOwnerToken),
+      data: swapPayload('Duplicate swap attempt'),
     });
+    expect(duplicateResponse.status()).toBe(400);
+
+    // 3. The requester can cancel their own pending swap
+    const cancelResponse = await request.post(`${API_URL}/shiftswaps/${swapId}/cancel`, {
+      headers: authHeaders(empOwnerToken),
+    });
+    expect(cancelResponse.status()).toBe(200);
+    expect((await cancelResponse.json()).swapStatus).toMatch(/cancelled/i);
+    // Keep swap id for teardown: cancelled swaps still hold FK references until deleted.
   });
 
   // ── BR-API-SS-06 — non-owner cannot cancel ────────────────────────────────
@@ -342,32 +332,8 @@ test.describe.serial('Shift Swap API', () => {
       expect(response.status()).toBe(400);
     });
   });
-  test('BR-API-SS-11 — cancelling already cancelled swap returns 400', async ({ request }) => {
-    const createResponse = await request.post(`${API_URL}/shiftswaps`, {
-      headers: authHeaders(empOwnerToken),
-      data: {
-        originalShiftAssignmentId: assignmentSS11Id,
-        employeeFromId: empOwnerId,
-        employeeToId: empTargetId,
-        requestDatetime: new Date(Date.now() - 60_000).toISOString().slice(0, 19),
-        reason: 'Cancel twice test',
-      },
-    });
 
-    expect(createResponse.status()).toBe(201);
-    const swapId = (await createResponse.json()).shiftSwapId as number;
-    swapsToCleanup.add(swapId);
-
-    const firstCancel = await request.post(`${API_URL}/shiftswaps/${swapId}/cancel`, {
-      headers: authHeaders(empOwnerToken),
-    });
-    expect(firstCancel.status()).toBe(200);
-
-    const secondCancel = await request.post(`${API_URL}/shiftswaps/${swapId}/cancel`, {
-      headers: authHeaders(empOwnerToken),
-    });
-    expect(secondCancel.status()).toBe(400);
-  });
+  // ── BR-API-SS-07 — non-owner cannot create for another employee ──────────
 
   test('BR-API-SS-07 — non-owner cannot create swap for another employee assignment', async ({ request }) => {
     const response = await request.post(`${API_URL}/shiftswaps`, {
@@ -381,8 +347,10 @@ test.describe.serial('Shift Swap API', () => {
       },
     });
     expect(response.status()).toBe(403);
-    
   });
+
+  // ── BR-API-SS-08 — non-existing assignment ────────────────────────────────
+
   test('BR-API-SS-08 — creating swap with non-existing assignment returns 400 or 404', async ({ request }) => {
     const response = await request.post(`${API_URL}/shiftswaps`, {
       headers: authHeaders(empOwnerToken),
@@ -394,9 +362,11 @@ test.describe.serial('Shift Swap API', () => {
         reason: 'Invalid assignment test',
       },
     });
-
     expect(response.status()).toBe(400);
   });
+
+  // ── BR-API-SS-09 — missing required field ─────────────────────────────────
+
   test('BR-API-SS-09 — missing originalShiftAssignmentId returns 400', async ({ request }) => {
     const response = await request.post(`${API_URL}/shiftswaps`, {
       headers: authHeaders(empOwnerToken),
@@ -407,9 +377,11 @@ test.describe.serial('Shift Swap API', () => {
         reason: 'Missing assignment id',
       },
     });
-
     expect(response.status()).toBe(400);
   });
+
+  // ── BR-API-SS-10 — swap with self ─────────────────────────────────────────
+
   test('BR-API-SS-10 — employee cannot request swap with themselves', async ({ request }) => {
     const response = await request.post(`${API_URL}/shiftswaps`, {
       headers: authHeaders(empOwnerToken),
@@ -421,7 +393,34 @@ test.describe.serial('Shift Swap API', () => {
         reason: 'Swap with myself',
       },
     });
-
     expect(response.status()).toBe(400);
+  });
+
+  // ── BR-API-SS-11 — cancelling an already cancelled swap ──────────────────
+
+  test('BR-API-SS-11 — cancelling already cancelled swap returns 400', async ({ request }) => {
+    const createResponse = await request.post(`${API_URL}/shiftswaps`, {
+      headers: authHeaders(empOwnerToken),
+      data: {
+        originalShiftAssignmentId: assignmentSS11Id,
+        employeeFromId: empOwnerId,
+        employeeToId: empTargetId,
+        requestDatetime: new Date(Date.now() - 60_000).toISOString().slice(0, 19),
+        reason: 'Cancel twice test',
+      },
+    });
+    expect(createResponse.status()).toBe(201);
+    const swapId = (await createResponse.json()).shiftSwapId as number;
+    swapsToCleanup.add(swapId);
+
+    const firstCancel = await request.post(`${API_URL}/shiftswaps/${swapId}/cancel`, {
+      headers: authHeaders(empOwnerToken),
+    });
+    expect(firstCancel.status()).toBe(200);
+
+    const secondCancel = await request.post(`${API_URL}/shiftswaps/${swapId}/cancel`, {
+      headers: authHeaders(empOwnerToken),
+    });
+    expect(secondCancel.status()).toBe(400);
   });
 });

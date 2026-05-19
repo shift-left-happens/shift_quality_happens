@@ -8,9 +8,11 @@
  * localStorage, creates shifts via the UI / API, and deletes every shift it
  * created in afterAll.
  *
- * It also guards the frontend↔backend status fix: ShiftFormPage previously
- * defaulted shiftStatus to 'SCHEDULED', which the backend rejects. E2E-SH-05
- * pins the form's status options to ShiftService.VALID_STATUSES.
+ * E2E-SH-01 walks the full planner → create → edit workflow as one flow.
+ * The remaining tests are independent guards: a validation rejection, the
+ * frontend↔backend status regression check (ShiftFormPage previously
+ * defaulted shiftStatus to 'SCHEDULED', which the backend rejects), and the
+ * protected-route redirect.
  */
 
 import { test, expect } from '@playwright/test';
@@ -93,27 +95,25 @@ test.describe.serial('Shift E2E', () => {
     return match.shiftId as number;
   }
 
-  // ── E2E-SH-01 — Planner loads ─────────────────────────────────────────────
+  // ── E2E-SH-01 — Planner → create → edit workflow ──────────────────────────
 
-  test('E2E-SH-01 — admin sees the shift planner with a New shift action', async ({ page }) => {
+  test('E2E-SH-01 — admin loads the planner, creates a shift and edits it (FR-SH-01, FR-SH-02)', async ({
+    page,
+    request,
+  }) => {
     await seedAuthState(page, adminSession);
     const shiftPage = new ShiftPage(page);
-    await shiftPage.gotoPlanner();
 
+    // 1. The planner loads with a New shift action
+    await shiftPage.gotoPlanner();
     await expect(page).not.toHaveURL(/\/login/);
     await expect(shiftPage.plannerHeading).toBeVisible();
     await expect(shiftPage.newShiftLink).toBeVisible();
-  });
 
-  // ── E2E-SH-02 — Create a shift through the form ───────────────────────────
-
-  test('E2E-SH-02 — admin creates a shift via the form (FR-SH-01)', async ({ page, request }) => {
-    await seedAuthState(page, adminSession);
-    const shiftPage = new ShiftPage(page);
+    // 2. Create a shift through the form — status is left untouched on
+    //    purpose, so its default must be backend-valid.
     await shiftPage.gotoNew();
-
     const shiftName = `E2E Created Shift ${Date.now().toString(36)}`;
-    // Status is left untouched on purpose — its default must be backend-valid.
     await shiftPage.fillForm({
       name: shiftName,
       start: futureDateTimeLocal(10, 9),
@@ -122,16 +122,31 @@ test.describe.serial('Shift E2E', () => {
     });
     await shiftPage.submit();
 
-    // On success the form navigates back to the planner.
+    // 3. On success the form navigates back to the planner; track the
+    //    created shift for cleanup.
+    await expect(page).toHaveURL(/\/shifts$/);
+    const shiftId = await findShiftIdByName(request, shiftName);
+    createdShiftIds.push(shiftId);
+
+    // 4. Edit the shift just created via the form
+    await shiftPage.gotoEdit(shiftId);
+    const renamed = `${shiftName} (edited)`;
+    await expect(shiftPage.nameInput).toHaveValue(shiftName);
+    await shiftPage.fillForm({ name: renamed });
+    await shiftPage.submit();
     await expect(page).toHaveURL(/\/shifts$/);
 
-    const id = await findShiftIdByName(request, shiftName);
-    createdShiftIds.push(id);
+    // 5. The rename persisted on the backend
+    const verifyRes = await request.get(`${API_URL}/shifts/${shiftId}`, {
+      headers: authHeaders(adminSession.token),
+    });
+    expect(verifyRes.status()).toBe(200);
+    expect((await verifyRes.json()).shiftName).toBe(renamed);
   });
 
-  // ── E2E-SH-03 — Invalid shift surfaces an error ───────────────────────────
+  // ── E2E-SH-02 — Invalid shift surfaces an error ───────────────────────────
 
-  test('E2E-SH-03 — end time before start time shows a validation error', async ({ page }) => {
+  test('E2E-SH-02 — end time before start time shows a validation error', async ({ page }) => {
     await seedAuthState(page, adminSession);
     const shiftPage = new ShiftPage(page);
     await shiftPage.gotoNew();
@@ -149,47 +164,9 @@ test.describe.serial('Shift E2E', () => {
     await expect(page).toHaveURL(/\/shifts\/new/);
   });
 
-  // ── E2E-SH-04 — Edit an existing shift ────────────────────────────────────
+  // ── E2E-SH-03 — Status options match the backend (regression) ─────────────
 
-  test('E2E-SH-04 — admin edits a shift via the form (FR-SH-02)', async ({ page, request }) => {
-    // Seed a shift through the API so the edit form has something to load.
-    const original = `E2E Edit Source ${Date.now().toString(36)}`;
-    const createRes = await request.post(`${API_URL}/shifts`, {
-      headers: authHeaders(adminSession.token),
-      data: {
-        departmentId: (await (await request.get(`${API_URL}/departments`, { headers: authHeaders(adminSession.token) })).json())[0].departmentId,
-        workLocationId: (await (await request.get(`${API_URL}/worklocations`, { headers: authHeaders(adminSession.token) })).json())[0].workLocationId,
-        shiftName: original,
-        startDatetime: `${futureDateTimeLocal(12, 9)}:00`,
-        endDatetime: `${futureDateTimeLocal(12, 17)}:00`,
-        shiftStatus: 'Open',
-      },
-    });
-    expect(createRes.status()).toBe(201);
-    const shiftId = (await createRes.json()).shiftId as number;
-    createdShiftIds.push(shiftId);
-
-    await seedAuthState(page, adminSession);
-    const shiftPage = new ShiftPage(page);
-    await shiftPage.gotoEdit(shiftId);
-
-    const renamed = `${original} (edited)`;
-    await expect(shiftPage.nameInput).toHaveValue(original);
-    await shiftPage.fillForm({ name: renamed });
-    await shiftPage.submit();
-
-    await expect(page).toHaveURL(/\/shifts$/);
-
-    const verifyRes = await request.get(`${API_URL}/shifts/${shiftId}`, {
-      headers: authHeaders(adminSession.token),
-    });
-    expect(verifyRes.status()).toBe(200);
-    expect((await verifyRes.json()).shiftName).toBe(renamed);
-  });
-
-  // ── E2E-SH-05 — Status options match the backend (regression) ─────────────
-
-  test('E2E-SH-05 — form status options match backend VALID_STATUSES', async ({ page }) => {
+  test('E2E-SH-03 — form status options match backend VALID_STATUSES', async ({ page }) => {
     await seedAuthState(page, adminSession);
     const shiftPage = new ShiftPage(page);
     await shiftPage.gotoNew();
@@ -198,9 +175,9 @@ test.describe.serial('Shift E2E', () => {
     expect(options.map((o) => o.trim())).toEqual(BACKEND_STATUSES);
   });
 
-  // ── E2E-SH-06 — Protected route ───────────────────────────────────────────
+  // ── E2E-SH-04 — Protected route ───────────────────────────────────────────
 
-  test('E2E-SH-06 — unauthenticated user is redirected to login', async ({ page }) => {
+  test('E2E-SH-04 — unauthenticated user is redirected to login', async ({ page }) => {
     await page.goto('/shifts');
     await expect(page).toHaveURL(/\/login/);
   });

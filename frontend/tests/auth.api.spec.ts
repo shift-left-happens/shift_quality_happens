@@ -5,30 +5,22 @@ test.describe('Auth API Integration', () => {
   const password = process.env.TEST_USER_PASSWORD || 'password123';
   const api_url = process.env.API_URL || '';
 
-  test('should return 200 and token on valid login', async ({ request }) => {
-    const response = await request.post(`${api_url}/auth/login`, {
-      data: {
-        email: email,
-        password: password
-      }
+  test('should issue a token for valid login and reject invalid login', async ({ request }) => {
+    // 1. Valid credentials return 200 with a token
+    const validResponse = await request.post(`${api_url}/auth/login`, {
+      data: { email, password },
     });
+    expect(validResponse.ok()).toBeTruthy();
+    const validBody = await validResponse.json();
+    expect(validBody).toHaveProperty('token');
+    expect(validBody.email).toBe(email);
 
-    expect(response.ok()).toBeTruthy();
-    const body = await response.json();
-    expect(body).toHaveProperty('token');
-    expect(body.email).toBe(email);
-  });
-
-  test('should return 401 on invalid login', async ({ request }) => {
-    const response = await request.post(`${api_url}/auth/login`, {
-      data: {
-        email: 'invalid@user.dk',
-        password: 'wrongpassword'
-      }
+    // 2. Invalid credentials return 401 with an error message
+    const invalidResponse = await request.post(`${api_url}/auth/login`, {
+      data: { email: 'invalid@user.dk', password: 'wrongpassword' },
     });
-
-    expect(response.status()).toBe(401);
-    const body = await response.json();
-    expect(body.error).toBe('Invalid email or password');
+    expect(invalidResponse.status()).toBe(401);
+    const invalidBody = await invalidResponse.json();
+    expect(invalidBody.error).toBe('Invalid email or password');
   });
 });
