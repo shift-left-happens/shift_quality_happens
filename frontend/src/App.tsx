@@ -13,6 +13,10 @@ import ShiftPlannerPage from './pages/shifts/ShiftPlannerPage';
 import ShiftFormPage from './pages/shifts/ShiftFormPage';
 import ShiftAssignmentsListPage from './pages/shift-assignments/ShiftAssignmentsListPage';
 import ShiftAssignmentFormPage from './pages/shift-assignments/ShiftAssignmentFormPage';
+import ShiftSwapsListPage from './pages/shift-swaps/ShiftSwapsListPage';
+import ShiftSwapFormPage from './pages/shift-swaps/ShiftSwapFormPage';
+import JobRolesListPage from './pages/job-roles/JobRolesListPage';
+import JobRoleFormPage from './pages/job-roles/JobRoleFormPage';
 import MySchedulePage from './pages/MySchedulePage';
 import LeaveRequestsListPage from './pages/leave-requests/LeaveRequestsListPage';
 import LeaveRequestFormPage from './pages/leave-requests/LeaveRequestFormPage';
@@ -44,6 +48,11 @@ export default function App() {
           <Route path="/shift-assignments" element={<ShiftAssignmentsListPage />} />
           <Route path="/shift-assignments/new" element={<ShiftAssignmentFormPage />} />
           <Route path="/shift-assignments/:id" element={<ShiftAssignmentFormPage />} />
+          <Route path="/shift-swaps" element={<ShiftSwapsListPage />} />
+          <Route path="/shift-swaps/new" element={<ShiftSwapFormPage />} />
+          <Route path="/job-roles" element={<JobRolesListPage />} />
+          <Route path="/job-roles/new" element={<JobRoleFormPage />} />
+          <Route path="/job-roles/:id" element={<JobRoleFormPage />} />
           <Route path="/leave-requests" element={<LeaveRequestsListPage />} />
           <Route path="/leave-requests/new" element={<LeaveRequestFormPage />} />
           <Route path="/leave-requests/:id" element={<LeaveRequestFormPage />} />

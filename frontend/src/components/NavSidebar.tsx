@@ -15,9 +15,11 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/my-schedule', label: 'My Schedule' },
   { to: '/shifts', label: 'Shifts' },
   { to: '/shift-assignments', label: 'Shift Assignments' },
+  { to: '/shift-swaps', label: 'Shift Swaps' },
   { to: '/leave-requests', label: 'Leave Requests' },
   { to: '/employees', label: 'Employees' },
   { to: '/departments', label: 'Departments' },
+  { to: '/job-roles', label: 'Job Roles' },
 ];
 
 const EMPLOYEE_ALLOWED = new Set<string>([
@@ -25,10 +27,15 @@ const EMPLOYEE_ALLOWED = new Set<string>([
   '/my-schedule',
   '/shifts',
   '/shift-assignments',
+  '/shift-swaps',
   '/leave-requests',
 ]);
 
-const MANAGE_ROUTES = new Set<string>(['/employees', '/departments']);
+const MANAGE_ROUTES = new Set<string>([
+  '/employees',
+  '/departments',
+  '/job-roles',
+]);
 
 export function NavSidebar({ collapsed }: NavSidebarProps) {
   const { user } = useAuth();
