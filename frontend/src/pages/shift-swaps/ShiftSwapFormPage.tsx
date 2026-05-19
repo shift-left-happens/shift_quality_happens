@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createShiftSwap } from '../../api/shiftSwaps';
+import { createShiftSwap, listShiftSwaps } from '../../api/shiftSwaps';
 import { listShiftAssignments } from '../../api/shiftAssignments';
 import { listShifts } from '../../api/shifts';
 import { listEmployees } from '../../api/employees';
@@ -8,6 +8,7 @@ import type {
   Employee,
   Shift,
   ShiftAssignment,
+  ShiftSwap,
 } from '../../api/types';
 import { ApiError } from '../../api/types';
 import { useAuth } from '../../auth/useAuth';
@@ -25,6 +26,7 @@ export default function ShiftSwapFormPage() {
   const [assignments, setAssignments] = useState<ShiftAssignment[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [swaps, setSwaps] = useState<ShiftSwap[]>([]);
   const [assignmentId, setAssignmentId] = useState(0);
   const [employeeToId, setEmployeeToId] = useState(0);
   const [reason, setReason] = useState('');
@@ -34,12 +36,18 @@ export default function ShiftSwapFormPage() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([listShiftAssignments(), listShifts(), listEmployees()])
-      .then(([as, ss, es]) => {
+    Promise.all([
+      listShiftAssignments(),
+      listShifts(),
+      listEmployees(),
+      listShiftSwaps(),
+    ])
+      .then(([as, ss, es, sw]) => {
         if (cancelled) return;
         setAssignments(as);
         setShifts(ss);
         setEmployees(es);
+        setSwaps(sw);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -65,14 +73,44 @@ export default function ShiftSwapFormPage() {
     return m;
   }, [employees]);
 
-  // Employees may only swap away their own assignments; managers/admins
-  // can raise a swap for anyone.
-  const myAssignments = useMemo(() => {
-    if (isEmployee && user?.employeeId !== undefined) {
-      return assignments.filter((a) => a.employeeId === user.employeeId);
+  // Assignments that already have an open swap request — the backend
+  // rejects a second pending swap for the same assignment.
+  const pendingAssignmentIds = useMemo(() => {
+    const ids = new Set<number>();
+    for (const sw of swaps) {
+      if ((sw.swapStatus ?? '').toLowerCase() === 'pending') {
+        ids.add(sw.originalShiftAssignmentId);
+      }
     }
-    return assignments;
-  }, [assignments, isEmployee, user?.employeeId]);
+    return ids;
+  }, [swaps]);
+
+  // Only assignments that can actually be swapped, mirroring the backend
+  // rules in ShiftSwapService.create: the assignment and its shift must not
+  // be cancelled, the shift must not have started yet, and no pending swap
+  // can already exist for it. Employees see only their own assignments.
+  const myAssignments = useMemo(() => {
+    const now = Date.now();
+    return assignments.filter((a) => {
+      if (
+        isEmployee &&
+        user?.employeeId !== undefined &&
+        a.employeeId !== user.employeeId
+      ) {
+        return false;
+      }
+      if ((a.assignmentStatus ?? '').toLowerCase() === 'cancelled') return false;
+      if (pendingAssignmentIds.has(a.shiftAssignmentId)) return false;
+      const shift = shiftById.get(a.shiftId);
+      if (!shift) return false;
+      if ((shift.shiftStatus ?? '').toLowerCase() === 'cancelled') return false;
+      const start = shift.startDatetime
+        ? new Date(shift.startDatetime).getTime()
+        : NaN;
+      if (Number.isNaN(start) || start <= now) return false;
+      return true;
+    });
+  }, [assignments, shiftById, pendingAssignmentIds, isEmployee, user?.employeeId]);
 
   // Default to the first available assignment once data has loaded.
   useEffect(() => {
@@ -146,7 +184,9 @@ export default function ShiftSwapFormPage() {
 
       {myAssignments.length === 0 ? (
         <div className="card card--padded page-muted">
-          There are no shift assignments to swap.
+          You have no upcoming shifts available to swap. Shifts that are
+          cancelled, already started, or already have an open swap request
+          cannot be swapped.
         </div>
       ) : (
         <form className="form-grid" onSubmit={handleSubmit}>
