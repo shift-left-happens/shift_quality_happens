@@ -684,6 +684,7 @@ button {
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
 .planner-nav {
@@ -789,10 +790,26 @@ button {
   white-space: nowrap;
 }
 
+/* Horizontal scroll wrapper: the 7-day grid keeps a readable minimum
+   width and scrolls within the card instead of clipping on narrow screens. */
+.planner-scroll {
+  overflow-x: auto;
+}
+
 .planner {
   display: grid;
-  grid-template-columns: 240px repeat(7, minmax(150px, 1fr));
+  grid-template-columns: 200px repeat(7, minmax(140px, 1fr));
+  min-width: 1180px;
   background: var(--color-surface);
+}
+
+/* Tighter columns on smaller screens so the week fits without scrolling
+   more often; the scroll wrapper still covers anything narrower. */
+@media (max-width: 1100px) {
+  .planner {
+    grid-template-columns: 150px repeat(7, minmax(116px, 1fr));
+    min-width: 962px;
+  }
 }
 
 .planner-cell {

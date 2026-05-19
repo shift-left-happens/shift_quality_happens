@@ -376,7 +376,8 @@ export default function ShiftPlannerPage() {
             </div>
           </div>
 
-          <div className="planner">
+          <div className="planner-scroll">
+            <div className="planner">
             <div className="planner-cell planner-header planner-header--team">
               Team
             </div>
@@ -424,6 +425,7 @@ export default function ShiftPlannerPage() {
                 onCellClick={onCellClick}
               />
             ))}
+            </div>
           </div>
 
           {!hasContent && (
