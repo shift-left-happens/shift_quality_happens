@@ -4,6 +4,11 @@
  * These tests talk directly to the Spring Boot backend using Playwright's
  * request fixture. They validate the HTTP contract for /jobroles.
  *
+ * BR-API-JR-03 walks the full create → read → update → delete lifecycle as
+ * one flow. The remaining tests are independent guards: authentication,
+ * listing, manager authorization, employee forbidden writes, not-found
+ * reads, validation, duplicate names and dependency-blocked deletion.
+ *
  * Fully self-contained: all job roles are created and deleted by the suite itself.
  * The only seed assumption is a running admin account (admin@shift.dk).
  */
@@ -128,7 +133,7 @@ test.describe.serial('Job Role API', () => {
     }
   });
 
-  // ── BR-API-JR-01 ──────────────────────────────────────────────────────────
+  // ── BR-API-JR-01 — Authentication ─────────────────────────────────────────
 
   test('BR-API-JR-01 — unauthenticated GET /jobroles returns 401', async ({ request }) => {
     const response = await request.get(`${API_URL}/jobroles`);
@@ -146,7 +151,7 @@ test.describe.serial('Job Role API', () => {
     expect(response.status()).toBe(401);
   });
 
-  // ── BR-API-JR-02 ──────────────────────────────────────────────────────────
+  // ── BR-API-JR-02 — Listing ────────────────────────────────────────────────
 
   test('BR-API-JR-02 — authenticated admin can list job roles', async ({ request }) => {
     const response = await request.get(`${API_URL}/jobroles`, {
@@ -157,122 +162,107 @@ test.describe.serial('Job Role API', () => {
     expect(Array.isArray(body)).toBe(true);
   });
 
-  // ── BR-API-JR-03 / 04 / 05 / 06 — CRUD operations ─────────────────────────
+  // ── BR-API-JR-03 — Create → read → update → delete lifecycle ─────────────
 
-  test.describe.serial('Job Role CRUD operations', () => {
-    let createdJobRoleId: number;
-
-    test('BR-API-JR-03 — admin can create a new job role', async ({ request }) => {
-      const jobRoleName = `TestRole${randomLetters(8)}`;
-      const response = await request.post(`${API_URL}/jobroles`, {
-        headers: authHeaders(adminToken),
-        data: {
-          roleName: jobRoleName,
-          jobRoleDescription: 'Test job role for API testing',
-          isCertificationRequired: true,
-        },
-      });
-
-      expect(response.status(), 'Create job role should return 201').toBe(201);
-      const body = await response.json();
-      expect(body).toHaveProperty('jobRoleId');
-      expect(body.roleName).toBe(jobRoleName);
-      expect(body.jobRoleDescription).toBe('Test job role for API testing');
-      expect(body.isCertificationRequired).toBe(true);
-
-      createdJobRoleId = body.jobRoleId as number;
-      jobRolesToCleanup.add(createdJobRoleId);
+  test('BR-API-JR-03 — admin creates, reads, updates and deletes a job role', async ({ request }) => {
+    // 1. Create a job role
+    const jobRoleName = `TestRole${randomLetters(8)}`;
+    const createResponse = await request.post(`${API_URL}/jobroles`, {
+      headers: authHeaders(adminToken),
+      data: {
+        roleName: jobRoleName,
+        jobRoleDescription: 'Test job role for API testing',
+        isCertificationRequired: true,
+      },
     });
+    expect(createResponse.status(), 'Create job role should return 201').toBe(201);
+    const created = await createResponse.json();
+    expect(created).toHaveProperty('jobRoleId');
+    expect(created.roleName).toBe(jobRoleName);
+    expect(created.jobRoleDescription).toBe('Test job role for API testing');
+    expect(created.isCertificationRequired).toBe(true);
+    const jobRoleId = created.jobRoleId as number;
+    jobRolesToCleanup.add(jobRoleId);
 
-    test('BR-API-JR-04 — can retrieve a created job role by ID', async ({ request }) => {
-      expect(createdJobRoleId).toBeDefined();
-
-      const response = await request.get(`${API_URL}/jobroles/${createdJobRoleId}`, {
-        headers: authHeaders(adminToken),
-      });
-
-      expect(response.status()).toBe(200);
-      const body = await response.json();
-      expect(body.jobRoleId).toBe(createdJobRoleId);
-      expect(body.isCertificationRequired).toBe(true);
+    // 2. Read it back by id
+    const getResponse = await request.get(`${API_URL}/jobroles/${jobRoleId}`, {
+      headers: authHeaders(adminToken),
     });
+    expect(getResponse.status()).toBe(200);
+    const fetched = await getResponse.json();
+    expect(fetched.jobRoleId).toBe(jobRoleId);
+    expect(fetched.isCertificationRequired).toBe(true);
 
-    test('BR-API-JR-05 — admin can update a job role', async ({ request }) => {
-      expect(createdJobRoleId).toBeDefined();
-
-      const response = await request.put(`${API_URL}/jobroles/${createdJobRoleId}`, {
-        headers: authHeaders(adminToken),
-        data: {
-          roleName: `UpdatedRole${randomLetters(8)}`,
-          jobRoleDescription: 'Updated description after creation',
-          isCertificationRequired: false,
-        },
-      });
-
-      expect(response.status()).toBe(200);
-      const body = await response.json();
-      expect(body.jobRoleId).toBe(createdJobRoleId);
-      expect(body.isCertificationRequired).toBe(false);
-      expect(body.jobRoleDescription).toBe('Updated description after creation');
+    // 3. Update it
+    const updateResponse = await request.put(`${API_URL}/jobroles/${jobRoleId}`, {
+      headers: authHeaders(adminToken),
+      data: {
+        roleName: `UpdatedRole${randomLetters(8)}`,
+        jobRoleDescription: 'Updated description after creation',
+        isCertificationRequired: false,
+      },
     });
+    expect(updateResponse.status()).toBe(200);
+    const updated = await updateResponse.json();
+    expect(updated.jobRoleId).toBe(jobRoleId);
+    expect(updated.isCertificationRequired).toBe(false);
+    expect(updated.jobRoleDescription).toBe('Updated description after creation');
 
-    test('BR-API-JR-06 — admin can delete a job role', async ({ request }) => {
-      expect(createdJobRoleId).toBeDefined();
-
-      const response = await request.delete(`${API_URL}/jobroles/${createdJobRoleId}`, {
-        headers: authHeaders(adminToken),
-      });
-
-      expect(response.status()).toBe(204);
-      jobRolesToCleanup.delete(createdJobRoleId);
-
-      // Verify it's deleted
-      const getResponse = await request.get(`${API_URL}/jobroles/${createdJobRoleId}`, {
-        headers: authHeaders(adminToken),
-      });
-      expect(getResponse.status()).toBe(404);
+    // 4. Delete it
+    const deleteResponse = await request.delete(`${API_URL}/jobroles/${jobRoleId}`, {
+      headers: authHeaders(adminToken),
     });
+    expect(deleteResponse.status()).toBe(204);
+    jobRolesToCleanup.delete(jobRoleId);
 
-    test('BR-API-JR-06B — manager can create, update and delete a job role', async ({ request }) => {
-      const createdName = `ManagerRole${randomLetters(8)}`;
-      const createResponse = await request.post(`${API_URL}/jobroles`, {
-        headers: authHeaders(managerToken),
-        data: {
-          roleName: createdName,
-          jobRoleDescription: 'Created by manager for authorization coverage',
-          isCertificationRequired: false,
-        },
-      });
-
-      expect(createResponse.status()).toBe(201);
-      const created = await createResponse.json();
-      const managerCreatedId = created.jobRoleId as number;
-      jobRolesToCleanup.add(managerCreatedId);
-
-      const updateResponse = await request.put(`${API_URL}/jobroles/${managerCreatedId}`, {
-        headers: authHeaders(managerToken),
-        data: {
-          roleName: `ManagerUpdated${randomLetters(8)}`,
-          jobRoleDescription: 'Updated by manager',
-          isCertificationRequired: true,
-        },
-      });
-
-      expect(updateResponse.status()).toBe(200);
-      const updated = await updateResponse.json();
-      expect(updated.jobRoleId).toBe(managerCreatedId);
-      expect(updated.isCertificationRequired).toBe(true);
-
-      const deleteResponse = await request.delete(`${API_URL}/jobroles/${managerCreatedId}`, {
-        headers: authHeaders(managerToken),
-      });
-
-      expect(deleteResponse.status()).toBe(204);
-      jobRolesToCleanup.delete(managerCreatedId);
+    // 5. It is gone
+    const goneResponse = await request.get(`${API_URL}/jobroles/${jobRoleId}`, {
+      headers: authHeaders(adminToken),
     });
+    expect(goneResponse.status()).toBe(404);
   });
 
-  // ── BR-API-JR-07 ──────────────────────────────────────────────────────────
+  // ── BR-API-JR-06B — manager authorization ─────────────────────────────────
+
+  test('BR-API-JR-06B — manager can create, update and delete a job role', async ({ request }) => {
+    const createdName = `ManagerRole${randomLetters(8)}`;
+    const createResponse = await request.post(`${API_URL}/jobroles`, {
+      headers: authHeaders(managerToken),
+      data: {
+        roleName: createdName,
+        jobRoleDescription: 'Created by manager for authorization coverage',
+        isCertificationRequired: false,
+      },
+    });
+
+    expect(createResponse.status()).toBe(201);
+    const created = await createResponse.json();
+    const managerCreatedId = created.jobRoleId as number;
+    jobRolesToCleanup.add(managerCreatedId);
+
+    const updateResponse = await request.put(`${API_URL}/jobroles/${managerCreatedId}`, {
+      headers: authHeaders(managerToken),
+      data: {
+        roleName: `ManagerUpdated${randomLetters(8)}`,
+        jobRoleDescription: 'Updated by manager',
+        isCertificationRequired: true,
+      },
+    });
+
+    expect(updateResponse.status()).toBe(200);
+    const updated = await updateResponse.json();
+    expect(updated.jobRoleId).toBe(managerCreatedId);
+    expect(updated.isCertificationRequired).toBe(true);
+
+    const deleteResponse = await request.delete(`${API_URL}/jobroles/${managerCreatedId}`, {
+      headers: authHeaders(managerToken),
+    });
+
+    expect(deleteResponse.status()).toBe(204);
+    jobRolesToCleanup.delete(managerCreatedId);
+  });
+
+  // ── BR-API-JR-07 — Not found ──────────────────────────────────────────────
 
   test('BR-API-JR-07 — get non-existent job role returns 404', async ({ request }) => {
     const response = await request.get(`${API_URL}/jobroles/999999`, {

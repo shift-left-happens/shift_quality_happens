@@ -4,6 +4,11 @@
  * These tests talk directly to the Spring Boot backend using Playwright's
  * request fixture. They validate the HTTP contract for /shifts.
  *
+ * SH-API-03 walks the full create → read → update → cancel → delete lifecycle
+ * as one flow. The remaining tests are independent guards: authentication,
+ * role authorization, a not-found read, and the blackbox-derived validation
+ * rejections.
+ *
  * The validation cases are blackbox-derived from "Software Quality exam -
  * Shift Happens" §"Shift Duration & Timing" and §"Shift Status Transitions",
  * mirrored from ShiftServiceTest on the backend.
@@ -14,7 +19,7 @@
  */
 
 import { test, expect, type APIRequestContext } from '@playwright/test';
-import { API_URL, loginAndGetToken, authHeaders, fmt, shiftWindow } from '../pages/helper/api-helpers';
+import { API_URL, loginAndGetToken, authHeaders, shiftWindow } from '../pages/helper/api-helpers';
 
 const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || 'admin@shift.dk';
 const TEST_EMPLOYEE_PASSWORD = process.env.TEST_EMPLOYEE_PASSWORD || 'TestPass123';
@@ -145,21 +150,51 @@ test.describe.serial('Shift API', () => {
     expect(res.status()).toBe(403);
   });
 
-  // ── SH-API-03 — Create + read ─────────────────────────────────────────────
+  // ── SH-API-03 — Create → read → update → cancel → delete lifecycle ────────
 
-  test('SH-API-03 — admin creates a valid shift (FR-SH-01)', async ({ request }) => {
-    const shift = await createShift(request, adminToken);
-    expect(shift).toHaveProperty('shiftId');
-    expect(shift.shiftStatus).toBe('Open');
-  });
+  test('SH-API-03 — admin walks a shift through its full lifecycle (FR-SH-01, 02, 03, 06)', async ({
+    request,
+  }) => {
+    // 1. Create a valid shift
+    const created = await createShift(request, adminToken);
+    expect(created).toHaveProperty('shiftId');
+    expect(created.shiftStatus).toBe('Open');
+    const shiftId = created.shiftId as number;
 
-  test('SH-API-03 — created shift can be fetched by id', async ({ request }) => {
-    const shift = await createShift(request, adminToken, { shiftName: 'Fetch Me' });
-    const res = await request.get(`${API_URL}/shifts/${shift.shiftId}`, {
+    // 2. Read it back by id
+    const getRes = await request.get(`${API_URL}/shifts/${shiftId}`, {
       headers: authHeaders(adminToken),
     });
-    expect(res.status()).toBe(200);
-    expect((await res.json()).shiftName).toBe('Fetch Me');
+    expect(getRes.status()).toBe(200);
+    expect((await getRes.json()).shiftId).toBe(shiftId);
+
+    // 3. Update it (FR-SH-02)
+    const updateRes = await request.put(`${API_URL}/shifts/${shiftId}`, {
+      headers: authHeaders(adminToken),
+      data: { ...validShiftPayload(), shiftName: 'Updated Name' },
+    });
+    expect(updateRes.status()).toBe(200);
+    expect((await updateRes.json()).shiftName).toBe('Updated Name');
+
+    // 4. Cancel it (FR-SH-06)
+    const cancelRes = await request.post(`${API_URL}/shifts/${shiftId}/cancel`, {
+      headers: authHeaders(adminToken),
+    });
+    expect(cancelRes.status()).toBe(200);
+    expect((await cancelRes.json()).shiftStatus).toBe('Cancelled');
+
+    // 5. Delete it — still a future shift, so deletion is allowed (FR-SH-03)
+    const deleteRes = await request.delete(`${API_URL}/shifts/${shiftId}`, {
+      headers: authHeaders(adminToken),
+    });
+    expect(deleteRes.status()).toBe(204);
+    shiftIds.splice(shiftIds.indexOf(shiftId), 1);
+
+    // 6. It is gone
+    const goneRes = await request.get(`${API_URL}/shifts/${shiftId}`, {
+      headers: authHeaders(adminToken),
+    });
+    expect(goneRes.status()).toBe(404);
   });
 
   test('SH-API-03 — GET unknown shift id returns 404', async ({ request }) => {
@@ -169,38 +204,7 @@ test.describe.serial('Shift API', () => {
     expect(res.status()).toBe(404);
   });
 
-  // ── SH-API-04 — Update + cancel + delete lifecycle ────────────────────────
-
-  test('SH-API-04 — shift can be updated (FR-SH-02)', async ({ request }) => {
-    const shift = await createShift(request, adminToken);
-    const res = await request.put(`${API_URL}/shifts/${shift.shiftId}`, {
-      headers: authHeaders(adminToken),
-      data: { ...validShiftPayload(), shiftName: 'Updated Name' },
-    });
-    expect(res.status()).toBe(200);
-    expect((await res.json()).shiftName).toBe('Updated Name');
-  });
-
-  test('SH-API-04 — shift can be cancelled (FR-SH-06)', async ({ request }) => {
-    const shift = await createShift(request, adminToken);
-    const res = await request.post(`${API_URL}/shifts/${shift.shiftId}/cancel`, {
-      headers: authHeaders(adminToken),
-    });
-    expect(res.status()).toBe(200);
-    expect((await res.json()).shiftStatus).toBe('Cancelled');
-  });
-
-  test('SH-API-04 — future shift can be deleted (FR-SH-03)', async ({ request }) => {
-    const shift = await createShift(request, adminToken);
-    const res = await request.delete(`${API_URL}/shifts/${shift.shiftId}`, {
-      headers: authHeaders(adminToken),
-    });
-    expect(res.status()).toBe(204);
-    // already gone — drop from the cleanup list
-    shiftIds.splice(shiftIds.indexOf(shift.shiftId), 1);
-  });
-
-  // ── SH-API-05 — Validation rejections (400) ───────────────────────────────
+  // ── SH-API-04 — Validation rejections (400) ───────────────────────────────
   // Each case maps to a branch of ShiftService.validate(); see ShiftServiceTest.
 
   const w = shiftWindow(7, 8 * 60);
@@ -224,7 +228,7 @@ test.describe.serial('Shift API', () => {
   ];
 
   for (const { name, overrides } of invalidCases) {
-    test(`SH-API-05 — rejects ${name} with 400`, async ({ request }) => {
+    test(`SH-API-04 — rejects ${name} with 400`, async ({ request }) => {
       const res = await request.post(`${API_URL}/shifts`, {
         headers: authHeaders(adminToken),
         data: validShiftPayload(overrides),

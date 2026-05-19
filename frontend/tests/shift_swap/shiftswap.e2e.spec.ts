@@ -4,6 +4,9 @@
  * The frontend does not yet have a dedicated shift swap form page, so this
  * spec validates browser-authenticated API calls from a real app session.
  *
+ * E2E-SS-01 walks one flow: an owner creates a swap, cancels it, creates a
+ * second one, and a non-owner is then blocked from cancelling it.
+ *
  * This suite is self-contained: it creates and cleans up its own employees,
  * shifts, assignments and swaps.
  */
@@ -148,8 +151,7 @@ test.describe('Shift Swap E2E', () => {
 
     const deleteSwapIfExists = async (swapId: number) => {
       // Pending swaps often must be cancelled before delete. Non-pending may return 400 here.
-      const cancelRes = await adminPostWithRetry(`${API_URL}/shiftswaps/${swapId}/cancel`);
-      // expect(cancelRes.status()).toBe(200);
+      await adminPostWithRetry(`${API_URL}/shiftswaps/${swapId}/cancel`);
 
       const deleteRes = await adminDeleteWithRetry(`${API_URL}/shiftswaps/${swapId}`);
       expect(deleteRes.status()).toBe(204);
@@ -174,61 +176,53 @@ test.describe('Shift Swap E2E', () => {
     }
   });
 
-  test('E2E-SS-01 — browser auth session can create and cancel a swap', async ({ page }) => {
+  // ── E2E-SS-01 — Create → cancel → re-create → non-owner cancel blocked ────
+
+  test('E2E-SS-01 — owner manages a swap from a browser session; non-owner cannot cancel it', async ({
+    page,
+  }) => {
     await seedAuthState(page, ownerSession);
     await ensureBrowserAuthenticated(page, ownerSession);
 
-    const createResponse = await page.request.post(`${API_URL}/shiftswaps`, {
-      headers: authHeaders(ownerSession.token),
-      data: {
-        originalShiftAssignmentId: assignmentId,
-        employeeFromId: ownerSession.employeeId,
-        employeeToId: targetEmployeeId,
-        requestDatetime: new Date(Date.now() - 60_000).toISOString().slice(0, 19),
-        reason: 'E2E Playwright test — login UI → JWT → swap API',
-      },
+    const swapPayload = (reason: string) => ({
+      originalShiftAssignmentId: assignmentId,
+      employeeFromId: ownerSession.employeeId,
+      employeeToId: targetEmployeeId,
+      requestDatetime: new Date(Date.now() - 60_000).toISOString().slice(0, 19),
+      reason,
     });
 
+    // 1. Owner creates a swap from the browser-authenticated app session
+    const createResponse = await page.request.post(`${API_URL}/shiftswaps`, {
+      headers: authHeaders(ownerSession.token),
+      data: swapPayload('E2E Playwright test — login UI → JWT → swap API'),
+    });
     expect(createResponse.status()).toBe(201);
     const swap = await createResponse.json();
     expect(swap.swapStatus).toMatch(/pending/i);
-
     const swapId: number = swap.shiftSwapId;
     swapsToCleanup.add(swapId);
 
-    // Cancel the swap to leave the database clean and verify the cancel path.
+    // 2. Owner cancels their own pending swap
     const cancelResponse = await page.request.post(`${API_URL}/shiftswaps/${swapId}/cancel`, {
       headers: authHeaders(ownerSession.token),
     });
     expect(cancelResponse.status()).toBe(200);
-    const cancelled = await cancelResponse.json();
-    expect(cancelled.swapStatus).toMatch(/cancelled/i);
-    // Keep swap id for teardown: cancelled swaps still hold FK references until deleted.
-  });
+    expect((await cancelResponse.json()).swapStatus).toMatch(/cancelled/i);
 
-  test('E2E-SS-02 — non-owner cannot cancel owner swap (400)', async ({ page }) => {
-    await seedAuthState(page, ownerSession);
-    await page.goto('/');
-
-    const createRes = await page.request.post(`${API_URL}/shiftswaps`, {
+    // 3. Owner creates a second swap on the same assignment (the first is cancelled)
+    const createResponse2 = await page.request.post(`${API_URL}/shiftswaps`, {
       headers: authHeaders(ownerSession.token),
-      data: {
-        originalShiftAssignmentId: assignmentId,
-        employeeFromId: ownerSession.employeeId,
-        employeeToId: targetEmployeeId,
-        requestDatetime: new Date(Date.now() - 60_000).toISOString().slice(0, 19),
-        reason: 'E2E non-owner cancel test',
-      },
+      data: swapPayload('E2E non-owner cancel test'),
     });
-    expect(createRes.status()).toBe(201);
-    const swap = await createRes.json();
-    const swapId = swap.shiftSwapId as number;
-    swapsToCleanup.add(swapId);
+    expect(createResponse2.status()).toBe(201);
+    const swap2Id: number = (await createResponse2.json()).shiftSwapId;
+    swapsToCleanup.add(swap2Id);
 
-    const nonOwnerCancelRes = await page.request.post(`${API_URL}/shiftswaps/${swapId}/cancel`, {
+    // 4. A non-owner cannot cancel the owner's swap
+    const nonOwnerCancelRes = await page.request.post(`${API_URL}/shiftswaps/${swap2Id}/cancel`, {
       headers: authHeaders(nonOwnerSession.token),
     });
     expect(nonOwnerCancelRes.status()).toBe(400);
   });
-
 });
