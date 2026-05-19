@@ -133,7 +133,6 @@ export default function ShiftSwapsListPage() {
   async function handleDecision(swapId: number, decision: 'Approved' | 'Declined') {
     if (user?.employeeId === undefined) return;
     const verb = decision === 'Approved' ? 'Approve' : 'Decline';
-    if (!confirm(`${verb} this swap request?`)) return;
     try {
       await createShiftSwapApproval({
         shiftSwapId: swapId,
