@@ -148,8 +148,7 @@ test.describe('Shift Swap E2E', () => {
 
     const deleteSwapIfExists = async (swapId: number) => {
       // Pending swaps often must be cancelled before delete. Non-pending may return 400 here.
-      const cancelRes = await adminPostWithRetry(`${API_URL}/shiftswaps/${swapId}/cancel`);
-      // expect(cancelRes.status()).toBe(200);
+      await adminPostWithRetry(`${API_URL}/shiftswaps/${swapId}/cancel`);
 
       const deleteRes = await adminDeleteWithRetry(`${API_URL}/shiftswaps/${swapId}`);
       expect(deleteRes.status()).toBe(204);

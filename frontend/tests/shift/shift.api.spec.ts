@@ -14,7 +14,7 @@
  */
 
 import { test, expect, type APIRequestContext } from '@playwright/test';
-import { API_URL, loginAndGetToken, authHeaders, fmt, shiftWindow } from '../pages/helper/api-helpers';
+import { API_URL, loginAndGetToken, authHeaders, shiftWindow } from '../pages/helper/api-helpers';
 
 const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || 'admin@shift.dk';
 const TEST_EMPLOYEE_PASSWORD = process.env.TEST_EMPLOYEE_PASSWORD || 'TestPass123';

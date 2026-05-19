@@ -77,7 +77,7 @@ test.describe('Employee E2E', () => {
 
     await employeePage.goto();
 
-    const dialogs: any[] = [];
+    const dialogs: Array<{ type(): string; message(): string }> = [];
 
     page.on('dialog', async dialog => {
       dialogs.push(dialog);

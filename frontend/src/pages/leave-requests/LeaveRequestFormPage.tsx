@@ -82,7 +82,6 @@ export default function LeaveRequestFormPage() {
   useEffect(() => {
     if (isNew || numericId === null) return;
     let cancelled = false;
-    setLoading(true);
     getLeaveRequest(numericId)
       .then((r) => {
         if (cancelled) return;

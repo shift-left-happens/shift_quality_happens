@@ -35,7 +35,16 @@ export class EmployeePage {
     await this.page.goto('/employees');
   }
 
-  async createEmployee(data: any) {
+  async createEmployee(data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    employeeNumber: string;
+    loginPassword?: string;
+    phoneNumber?: string;
+    birthDate: string;
+    hireDate: string;
+  }) {
     // Wait until button is actually visible and clickable
     await this.newButton.waitFor({ state: 'visible' });
 
