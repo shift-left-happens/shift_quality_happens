@@ -121,6 +121,9 @@ function formatHours(h: number): string {
   return Number.isInteger(rounded) ? `${rounded}h` : `${rounded.toFixed(1)}h`;
 }
 
+/** Selected department filter: a department id, or 'all' for no filter. */
+type DepartmentFilter = number | 'all';
+
 export default function ShiftPlannerPage() {
   const { user } = useAuth();
   const mayWrite = canWrite(user?.roleName);
@@ -131,6 +134,7 @@ export default function ShiftPlannerPage() {
   const [assignments, setAssignments] = useState<ShiftAssignment[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [departmentFilter, setDepartmentFilter] = useState<DepartmentFilter>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -180,6 +184,14 @@ export default function ShiftPlannerPage() {
     return map;
   }, [departments]);
 
+  const sortedDepartments = useMemo(
+    () =>
+      [...departments].sort((a, b) =>
+        (a.departmentName ?? '').localeCompare(b.departmentName ?? '')
+      ),
+    [departments]
+  );
+
   const rows = useMemo(() => {
     const cellsByEmployee = new Map<
       number,
@@ -189,6 +201,9 @@ export default function ShiftPlannerPage() {
     for (const a of assignments) {
       const shift = shiftById.get(a.shiftId);
       if (!shift?.startDatetime) continue;
+      if (departmentFilter !== 'all' && shift.departmentId !== departmentFilter) {
+        continue;
+      }
       const start = new Date(shift.startDatetime);
       const day = weekDays.find((d) => isSameDay(d, start));
       if (!day) continue;
@@ -207,21 +222,51 @@ export default function ShiftPlannerPage() {
         );
         return { employee: e, cells, totalHours };
       });
-  }, [assignments, employees, shiftById, weekDays]);
+  }, [assignments, employees, shiftById, weekDays, departmentFilter]);
+
+  /**
+   * Shifts in the visible week that have no assignment, grouped by day.
+   * These never show up in the employee rows, so without this lane a newly
+   * created shift would be invisible until someone is assigned to it.
+   */
+  const unassignedByDay = useMemo(() => {
+    const assignedShiftIds = new Set(assignments.map((a) => a.shiftId));
+    const byDay = new Map<string, { day: Date; shift: Shift }[]>();
+    for (const shift of shifts) {
+      if (assignedShiftIds.has(shift.shiftId)) continue;
+      if (!shift.startDatetime) continue;
+      if (departmentFilter !== 'all' && shift.departmentId !== departmentFilter) {
+        continue;
+      }
+      const start = new Date(shift.startDatetime);
+      const day = weekDays.find((d) => isSameDay(d, start));
+      if (!day) continue;
+      const key = day.toDateString();
+      const list = byDay.get(key) ?? [];
+      list.push({ day, shift });
+      byDay.set(key, list);
+    }
+    return byDay;
+  }, [shifts, assignments, weekDays, departmentFilter]);
+
+  const unassignedCount = useMemo(() => {
+    let n = 0;
+    for (const list of unassignedByDay.values()) n += list.length;
+    return n;
+  }, [unassignedByDay]);
 
   const weekStats = useMemo(() => {
     const shiftIds = new Set<number>();
     let hours = 0;
-    for (const row of rows) {
-      for (const cell of row.cells) {
-        if (!shiftIds.has(cell.shift.shiftId)) {
-          shiftIds.add(cell.shift.shiftId);
-          hours += hoursBetween(cell.shift.startDatetime, cell.shift.endDatetime);
-        }
-      }
-    }
+    const add = (shift: Shift) => {
+      if (shiftIds.has(shift.shiftId)) return;
+      shiftIds.add(shift.shiftId);
+      hours += hoursBetween(shift.startDatetime, shift.endDatetime);
+    };
+    for (const row of rows) for (const cell of row.cells) add(cell.shift);
+    for (const list of unassignedByDay.values()) for (const u of list) add(u.shift);
     return { shifts: shiftIds.size, hours };
-  }, [rows]);
+  }, [rows, unassignedByDay]);
 
   const today = new Date();
   const weekNum = isoWeekNumber(weekStart);
@@ -240,6 +285,11 @@ export default function ShiftPlannerPage() {
     navigate(`/shifts/${shiftId}`);
   }
 
+  function onAssignClick(shiftId: number) {
+    if (!mayWrite) return;
+    navigate(`/shift-assignments/new?shiftId=${shiftId}`);
+  }
+
   function onCellClick(employeeId: number, day: Date) {
     if (!mayWrite) return;
     const params = new URLSearchParams({
@@ -248,6 +298,8 @@ export default function ShiftPlannerPage() {
     });
     navigate(`/shifts/new?${params.toString()}`);
   }
+
+  const hasContent = rows.length > 0 || unassignedCount > 0;
 
   return (
     <div className="page">
@@ -275,6 +327,26 @@ export default function ShiftPlannerPage() {
             {formatWeekRange(weekStart, weekEnd)}
           </span>
         </div>
+
+        <label className="planner-filter">
+          <span className="planner-filter-label">Department</span>
+          <select
+            className="planner-filter-select"
+            value={departmentFilter === 'all' ? 'all' : String(departmentFilter)}
+            onChange={(e) =>
+              setDepartmentFilter(
+                e.target.value === 'all' ? 'all' : Number(e.target.value)
+              )
+            }
+          >
+            <option value="all">All departments</option>
+            {sortedDepartments.map((d) => (
+              <option key={d.departmentId} value={d.departmentId}>
+                {d.departmentName ?? `Department #${d.departmentId}`}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
@@ -293,6 +365,11 @@ export default function ShiftPlannerPage() {
               <span className="planner-week-stat">
                 {weekStats.shifts} {weekStats.shifts === 1 ? 'shift' : 'shifts'}
               </span>
+              {unassignedCount > 0 && (
+                <span className="planner-week-stat planner-week-stat--warn">
+                  {unassignedCount} unassigned
+                </span>
+              )}
               <span className="planner-week-stat">
                 {formatHours(weekStats.hours)}
               </span>
@@ -321,6 +398,18 @@ export default function ShiftPlannerPage() {
               );
             })}
 
+            {unassignedCount > 0 && (
+              <UnassignedRow
+                unassignedByDay={unassignedByDay}
+                unassignedCount={unassignedCount}
+                weekDays={weekDays}
+                today={today}
+                mayWrite={mayWrite}
+                departmentById={departmentById}
+                onAssignClick={onAssignClick}
+              />
+            )}
+
             {rows.map(({ employee, cells, totalHours }) => (
               <PlannerRow
                 key={employee.employeeId}
@@ -337,7 +426,7 @@ export default function ShiftPlannerPage() {
             ))}
           </div>
 
-          {rows.length === 0 && (
+          {!hasContent && (
             <div className="planner-empty">
               No shifts scheduled this week.
             </div>
@@ -345,6 +434,81 @@ export default function ShiftPlannerPage() {
         </div>
       )}
     </div>
+  );
+}
+
+interface UnassignedRowProps {
+  unassignedByDay: Map<string, { day: Date; shift: Shift }[]>;
+  unassignedCount: number;
+  weekDays: Date[];
+  today: Date;
+  mayWrite: boolean;
+  departmentById: Map<number, Department>;
+  onAssignClick: (shiftId: number) => void;
+}
+
+function UnassignedRow({
+  unassignedByDay,
+  unassignedCount,
+  weekDays,
+  today,
+  mayWrite,
+  departmentById,
+  onAssignClick,
+}: UnassignedRowProps) {
+  return (
+    <>
+      <div className="planner-cell planner-employee planner-unassigned-head">
+        <div className="planner-unassigned-icon">!</div>
+        <div className="planner-employee-meta">
+          <span className="planner-employee-name">Unassigned</span>
+          <span className="planner-employee-hours">
+            {unassignedCount} {unassignedCount === 1 ? 'shift' : 'shifts'} need staffing
+          </span>
+        </div>
+      </div>
+      {weekDays.map((d) => {
+        const items = unassignedByDay.get(d.toDateString()) ?? [];
+        const todayCol = isSameDay(d, today);
+        return (
+          <div
+            key={d.toISOString()}
+            className={'planner-cell' + (todayCol ? ' planner-cell--today' : '')}
+          >
+            {items.map(({ shift }) => {
+              const dept = departmentById.get(shift.departmentId);
+              const accent = deptColor(shift.departmentId);
+              return (
+                <div
+                  key={shift.shiftId}
+                  className="planner-block planner-block--unassigned"
+                  style={{ ['--block-accent' as string]: accent }}
+                  role={mayWrite ? 'button' : undefined}
+                  onClick={() => onAssignClick(shift.shiftId)}
+                >
+                  <div className="planner-block-time">
+                    {formatTime(shift.startDatetime)} –{' '}
+                    {formatTime(shift.endDatetime)}
+                  </div>
+                  {shift.shiftName && (
+                    <div className="planner-block-name">{shift.shiftName}</div>
+                  )}
+                  {dept && (
+                    <div className="planner-block-dept">
+                      <span className="planner-block-dept-dot" />
+                      {dept.departmentName}
+                    </div>
+                  )}
+                  {mayWrite && (
+                    <div className="planner-block-assign">+ Assign employee</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+    </>
   );
 }
 

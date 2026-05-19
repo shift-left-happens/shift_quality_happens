@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   createShiftAssignment,
   deleteShiftAssignment,
@@ -61,6 +61,10 @@ export default function ShiftAssignmentFormPage() {
   const numericId = isNew ? null : Number(id);
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // The planner deep-links here as /shift-assignments/new?shiftId=<id> so a
+  // specific (often unassigned) shift is pre-selected.
+  const preselectShiftId = Number(searchParams.get('shiftId')) || 0;
   const { user } = useAuth();
   const mayWrite = canWrite(user?.roleName);
 
@@ -81,7 +85,7 @@ export default function ShiftAssignmentFormPage() {
         setForm((f) => ({
           ...f,
           employeeId: f.employeeId || es[0]?.employeeId || 0,
-          shiftId: f.shiftId || ss[0]?.shiftId || 0,
+          shiftId: f.shiftId || preselectShiftId || ss[0]?.shiftId || 0,
         }));
       })
       .catch(() => {
