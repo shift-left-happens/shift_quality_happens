@@ -73,7 +73,7 @@ test.describe('Shift Approval E2E', () => {
 
     const assignRes = await request.post(`${API_URL}/shiftassignments`, {
       headers: authHeaders(adminSession.token),
-      data: { shiftId, employeeId: approverEmployeeId, assignmentStatus: 'Assigned', assignedDatetime: fmt(new Date()) },
+      data: { shiftId, employeeId: approverEmployeeId, assignmentStatus: 'Assigned', assignedDatetime: fmt(new Date(Date.now() - 10000)) },
     });
     expect(assignRes.status()).toBe(201);
     assignmentId = (await assignRes.json()).shiftAssignmentId as number;
@@ -112,7 +112,7 @@ test.describe('Shift Approval E2E', () => {
         approverEmployeeId,
         decision: 'Approved',
         approvalComment: 'E2E Playwright — login UI → JWT → approval API',
-        decisionDatetime: fmt(new Date()),
+        decisionDatetime: fmt(new Date(Date.now() - 5000)),
       },
     });
     expect(createRes.status()).toBe(200);

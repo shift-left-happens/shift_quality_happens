@@ -115,7 +115,7 @@ test.describe.serial('Shift Assignment API (CRUD + validation)', () => {
 
     const res = await request.post(`${API_URL}/shiftassignments`, {
       headers: authHeaders(adminToken),
-      data: { shiftId, employeeId, assignmentStatus: 'Assigned', assignedDatetime: fmt(new Date()) },
+      data: { shiftId, employeeId, assignmentStatus: 'Assigned', assignedDatetime: fmt(new Date(Date.now() - 10000)) },
     });
     expect(res.status()).toBe(201);
     expect(res.headers()['content-type']).toContain('application/json');

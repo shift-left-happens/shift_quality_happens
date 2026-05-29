@@ -45,7 +45,7 @@ test.describe.serial('Shift Approval API', () => {
         approverEmployeeId,
         decision,
         approvalComment: 'API test approval',
-        decisionDatetime: fmt(new Date()),
+        decisionDatetime: fmt(new Date(Date.now() - 5000)),
       },
     });
     if (res.status() === 200) {
@@ -102,7 +102,7 @@ test.describe.serial('Shift Approval API', () => {
 
     const assignRes = await request.post(`${API_URL}/shiftassignments`, {
       headers: authHeaders(adminToken),
-      data: { shiftId, employeeId: approverEmployeeId, assignmentStatus: 'Assigned', assignedDatetime: fmt(new Date()) },
+      data: { shiftId, employeeId: approverEmployeeId, assignmentStatus: 'Assigned', assignedDatetime: fmt(new Date(Date.now() - 10000)) },
     });
     expect(assignRes.status(), 'create assignment').toBe(201);
     assignmentId = (await assignRes.json()).shiftAssignmentId as number;
@@ -175,7 +175,7 @@ test.describe.serial('Shift Approval API', () => {
         approverEmployeeId,
         decision: 'Declined',
         approvalComment: 'changed via PUT',
-        decisionDatetime: fmt(new Date()),
+        decisionDatetime: fmt(new Date(Date.now() - 5000)),
       },
     });
 

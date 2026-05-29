@@ -94,7 +94,7 @@ test.describe('Shift Swap E2E', () => {
           shiftId,
           employeeId,
           assignmentStatus: 'Assigned',
-          assignedDatetime: fmt(new Date()),
+          assignedDatetime: fmt(new Date(Date.now() - 10000)),
         },
       });
       expect(res.status(), `Create assignment for shift ${shiftId}`).toBe(201);

@@ -77,7 +77,7 @@ test.describe('ShiftSwap Extra API', () => {
           shiftId: shiftId,
           employeeId: empAId,
           assignmentStatus: 'Assigned',
-          assignedDatetime: fmt(new Date())
+          assignedDatetime: fmt(new Date(Date.now() - 10000))
         }
       });
       expect(assignRes.status()).toBe(201);
@@ -90,7 +90,7 @@ test.describe('ShiftSwap Extra API', () => {
         employeeToId: empBId,
         originalShiftAssignmentId: assignId,
         reason: 'Testing PUT update',
-        requestDatetime: fmt(new Date()),
+        requestDatetime: fmt(new Date(Date.now() - 5000)),
         swapStatus: 'Pending'
       };
       const swapRes = await request.post(`${api_url}/shiftswaps`, {
