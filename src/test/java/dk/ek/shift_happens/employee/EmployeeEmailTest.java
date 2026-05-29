@@ -98,18 +98,18 @@ class EmployeeEmailTest {
 
     @ParameterizedTest(name = "Should validate length boundary for email: {0} chars -> {1}")
     @CsvSource({
-            "0, false",
-            "1, false",
-            "3, false",
-            "4, false",
-            "5, false",
-            "6, true", //Minimum valid value
-            "150, true", //Middle value
-            "319, true",
-            "320, true", // Maximum valid value
-            "321, false",
-            "322, false",
-            "400, false"
+        "0, false",
+        "1, false",
+        "3, false",
+        "4, false",
+        "5, false",
+        "6, true", // Minimum valid value
+        "150, true", // Middle value
+        "319, true",
+        "320, true", // Maximum valid value
+        "321, false",
+        "322, false",
+        "400, false"
     })
     void should_validate_email_length_boundaries(int length, boolean expectedValid) {
         // §1 BVA — email length 5-320

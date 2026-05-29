@@ -71,10 +71,13 @@ class ShiftSwapApprovalServiceTest {
 
     @Mock
     private ShiftRequiredJobRoleRepository shiftRequiredJobRoleRepository;
+
     @Mock
     private EmployeeJobRoleRepository employeeJobRoleRepository;
+
     @Mock
     private ShiftRequiredJobRole shiftRequiredJobRole;
+
     @Mock
     private EmployeeJobRole employeeJobRole;
 
@@ -223,11 +226,9 @@ class ShiftSwapApprovalServiceTest {
     @Test
     // --- Case 7 — underlying shift required job role mismatch → Deny -----------
     void case7_should_deny_when_underlying_shift_required_job_role_mismatch() {
-        when(shiftRequiredJobRoleRepository.findByShiftId(anyInt()))
-                .thenReturn(List.of(shiftRequiredJobRole));
+        when(shiftRequiredJobRoleRepository.findByShiftId(anyInt())).thenReturn(List.of(shiftRequiredJobRole));
         when(shiftRequiredJobRole.getJobRoleId()).thenReturn(1);
-        when(employeeJobRoleRepository.findByEmployeeId(anyInt()))
-                .thenReturn(List.of(employeeJobRole));
+        when(employeeJobRoleRepository.findByEmployeeId(anyInt())).thenReturn(List.of(employeeJobRole));
         when(employeeJobRole.getJobRoleId()).thenReturn(2);
         assertThatThrownBy(() -> service.approve(buildApproval("Approved")))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -236,12 +237,10 @@ class ShiftSwapApprovalServiceTest {
 
     @Test
     // --- Case 8 - Employee has required job role -> Approve -------
-    void case8_should_approve_when_employee_is_qualified(){
-        when(shiftRequiredJobRoleRepository.findByShiftId(anyInt()))
-                .thenReturn(List.of(shiftRequiredJobRole));
+    void case8_should_approve_when_employee_is_qualified() {
+        when(shiftRequiredJobRoleRepository.findByShiftId(anyInt())).thenReturn(List.of(shiftRequiredJobRole));
         when(shiftRequiredJobRole.getJobRoleId()).thenReturn(1);
-        when(employeeJobRoleRepository.findByEmployeeId(anyInt()))
-                .thenReturn(List.of(employeeJobRole));
+        when(employeeJobRoleRepository.findByEmployeeId(anyInt())).thenReturn(List.of(employeeJobRole));
         when(employeeJobRole.getJobRoleId()).thenReturn(1);
         ShiftSwapApproval result = service.approve(buildApproval("Approved"));
         assertThat(result.getDecision()).isEqualTo(ShiftSwapApprovalService.DECISION_APPROVED);
