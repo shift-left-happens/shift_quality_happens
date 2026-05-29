@@ -3,11 +3,17 @@ include .env
 export
 # Windows-compatible command wrappers
 ifeq ($(OS),Windows_NT)
-MVNW := ./mvnw.cmd
+SHELL := cmd.exe
+.SHELLFLAGS := /C
+MVNW := mvnw.cmd
+NPM := npm.cmd
+NPX := npx.cmd
 OPEN := cmd /c start ""
 TEST_DB_ENV := set "DB_URL=jdbc:mysql://localhost:3309/shift_happens?serverTimezone=UTC" &&
 else
 MVNW := ./mvnw
+NPM := npm
+NPX := npx
 OPEN := open
 TEST_DB_ENV := DB_URL=jdbc:mysql://localhost:3309/shift_happens?serverTimezone=UTC
 endif
@@ -24,7 +30,7 @@ all:
 	@echo "Starting full stack with Docker Compose..."
 	docker compose up --build -d --wait
 	@echo "Starting frontend..."
-	cd frontend && npm run dev
+	cd frontend && $(NPM) run dev
 
 all-tests:
 	@echo "Starting full stack for tests..."
@@ -32,7 +38,7 @@ all-tests:
 	@echo "Running backend tests..."
 	$(MVNW) test
 	@echo "Running frontend tests..."
-	cd frontend && npx playwright test
+	cd frontend && $(NPX) playwright test
 	@echo "Stopping stack..."
 
 # Development : DB runs in Docker, app runs locally via Maven
@@ -53,11 +59,11 @@ dev-db:
 
 ## Run the frontend pointed at the dev backend (port 8080)
 dev-frontend:
-	cd frontend && npm run dev:prod
+	cd frontend && $(NPM) run dev:prod
 
 ## Run the frontend pointed at the test backend (port 8081)
 test-frontend:
-	cd frontend && npm run dev:test
+	cd frontend && $(NPM) run dev:test
 
 ## Run the Spring Boot app locally (dev DB must already be running)
 dev-app:
@@ -161,43 +167,43 @@ test-env-logs:
 
 ## Install the Playwright browser (Chromium) — run once
 fe-test-install:
-	cd frontend && npx playwright install chromium
+	cd frontend && $(NPX) playwright install chromium
 
 ## Run all frontend tests (API + E2E)
 fe-test:
-	cd frontend && npx playwright test
+	cd frontend && $(NPX) playwright test
 
 ## Run only the API specs (*.api.spec.ts)
 fe-test-api:
-	cd frontend && npx playwright test api.spec
+	cd frontend && $(NPX) playwright test api.spec
 
 ## Run only the end-to-end specs (*.e2e.spec.ts)
 fe-test-e2e:
-	cd frontend && npx playwright test e2e.spec
+	cd frontend && $(NPX) playwright test e2e.spec
 
 ## Run a single spec or filter by path/title. Usage: make fe-test-one SPEC=shiftapproval
 fe-test-one:
-	cd frontend && npx playwright test $(SPEC)
+	cd frontend && $(NPX) playwright test $(SPEC)
 
 ## Watch the E2E tests run in a visible browser (headed)
 fe-test-headed:
-	cd frontend && npx playwright test e2e.spec --headed
+	cd frontend && $(NPX) playwright test e2e.spec --headed
 
 ## Open Playwright's interactive UI — watch/replay tests in the browser, re-run on save
 fe-test-ui:
-	cd frontend && npx playwright test --ui
+	cd frontend && $(NPX) playwright test --ui
 
 ## Open the last Playwright HTML report
 fe-test-report:
-	cd frontend && npx playwright show-report
+	cd frontend && $(NPX) playwright show-report
 
 ## Check frontend linting
 fe-lint:
-	cd frontend && npm run lint
+	cd frontend && $(NPM) run lint
 
 ## Auto-fix frontend lint violations
 fe-lint-fix:
-	cd frontend && npm run lint:fix
+	cd frontend && $(NPM) run lint:fix
 
 # ──────────────────────────────────────────────────────────────
 # Performance (run against test env — start with make test-env-up first)
