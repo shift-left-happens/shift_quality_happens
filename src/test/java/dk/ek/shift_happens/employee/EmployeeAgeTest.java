@@ -67,7 +67,21 @@ class EmployeeAgeTest {
     }
 
     @ParameterizedTest(name = "Should validate age: {0} years old -> {1}")
-    @CsvSource({"14, false", "15, false", "16, true", "17, true", "99, true", "100, true", "101, false", "102, false"})
+    @CsvSource({
+            "0, false",
+            "1, false",
+            "10, false",
+            "14, false",
+            "15, false",
+            "16, true", // Minimum valid value
+            "17, true",
+            "30, true",
+            "99, true",
+            "100, true", // Maximum valid value
+            "101, false",
+            "102, false",
+            "110, false"
+    })
     void should_validate_age_boundaries(int age, boolean expectedValid) {
         // §"Age & Birth Date" 3-point BVA for age
         Employee e = valid();
@@ -88,7 +102,19 @@ class EmployeeAgeTest {
     }
 
     @ParameterizedTest(name = "Should validate birth year: {0} -> {1}")
-    @CsvSource({"1924, false", "1925, false", "1926, true", "1927, true", "2009, true", "2010, true", "2011, false"})
+    @CsvSource({
+            "1900, false",
+            "1924, false",
+            "1925, false",
+            "1926, true", //Minimum valid value
+            "1927, true",
+            "1980, true",
+            "2009, true",
+            "2010, true", //Maximum valid value
+            "2011, false",
+            "2012, false",
+            "2035, false"
+    })
     void should_validate_birth_year_boundaries(int year, boolean expectedValid) {
         // §"Age & Birth Date" 3-point BVA for birth year
         // Use Jan 1st to avoid birthday timing issues

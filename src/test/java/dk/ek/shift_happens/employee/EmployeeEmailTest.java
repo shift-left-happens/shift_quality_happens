@@ -77,7 +77,7 @@ class EmployeeEmailTest {
     }
 
     @ParameterizedTest(name = "Should reject email={0}")
-    @ValueSource(strings = {"@@das", "a@a", "@aaa.dk", "aaa@a"})
+    @ValueSource(strings = {"@@das", "a@a", "@aaa.dk", "aaa@a", ""})
     void should_reject_invalid_format_emails(String email) {
         // §"Email decision table" Case 2, 3, 3(renum), 4
         Employee e = valid();
@@ -89,15 +89,28 @@ class EmployeeEmailTest {
     void should_reject_when_email_already_taken() {
         // §"Email decision table" Case 1 with R4=F
         Employee e = valid();
-        e.setEmail("taken@a.dk");
-        when(repo.existsByEmail("taken@a.dk")).thenReturn(true);
+        e.setEmail("a@a.dk");
+        when(repo.existsByEmail("a@a.dk")).thenReturn(true);
         assertThatThrownBy(() -> service.save(e))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("already in use");
     }
 
     @ParameterizedTest(name = "Should validate length boundary for email: {0} chars -> {1}")
-    @CsvSource({"5, true", "6, true", "319, true", "320, true", "321, false"})
+    @CsvSource({
+            "0, false",
+            "1, false",
+            "3, false",
+            "4, false",
+            "5, false",
+            "6, true", //Minimum valid value
+            "150, true", //Middle value
+            "319, true",
+            "320, true", // Maximum valid value
+            "321, false",
+            "322, false",
+            "400, false"
+    })
     void should_validate_email_length_boundaries(int length, boolean expectedValid) {
         // §1 BVA — email length 5-320
         Employee e = valid();
@@ -120,9 +133,13 @@ class EmployeeEmailTest {
     }
 
     private String emailOfLength(int len) {
-        int suffixLen = "@a.dk".length(); // 5
-        int localLen = Math.max(1, len - suffixLen);
-        String local = "a".repeat(localLen);
-        return local + "@a.dk";
+        String suffix = "@a.dk";
+
+        if (len <= suffix.length()) {
+            return "a".repeat(len);
+        }
+
+        int localLen = len - suffix.length();
+        return "a".repeat(localLen) + suffix;
     }
 }
