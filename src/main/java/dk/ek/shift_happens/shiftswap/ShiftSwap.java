@@ -1,7 +1,10 @@
 package dk.ek.shift_happens.shiftswap;
 
+import dk.ek.shift_happens.jobrole.JobRole;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -34,4 +37,5 @@ public class ShiftSwap {
 
     @Column(name = "reason")
     private String reason;
+
 }

@@ -10,16 +10,21 @@ import static org.mockito.Mockito.when;
 import dk.ek.shift_happens.employee.Employee;
 import dk.ek.shift_happens.employee.EmployeeRepository;
 import dk.ek.shift_happens.employee.UserRole;
+import dk.ek.shift_happens.employeejobrole.EmployeeJobRole;
+import dk.ek.shift_happens.employeejobrole.EmployeeJobRoleRepository;
 import dk.ek.shift_happens.shift.Shift;
 import dk.ek.shift_happens.shift.ShiftRepository;
 import dk.ek.shift_happens.shift.ShiftService;
 import dk.ek.shift_happens.shiftassignment.ShiftAssignment;
 import dk.ek.shift_happens.shiftassignment.ShiftAssignmentRepository;
 import dk.ek.shift_happens.shiftassignment.ShiftAssignmentService;
+import dk.ek.shift_happens.shiftrequiredjobrole.ShiftRequiredJobRole;
+import dk.ek.shift_happens.shiftrequiredjobrole.ShiftRequiredJobRoleRepository;
 import dk.ek.shift_happens.shiftswap.ShiftSwap;
 import dk.ek.shift_happens.shiftswap.ShiftSwapRepository;
 import dk.ek.shift_happens.shiftswap.ShiftSwapService;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,6 +69,15 @@ class ShiftSwapApprovalServiceTest {
     @Mock
     private ShiftAssignmentService shiftAssignmentService;
 
+    @Mock
+    private ShiftRequiredJobRoleRepository shiftRequiredJobRoleRepository;
+    @Mock
+    private EmployeeJobRoleRepository employeeJobRoleRepository;
+    @Mock
+    private ShiftRequiredJobRole shiftRequiredJobRole;
+    @Mock
+    private EmployeeJobRole employeeJobRole;
+
     private ShiftSwapApprovalService service;
 
     private ShiftSwap swap;
@@ -78,7 +92,9 @@ class ShiftSwapApprovalServiceTest {
                 shiftAssignmentRepository,
                 shiftRepository,
                 employeeRepository,
-                shiftAssignmentService);
+                shiftAssignmentService,
+                shiftRequiredJobRoleRepository,
+                employeeJobRoleRepository);
 
         swap = new ShiftSwap();
         swap.setShiftSwapId(SWAP_ID);
@@ -202,5 +218,34 @@ class ShiftSwapApprovalServiceTest {
         assertThatThrownBy(() -> service.approve(buildApproval("Approved")))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("overlap");
+    }
+
+    @Test
+    // --- Case 7 — underlying shift required job role mismatch → Deny -----------
+    void case7_should_deny_when_underlying_shift_required_job_role_mismatch() {
+        when(shiftRequiredJobRoleRepository.findByShiftId(anyInt()))
+                .thenReturn(List.of(shiftRequiredJobRole));
+        when(shiftRequiredJobRole.getJobRoleId()).thenReturn(1);
+        when(employeeJobRoleRepository.findByEmployeeId(anyInt()))
+                .thenReturn(List.of(employeeJobRole));
+        when(employeeJobRole.getJobRoleId()).thenReturn(2);
+        assertThatThrownBy(() -> service.approve(buildApproval("Approved")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Employee does not have required job role for shift");
+    }
+
+    @Test
+    // --- Case 8 - Employee has required job role -> Approve -------
+    void case8_should_approve_when_employee_is_qualified(){
+        when(shiftRequiredJobRoleRepository.findByShiftId(anyInt()))
+                .thenReturn(List.of(shiftRequiredJobRole));
+        when(shiftRequiredJobRole.getJobRoleId()).thenReturn(1);
+        when(employeeJobRoleRepository.findByEmployeeId(anyInt()))
+                .thenReturn(List.of(employeeJobRole));
+        when(employeeJobRole.getJobRoleId()).thenReturn(1);
+        ShiftSwapApproval result = service.approve(buildApproval("Approved"));
+        assertThat(result.getDecision()).isEqualTo(ShiftSwapApprovalService.DECISION_APPROVED);
+        assertThat(swap.getSwapStatus()).isEqualTo(ShiftSwapService.STATUS_APPROVED);
+        assertThat(originalAssignment.getEmployeeId()).isEqualTo(TARGET_ID);
     }
 }

@@ -3,12 +3,17 @@ package dk.ek.shift_happens.shiftswapapproval;
 import dk.ek.shift_happens.employee.Employee;
 import dk.ek.shift_happens.employee.EmployeeRepository;
 import dk.ek.shift_happens.employee.UserRole;
+import dk.ek.shift_happens.employeejobrole.EmployeeJobRole;
+import dk.ek.shift_happens.employeejobrole.EmployeeJobRoleRepository;
+import dk.ek.shift_happens.jobrole.JobRole;
 import dk.ek.shift_happens.shift.Shift;
 import dk.ek.shift_happens.shift.ShiftRepository;
 import dk.ek.shift_happens.shift.ShiftService;
 import dk.ek.shift_happens.shiftassignment.ShiftAssignment;
 import dk.ek.shift_happens.shiftassignment.ShiftAssignmentRepository;
 import dk.ek.shift_happens.shiftassignment.ShiftAssignmentService;
+import dk.ek.shift_happens.shiftrequiredjobrole.ShiftRequiredJobRole;
+import dk.ek.shift_happens.shiftrequiredjobrole.ShiftRequiredJobRoleRepository;
 import dk.ek.shift_happens.shiftswap.ShiftSwap;
 import dk.ek.shift_happens.shiftswap.ShiftSwapRepository;
 import dk.ek.shift_happens.shiftswap.ShiftSwapService;
@@ -36,6 +41,8 @@ public class ShiftSwapApprovalService {
     private final ShiftRepository shiftRepository;
     private final EmployeeRepository employeeRepository;
     private final ShiftAssignmentService shiftAssignmentService;
+    private final ShiftRequiredJobRoleRepository shiftRequiredJobRoleRepository;
+    private final EmployeeJobRoleRepository employeeJobRoleRepository;
 
     public List<ShiftSwapApproval> findAll() {
         return shiftSwapApprovalRepository.findAll();
@@ -61,6 +68,7 @@ public class ShiftSwapApprovalService {
         }
 
         String normalized = normaliseDecision(approval.getDecision());
+
 
         ShiftSwap swap = shiftSwapRepository
                 .findById(approval.getShiftSwapId())
@@ -96,6 +104,17 @@ public class ShiftSwapApprovalService {
         Shift originalShift = shiftRepository
                 .findById(originalAssignment.getShiftId())
                 .orElseThrow(() -> new IllegalArgumentException("Original shift not found"));
+        //Check if shift requires job roles
+        List<ShiftRequiredJobRole> shiftRequires = shiftRequiredJobRoleRepository.findByShiftId(originalShift.getShiftId());
+        if (shiftRequires.size() > 0) {
+            List<EmployeeJobRole> employeeJobRoles = employeeJobRoleRepository.findByEmployeeId(swap.getEmployeeToId());
+            for (ShiftRequiredJobRole requiredJobRole : shiftRequires) {
+                if(!(employeeJobRoles.stream().anyMatch(e -> e.getJobRoleId().equals(requiredJobRole.getJobRoleId())))) {
+                    throw new IllegalArgumentException("Employee does not have required job role for shift");
+                }
+            }
+        }
+
 
         if (ShiftService.STATUS_CANCELLED.equalsIgnoreCase(originalShift.getShiftStatus())) {
             throw new IllegalArgumentException("Cannot approve a swap for a cancelled shift");

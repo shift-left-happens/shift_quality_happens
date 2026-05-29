@@ -147,21 +147,21 @@ class EmployeePhoneTest {
 
     @ParameterizedTest(name = "Additional cases: phone={0} -> valid={1}")
     @CsvSource({
-            "+451234, false", //Missing space after country code
-            "+45 1234, true", //Space after country code
-            "+45  1234, false", //Extra spaces after country code
-            "45 1234, false", //No plus sign
-            "+45 1234, true", //Plus sign
-            "++45 1234, true", //Multiple plus signs
-            "123 4567, false",
+            "'+451234', false", //Missing space after country code
+            "'+45 1234', true", //Space after country code
+            "'+45  1234', false", //Extra spaces after country code
+            "'45 1234', false", //No plus sign
+            "'+45 1234', true", //Plus sign
+            "'++45 1234', false", //Multiple plus signs
+            "'123 4567', false",
             "'+1 123', true",
             "'+45', false",
             "'+45 ', false",
-            "123 4567, false", //Local number with spaces
-            "123  4567, false",
-            "+1, 12, false",
-            "+1 123, true", //minimum valid international number
-            "+1 1234, true",
+            "'123 4567', false", //Local number with spaces
+            "'123  4567', false",
+            "'+1 12', false",
+            "'+1 123', true", //minimum valid international number
+            "'+1 1234', true",
     })
     void should_validate_additional_phone_cases(String phone, boolean expectedValid) {
         // §"Phone number" BVA additional cases
