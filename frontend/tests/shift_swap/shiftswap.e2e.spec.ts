@@ -188,7 +188,6 @@ test.describe('Shift Swap E2E', () => {
       originalShiftAssignmentId: assignmentId,
       employeeFromId: ownerSession.employeeId,
       employeeToId: targetEmployeeId,
-      requestDatetime: new Date(Date.now() - 60_000).toISOString().slice(0, 19),
       reason,
     });
 

@@ -90,7 +90,6 @@ test.describe('ShiftSwap Extra API', () => {
         employeeToId: empBId,
         originalShiftAssignmentId: assignId,
         reason: 'Testing PUT update',
-        requestDatetime: fmt(new Date()),
         swapStatus: 'Pending'
       };
       const swapRes = await request.post(`${api_url}/shiftswaps`, {
