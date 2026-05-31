@@ -1,4 +1,4 @@
-# Load .env variables
+#  Load .env variables
 include .env
 export
 # Windows-compatible command wrappers
