@@ -25,7 +25,7 @@ public class EmployeeValidator {
     public static final int NAME_MIN = 1;
     public static final int NAME_MAX = 100;
     public static final int PASSWORD_MIN = 8;
-    public static final int PASSWORD_MAX = 255;
+    public static final int PASSWORD_MAX = 64;
     public static final int EMAIL_MIN = 5;
     public static final int EMAIL_MAX = 320;
     public static final int AGE_MIN = 16;
