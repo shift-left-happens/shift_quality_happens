@@ -67,7 +67,7 @@ class EmployeeAgeTest {
     }
 
     @ParameterizedTest(name = "Should validate age: {0} years old -> {1}")
-    @CsvSource({"14, false", "15, false", "16, true", "17, true", "99, true", "100, true", "101, true", "102, false"})
+    @CsvSource({"14, false", "15, false", "16, true", "17, true", "99, true", "100, true", "101, false", "102, false"})
     void should_validate_age_boundaries(int age, boolean expectedValid) {
         // §"Age & Birth Date" 3-point BVA for age
         Employee e = valid();
