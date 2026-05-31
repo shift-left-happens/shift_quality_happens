@@ -94,12 +94,12 @@ class EmployeePasswordTest {
         "7, false",
         "8, true", // Minimum valid value
         "9, true",
-        "125, true", // Middle value
-        "254, true",
-        "255, true", // Maximum valid value
-        "256, false",
-        "257, false",
-        "300, false"
+        "30, true", // Middle value
+        "63, true",
+        "64, true", // Maximum valid value
+        "65, false",
+        "66, false",
+        "100, false"
     })
     void should_validate_password_length_boundaries(int length, boolean expectedValid) {
         // §"3-Point BVA – Password Length"
