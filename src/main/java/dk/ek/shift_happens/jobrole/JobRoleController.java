@@ -1,6 +1,8 @@
 package dk.ek.shift_happens.jobrole;
 
 import java.util.List;
+
+import dk.ek.shift_happens.department.DepartmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 public class JobRoleController {
 
     private final JobRoleService jobRoleService;
+    private final DepartmentService departmentService;
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
