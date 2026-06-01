@@ -169,7 +169,8 @@ class ShiftSwapApprovalServiceTest {
     void case2_should_deny_when_approver_is_employee_role() {
         when(employeeRepository.findById(APPROVER_ID))
                 .thenReturn(Optional.of(employeeWithRole(APPROVER_ID, UserRole.Employee)));
-        assertThatThrownBy(() -> service.approve(buildApproval("Approved")))
+        ShiftSwapApproval approval = buildApproval("Approved");
+        assertThatThrownBy(() -> service.approve(approval))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Administrator or Manager");
     }
@@ -191,7 +192,8 @@ class ShiftSwapApprovalServiceTest {
     @Test
     void case5_should_deny_when_swap_already_cancelled() {
         swap.setSwapStatus(ShiftSwapService.STATUS_CANCELLED);
-        assertThatThrownBy(() -> service.approve(buildApproval("Approved")))
+        ShiftSwapApproval approval = buildApproval("Approved");
+        assertThatThrownBy(() -> service.approve(approval))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("cancelled");
     }
@@ -199,7 +201,8 @@ class ShiftSwapApprovalServiceTest {
     @Test
     void case5_should_deny_when_swap_already_declined() {
         swap.setSwapStatus(ShiftSwapService.STATUS_DECLINED);
-        assertThatThrownBy(() -> service.approve(buildApproval("Approved")))
+        ShiftSwapApproval approval = buildApproval("Approved");
+        assertThatThrownBy(() -> service.approve(approval))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("declined");
     }
@@ -208,7 +211,8 @@ class ShiftSwapApprovalServiceTest {
     @Test
     void case6_should_deny_when_underlying_shift_cancelled() {
         originalShift.setShiftStatus(ShiftService.STATUS_CANCELLED);
-        assertThatThrownBy(() -> service.approve(buildApproval("Approved")))
+        ShiftSwapApproval approval = buildApproval("Approved");
+        assertThatThrownBy(() -> service.approve(approval))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("cancelled");
     }
@@ -218,7 +222,8 @@ class ShiftSwapApprovalServiceTest {
     void case1_should_deny_when_approval_would_cause_overlap() {
         when(shiftAssignmentService.hasOverlapOrInsufficientRest(anyInt(), any(), any()))
                 .thenReturn(true);
-        assertThatThrownBy(() -> service.approve(buildApproval("Approved")))
+        ShiftSwapApproval approval = buildApproval("Approved");
+        assertThatThrownBy(() -> service.approve(approval))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("overlap");
     }
@@ -230,7 +235,8 @@ class ShiftSwapApprovalServiceTest {
         when(shiftRequiredJobRole.getJobRoleId()).thenReturn(1);
         when(employeeJobRoleRepository.findByEmployeeId(anyInt())).thenReturn(List.of(employeeJobRole));
         when(employeeJobRole.getJobRoleId()).thenReturn(2);
-        assertThatThrownBy(() -> service.approve(buildApproval("Approved")))
+        ShiftSwapApproval approval = buildApproval("Approved");
+        assertThatThrownBy(() -> service.approve(approval))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Employee does not have required job role for shift");
     }
