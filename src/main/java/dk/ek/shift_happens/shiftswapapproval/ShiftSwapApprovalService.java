@@ -13,6 +13,7 @@ import dk.ek.shift_happens.shiftswap.ShiftSwap;
 import dk.ek.shift_happens.shiftswap.ShiftSwapRepository;
 import dk.ek.shift_happens.shiftswap.ShiftSwapService;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -108,7 +109,7 @@ public class ShiftSwapApprovalService {
 
         approval.setShiftSwapApprovalId(null);
         approval.setDecision(normalized);
-        approval.setDecisionDatetime(LocalDateTime.now());
+        approval.setDecisionDatetime(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
 
         if (swap.getRequestDatetime() != null && approval.getDecisionDatetime().isBefore(swap.getRequestDatetime())) {
             throw new IllegalArgumentException("Decision time cannot be before request time");

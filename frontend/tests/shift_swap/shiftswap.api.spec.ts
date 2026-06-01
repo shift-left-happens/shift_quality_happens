@@ -242,7 +242,6 @@ test.describe.serial('Shift Swap API', () => {
         originalShiftAssignmentId: assignmentLifecycleId,
         employeeFromId: empOwnerId,
         employeeToId: empTargetId,
-        requestDatetime: new Date(Date.now() - 60_000).toISOString().slice(0, 19),
         reason: 'Test swap',
       },
     });
@@ -269,7 +268,6 @@ test.describe.serial('Shift Swap API', () => {
       originalShiftAssignmentId: assignmentLifecycleId,
       employeeFromId: empOwnerId,
       employeeToId: empTargetId,
-      requestDatetime: new Date(Date.now() - 60_000).toISOString().slice(0, 19),
       reason,
     });
 
@@ -316,7 +314,6 @@ test.describe.serial('Shift Swap API', () => {
           originalShiftAssignmentId: assignmentSS06Id,
           employeeFromId: empOwnerId,
           employeeToId: empTargetId,
-          requestDatetime: new Date(Date.now() - 60_000).toISOString().slice(0, 19),
           reason: 'Non-owner cancel test',
         },
       });
@@ -342,7 +339,6 @@ test.describe.serial('Shift Swap API', () => {
         originalShiftAssignmentId: assignmentLifecycleId,
         employeeFromId: empOwnerId,
         employeeToId: empTargetId,
-        requestDatetime: new Date(Date.now() - 60_000).toISOString().slice(0, 19),
         reason: 'Non-owner create attempt',
       },
     });
@@ -358,7 +354,6 @@ test.describe.serial('Shift Swap API', () => {
         originalShiftAssignmentId: 999999999,
         employeeFromId: empOwnerId,
         employeeToId: empTargetId,
-        requestDatetime: new Date(Date.now() - 60_000).toISOString().slice(0, 19),
         reason: 'Invalid assignment test',
       },
     });
@@ -373,7 +368,6 @@ test.describe.serial('Shift Swap API', () => {
       data: {
         employeeFromId: empOwnerId,
         employeeToId: empTargetId,
-        requestDatetime: new Date(Date.now() - 60_000).toISOString().slice(0, 19),
         reason: 'Missing assignment id',
       },
     });
@@ -389,7 +383,6 @@ test.describe.serial('Shift Swap API', () => {
         originalShiftAssignmentId: assignmentLifecycleId,
         employeeFromId: empOwnerId,
         employeeToId: empOwnerId,
-        requestDatetime: new Date(Date.now() - 60_000).toISOString().slice(0, 19),
         reason: 'Swap with myself',
       },
     });
@@ -405,7 +398,6 @@ test.describe.serial('Shift Swap API', () => {
         originalShiftAssignmentId: assignmentSS11Id,
         employeeFromId: empOwnerId,
         employeeToId: empTargetId,
-        requestDatetime: new Date(Date.now() - 60_000).toISOString().slice(0, 19),
         reason: 'Cancel twice test',
       },
     });

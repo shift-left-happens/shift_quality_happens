@@ -86,7 +86,22 @@ class EmployeePasswordTest {
     }
 
     @ParameterizedTest(name = "Should validate length boundary for password: {0} chars -> {1}")
-    @CsvSource({"7, false", "8, true", "9, true", "63, true", "64, true", "65, false"})
+    @CsvSource({
+        // invalid-low partition (boundary + middle)
+        "4, false",
+        "6, false",
+        "7, false",
+        // valid partition (lower boundary, middle, upper boundary)
+        "8, true",
+        "9, true",
+        "30, true",
+        "63, true",
+        "64, true",
+        // invalid-high partition (boundary + middle)
+        "65, false",
+        "66, false",
+        "100, false"
+    })
     void should_validate_password_length_boundaries(int length, boolean expectedValid) {
         // §"3-Point BVA – Password Length"
         Employee e = valid();

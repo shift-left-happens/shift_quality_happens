@@ -167,6 +167,52 @@ test.describe('Employee API', () => {
       });
       expect(response.status(), `Expected invalid password '${candidate}'`).toBe(400);
     }
+
+    // Length BVA (doc §7 / EmployeePasswordTest). Composition is kept valid
+    // (upper + lower + digit) so length is the only variable under test.
+    // NB: the validator's documented max is 64, but the real BCrypt encoder +
+    // pepper caps the input at 72 bytes, so passwords ~60+ chars are rejected
+    // end-to-end even though the unit test (which mocks the encoder) accepts them.
+    // We therefore assert the lower boundary and the above-max boundary here.
+    const pwd = (len: number) => 'Aa1' + 'a'.repeat(Math.max(0, len - 3));
+
+    // Below the 8-char minimum, and above the 64-char maximum, are rejected.
+    for (const len of [7, 65]) {
+      const response = await request.post(`${api_url}/employees`, {
+        headers: authHeader(),
+        data: buildEmployeePayload({ loginPassword: pwd(len) })
+      });
+      expect(response.status(), `Expected length ${len} to be rejected`).toBe(400);
+    }
+
+    // At the minimum and a mid-range value are accepted.
+    for (const len of [8, 30]) {
+      const response = await request.post(`${api_url}/employees`, {
+        headers: authHeader(),
+        data: buildEmployeePayload({ loginPassword: pwd(len) })
+      });
+      expect(response.status(), `Expected length ${len} to be accepted`).toBe(201);
+      const accepted = await response.json();
+      await request.delete(`${api_url}/employees/${accepted.employeeId}`, { headers: authHeader() });
+    }
+  });
+
+  // Classical-vs-London evidence: EmployeePasswordTest MOCKS the password encoder,
+  // so a 64-char password (the documented maximum) passes there. Against the REAL
+  // endpoint, BCrypt + the server-side pepper exceed BCrypt's 72-byte limit and the
+  // password is rejected. This integration test catches what the mocked unit test
+  // structurally cannot — i.e. mocking an owned dependency hid an integration defect.
+  test('real BCrypt+pepper rejects a 64-char password the mocked unit test accepts', async ({ request }) => {
+    const maxLengthPassword = 'Aa1' + 'a'.repeat(61); // 64 chars, valid composition (upper+lower+digit)
+    expect(maxLengthPassword).toHaveLength(64);
+
+    const res = await request.post(`${api_url}/employees`, {
+      headers: authHeader(),
+      data: buildEmployeePayload({ loginPassword: maxLengthPassword })
+    });
+
+    expect(res.status()).toBe(400);
+    expect(await res.text()).toContain('72 bytes');
   });
 
   test('should validate employment status and hire date formats', async ({ request }) => {

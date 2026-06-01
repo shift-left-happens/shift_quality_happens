@@ -93,7 +93,6 @@ test.describe('ShiftSwapApproval API', () => {
         employeeToId: empBId,
         originalShiftAssignmentId: assignId,
         reason: 'Testing Approval lifecycle',
-        requestDatetime: fmt(new Date()),
         swapStatus: 'Pending'
       };
       const swapRes = await request.post(`${api_url}/shiftswaps`, {

@@ -12,6 +12,7 @@ export class EmployeePage {
   readonly hireDateInput: Locator;
   readonly submitButton: Locator;
   readonly deleteButton: Locator;
+  readonly errorAlert: Locator;
   private primaryWorkLocation: Locator;
   readonly employeeNumber: Locator;
 
@@ -29,6 +30,7 @@ export class EmployeePage {
     this.primaryWorkLocation = page.locator('select[name="primaryWorkLocationId"]');
     this.submitButton = page.getByRole('button', { name: /Create|Save changes/ });
     this.deleteButton = page.getByRole('button', { name: 'Delete' });
+    this.errorAlert = page.locator('.alert-error');
   }
 
   async goto() {

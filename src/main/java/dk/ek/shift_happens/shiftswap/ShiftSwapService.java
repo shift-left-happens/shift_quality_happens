@@ -9,6 +9,7 @@ import dk.ek.shift_happens.shiftassignment.ShiftAssignment;
 import dk.ek.shift_happens.shiftassignment.ShiftAssignmentRepository;
 import dk.ek.shift_happens.shiftassignment.ShiftAssignmentService;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -109,7 +110,10 @@ public class ShiftSwapService {
         swap.setShiftSwapId(null);
         swap.setSwapStatus(STATUS_PENDING);
         if (swap.getRequestDatetime() == null) {
-            swap.setRequestDatetime(LocalDateTime.now());
+            // Whole-second precision: MySQL DATETIME(0) rounds to the nearest second,
+            // which can push a freshly stored request time ahead of a slightly-later
+            // decision time and trip the approval's "decision before request" guard.
+            swap.setRequestDatetime(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
         }
         if (swap.getRequestDatetime().isAfter(LocalDateTime.now())) {
             throw new IllegalArgumentException("requestDatetime cannot be in the future");

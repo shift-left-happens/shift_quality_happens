@@ -49,3 +49,4 @@ project_docs/postman/
 ### Performance Reports ###
 performance/reports/*.html
 performance/reports/*.json
+.DS_Store

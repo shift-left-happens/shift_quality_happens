@@ -13,7 +13,7 @@ TEST_DB_ENV := DB_URL=jdbc:mysql://localhost:3309/shift_happens?serverTimezone=U
 endif
 
 
-.PHONY: dev dev-db dev-frontend test-frontend dev-app dev-reset dev-down dev-clean dev-logs dev-shell verify lint lint-check test test-env-test test-unit test-one coverage test-env-up test-env-db test-env-down test-env-reset test-env-logs fe-test-install fe-test fe-test-api fe-test-e2e fe-test-one fe-test-headed fe-test-ui fe-test-report perf-smoke perf perf-one backup restore all all-tests
+.PHONY: dev dev-db dev-frontend test-frontend dev-app dev-reset dev-down dev-clean dev-logs dev-shell verify lint lint-check test test-env-test test-unit test-one coverage test-env-up test-env-db test-env-down test-env-reset test-env-logs fe-test-install fe-test fe-test-api fe-test-e2e fe-test-one fe-test-headed fe-test-ui fe-test-report perf-smoke perf perf-one perf-dashboard-smoke perf-dashboard-load perf-dashboard-stress perf-dashboard-spike perf-dashboard-soak backup restore all all-tests
 
 # ──────────────────────────────────────────────────────────────
 # Orchestration
@@ -150,8 +150,9 @@ test-env-logs:
 
 # ──────────────────────────────────────────────────────────────
 # Frontend tests (Playwright) — needs a running backend.
-# Defaults to the dev backend on :8080 (start it with `make dev`). For the
-# isolated test stack: `make test-env-up`, then API_URL=http://localhost:8081.
+# Default target backend is the isolated TEST stack on :8081 (start it with
+# `make test-env-up`). To point at the dev backend instead, override API_URL,
+# e.g.  API_URL=http://localhost:8080 make fe-test-e2e
 # Vite proxies /api -> $(API_URL) and the specs read API_URL, so one var points
 # both the app and the tests at the same backend.
 # BASE_URL uses localhost (not 127.0.0.1) so Playwright's dev-server readiness
@@ -165,23 +166,23 @@ fe-test-install:
 
 ## Run all frontend tests (API + E2E)
 fe-test:
-	cd frontend && npx playwright test
+	cd frontend && API_URL=$${API_URL:-http://localhost:8081} npx playwright test
 
 ## Run only the API specs (*.api.spec.ts)
 fe-test-api:
-	cd frontend && npx playwright test api.spec
+	cd frontend && API_URL=$${API_URL:-http://localhost:8081} npx playwright test api.spec
 
 ## Run only the end-to-end specs (*.e2e.spec.ts)
 fe-test-e2e:
-	cd frontend && npx playwright test e2e.spec
+	cd frontend && API_URL=$${API_URL:-http://localhost:8081} npx playwright test e2e.spec
 
 ## Run a single spec or filter by path/title. Usage: make fe-test-one SPEC=shiftapproval
 fe-test-one:
-	cd frontend && npx playwright test $(SPEC)
+	cd frontend && API_URL=$${API_URL:-http://localhost:8081} npx playwright test $(SPEC)
 
 ## Watch the E2E tests run in a visible browser (headed)
 fe-test-headed:
-	cd frontend && npx playwright test e2e.spec --headed
+	cd frontend && API_URL=$${API_URL:-http://localhost:8081} npx playwright test e2e.spec --headed
 
 ## Open Playwright's interactive UI — watch/replay tests in the browser, re-run on save
 fe-test-ui:
@@ -230,3 +231,42 @@ backup:
 ## Restore from a backup. Usage: make restore BACKUP=backups/<timestamp>
 restore:
 	@bash scripts/restore.sh $(BACKUP)
+
+# ══════════════════════════════════════════════════════════════
+# EXAM — run against the ISOLATED TEST STACK (docker-compose.test.yml:
+# DB :3309, app :8081). Run one layer at a time, matching the
+# black-box → unit → API → E2E → performance flow of the presentation.
+#
+#   make test-env-up           # 1. start the test stack (DB :3309 + app :8081)
+#   make test-env-test         # 2. backend unit + integration tests (+ JaCoCo)
+#   make coverage              #    open the JaCoCo coverage report
+#   make fe-test-api           # 3. internal API tests        (targets :8081 automatically)
+#   make fe-test-e2e           # 4. end-to-end UI tests        (all 10, targets :8081)
+#   make fe-test-report        #    open the last Playwright HTML report
+#   make perf-dashboard-load   # 5. a k6 scenario in the live web dashboard (:5665)
+#   make test-env-down         #    stop the test stack
+#
+#   perf scenarios:  perf-dashboard-smoke / -load / -stress / -spike / -soak
+#
+# (test-env-up reuses the existing app image — no rebuild. If you ever need a
+#  fresh image/seed: make test-env-reset.)
+# ══════════════════════════════════════════════════════════════
+
+# k6 with the live web dashboard (auto-opens http://127.0.0.1:5665) — one scenario each.
+K6_DASH := K6_WEB_DASHBOARD=true K6_WEB_DASHBOARD_OPEN=true k6 run performance/scenarios
+
+## EXAM: smoke scenario in the web dashboard
+perf-dashboard-smoke:
+	$(K6_DASH)/00-smoke-test.js
+## EXAM: load scenario in the web dashboards
+perf-dashboard-load:
+	$(K6_DASH)/01-load-test.js
+## EXAM: stress scenario in the web dashboard
+perf-dashboard-stress:
+	$(K6_DASH)/02-stress-test.js
+## EXAM: spike scenario in the web dashboard
+perf-dashboard-spike:
+	$(K6_DASH)/03-spike-test.js
+## EXAM: soak scenario in the web dashboard
+perf-dashboard-soak:
+	$(K6_DASH)/04-soak-test.js
