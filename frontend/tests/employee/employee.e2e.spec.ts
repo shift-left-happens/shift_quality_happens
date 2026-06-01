@@ -120,4 +120,34 @@ test.describe('Employee E2E', () => {
 
     await expect(page.locator('table')).not.toContainText(testEmployeeEmail);
   });
+
+  test('should reject creating an employee with a too-short password', async ({ page }) => {
+    // Password length rule (8–64) surfaced to the user. Boundary detail is covered
+    // exhaustively in EmployeePasswordTest + the API specs; this proves the rule
+    // reaches the UI. 'Ab1' is valid composition (upper+lower+digit) but length 3,
+    // so the only failure is the minimum-length boundary.
+    const loginPage = new LoginPage(page);
+    const employeePage = new EmployeePage(page);
+
+    await loginPage.goto();
+    await loginPage.login(email, password);
+    await expect(page).toHaveURL('/');
+
+    const randomSuffix = generateRandomString(10);
+    await employeePage.goto();
+    await employeePage.createEmployee({
+      employeeNumber: `EMP-${Date.now()}`,
+      firstName: `Employee${randomSuffix}`,
+      lastName: `User${randomSuffix}`,
+      email: `e2e.pwd.${Date.now()}@hospital.dk`,
+      loginPassword: 'Ab1',
+      birthDate: '1990-01-01',
+      hireDate: '2024-01-01',
+      phoneNumber: '12345678',
+    });
+
+    // Backend rejects with 400; the form surfaces the error and stays put.
+    await expect(employeePage.errorAlert).toBeVisible();
+    await expect(page).toHaveURL(/\/employees\/new$/);
+  });
 });
