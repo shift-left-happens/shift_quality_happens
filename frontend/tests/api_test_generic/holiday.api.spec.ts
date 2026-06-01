@@ -15,14 +15,34 @@ test.describe('Holiday API', () => {
         expect(adminToken).toBeDefined();
     });
 
-    test.describe('Holiday API', () => {
-        test('should fetch upcoming holidays', async ({ request }) => {
-            const response = await request.get(`${external_url}/PublicHolidays/2026/DK`);
+
+    const testCases = [
+        {
+            name: 'Nager.at',
+            headers: () => ({}), //No token needed
+            url: `${external_url}/PublicHolidays/2026/DK`,
+        },
+        {
+            name: 'Shift happens',
+            headers: (token: string) => authHeaders(token),
+            url: `${API_URL}/holidays`,
+        },
+    ];
+
+    for (const tc of testCases) {
+        test(`should fetch upcoming holidays - ${tc.name}`, async ({ request }) => {
+            const headers = tc.headers(adminToken);
+
+            const response = await request.get(tc.url, {
+                headers
+            });
+
             expect(response.status()).toBe(200);
+
             const holidays = await response.json();
             expect(Array.isArray(holidays)).toBe(true);
-        })
-    })
+        });
+    }
 
     test('should fetch upcoming holidays without parameters', async ({ request }) => {
         const response = await request.get(`${API_URL}/holidays`, {

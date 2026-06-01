@@ -88,7 +88,7 @@ test.describe('Employee E2E', () => {
 
     await row.getByRole('button', { name: 'Delete' }).click();
 
-    // ✅ Wait until both dialogs have actually happened
+    // Wait until both dialogs have actually happened
     await expect.poll(() => dialogs.length).toBe(2);
 
     // ASSERTIONS
