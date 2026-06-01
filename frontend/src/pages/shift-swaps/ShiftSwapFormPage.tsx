@@ -28,8 +28,9 @@ export default function ShiftSwapFormPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [swaps, setSwaps] = useState<ShiftSwap[]>([]);
   const [assignmentId, setAssignmentId] = useState(0);
-  const [employeeToId, setEmployeeToId] = useState(0);
   const [reason, setReason] = useState('');
+  const [now] = useState(() => Date.now());
+  const [employeeToId, setEmployeeToId] = useState(0);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,7 +91,6 @@ export default function ShiftSwapFormPage() {
   // be cancelled, the shift must not have started yet, and no pending swap
   // can already exist for it. Employees see only their own assignments.
   const myAssignments = useMemo(() => {
-    const now = Date.now();
     return assignments.filter((a) => {
       if (
         isEmployee &&
@@ -110,17 +110,13 @@ export default function ShiftSwapFormPage() {
       if (Number.isNaN(start) || start <= now) return false;
       return true;
     });
-  }, [assignments, shiftById, pendingAssignmentIds, isEmployee, user?.employeeId]);
+  }, [assignments, shiftById, pendingAssignmentIds, isEmployee, user, now]);
 
   // Default to the first available assignment once data has loaded.
-  useEffect(() => {
-    if (assignmentId === 0 && myAssignments.length > 0) {
-      setAssignmentId(myAssignments[0].shiftAssignmentId);
-    }
-  }, [assignmentId, myAssignments]);
+  const effectiveAssignmentId = assignmentId || myAssignments[0]?.shiftAssignmentId || 0;
 
   const selectedAssignment = myAssignments.find(
-    (a) => a.shiftAssignmentId === assignmentId
+    (a) => a.shiftAssignmentId === effectiveAssignmentId
   );
   const employeeFromId = selectedAssignment?.employeeId ?? 0;
 
@@ -144,7 +140,7 @@ export default function ShiftSwapFormPage() {
     e.preventDefault();
     setError(null);
 
-    if (assignmentId === 0 || employeeFromId === 0) {
+    if (effectiveAssignmentId === 0 || employeeFromId === 0) {
       setError('Select the shift assignment to swap.');
       return;
     }
@@ -160,7 +156,7 @@ export default function ShiftSwapFormPage() {
     setSubmitting(true);
     try {
       await createShiftSwap({
-        originalShiftAssignmentId: assignmentId,
+        originalShiftAssignmentId: effectiveAssignmentId,
         employeeFromId,
         employeeToId,
         swapStatus: null,
@@ -194,7 +190,7 @@ export default function ShiftSwapFormPage() {
             <span>Shift to swap</span>
             <select
               required
-              value={assignmentId}
+              value={effectiveAssignmentId}
               onChange={(e) => setAssignmentId(Number(e.target.value))}
             >
               <option value={0} disabled>

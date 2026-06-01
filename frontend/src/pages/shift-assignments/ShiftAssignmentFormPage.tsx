@@ -94,7 +94,7 @@ export default function ShiftAssignmentFormPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [preselectShiftId]);
 
   useEffect(() => {
     if (isNew || numericId === null) return;
