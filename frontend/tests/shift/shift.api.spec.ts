@@ -69,7 +69,7 @@ test.describe.serial('Shift API', () => {
     const deptRes = await request.get(`${API_URL}/departments`, {
       headers: authHeaders(adminToken),
     });
-    expect(deptRes.status()).toBe(400);
+    expect(deptRes.status()).toBe(200);
     departmentId = (await deptRes.json())[0].departmentId as number;
 
     const locRes = await request.get(`${API_URL}/worklocations`, {
