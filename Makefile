@@ -13,7 +13,7 @@ TEST_DB_ENV := DB_URL=jdbc:mysql://localhost:3309/shift_happens?serverTimezone=U
 endif
 
 
-.PHONY: dev dev-db dev-frontend test-frontend dev-app dev-reset dev-down dev-clean dev-logs dev-shell verify lint lint-check test test-env-test test-unit test-one coverage test-env-up test-env-db test-env-down test-env-reset test-env-logs fe-test-install fe-test fe-test-api fe-test-e2e fe-test-one fe-test-headed fe-test-ui fe-test-report perf-smoke perf perf-one backup restore all all-tests
+.PHONY: dev dev-db dev-frontend test-frontend dev-app dev-reset dev-down dev-clean dev-logs dev-shell verify lint lint-check test test-env-test test-unit test-one coverage test-env-up test-env-db test-env-down test-env-reset test-env-logs fe-test-install fe-prod fe-dev fe-test fe-test-api fe-test-e2e fe-test-one fe-test-headed fe-test-ui fe-test-report perf-smoke perf perf-influxdb perf-one backup restore all all-tests
 
 # ──────────────────────────────────────────────────────────────
 # Orchestration
@@ -163,6 +163,12 @@ test-env-logs:
 fe-test-install:
 	cd frontend && npx playwright install chromium
 
+## Run the frontend pointed at the dev backend (port 8080)
+fe-prod:
+	cd frontend && npm run dev:prod
+fe-dev:
+	cd frontend && npm run dev:test
+
 ## Run all frontend tests (API + E2E)
 fe-test:
 	cd frontend && npx playwright test
@@ -214,6 +220,13 @@ perf:
 	k6 run performance/scenarios/02-stress-test.js
 	k6 run performance/scenarios/03-spike-test.js
 	k6 run performance/scenarios/04-soak-test.js
+
+perf-influxdb:
+	k6 run --out influxdb=http://localhost:8086/k6 performance/scenarios/00-smoke-test.js
+	k6 run --out influxdb=http://localhost:8086/k6 performance/scenarios/01-load-test.js
+	k6 run --out influxdb=http://localhost:8086/k6 performance/scenarios/02-stress-test.js
+	k6 run --out influxdb=http://localhost:8086/k6 performance/scenarios/03-spike-test.js
+	k6 run --out influxdb=http://localhost:8086/k6 performance/scenarios/04-soak-test.js
 
 ## Run a single performance test. Usage: make perf-one TEST=01-load-test
 perf-one:

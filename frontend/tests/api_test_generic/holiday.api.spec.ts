@@ -4,6 +4,7 @@ import { loginAndGetToken, authHeaders, DEFAULT_ADMIN_EMAIL, DEFAULT_PASSWORD } 
 test.describe('Holiday API', () => {
     let adminToken: string;
     const API_URL = process.env.API_URL || 'http://localhost:8080';
+    const external_url = 'https://date.nager.at/api/v3';
 
     test.beforeAll(async ({ request }) => {
         // Log in as admin to get a token
@@ -13,6 +14,35 @@ test.describe('Holiday API', () => {
         adminToken = loginResponse.token;
         expect(adminToken).toBeDefined();
     });
+
+
+    const testCases = [
+        {
+            name: 'Nager.at',
+            headers: () => ({}), //No token needed
+            url: `${external_url}/PublicHolidays/2026/DK`,
+        },
+        {
+            name: 'Shift happens',
+            headers: (token: string) => authHeaders(token),
+            url: `${API_URL}/holidays`,
+        },
+    ];
+
+    for (const tc of testCases) {
+        test(`should fetch upcoming holidays - ${tc.name}`, async ({ request }) => {
+            const headers = tc.headers(adminToken);
+
+            const response = await request.get(tc.url, {
+                headers
+            });
+
+            expect(response.status()).toBe(200);
+
+            const holidays = await response.json();
+            expect(Array.isArray(holidays)).toBe(true);
+        });
+    }
 
     test('should fetch upcoming holidays without parameters', async ({ request }) => {
         const response = await request.get(`${API_URL}/holidays`, {

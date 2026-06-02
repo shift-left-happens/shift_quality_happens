@@ -40,8 +40,8 @@ build/
 backups/
 
 ### PlayWright ###
-frontend/playwright-report
-frontend/test-results
+#frontend/playwright-report
+#frontend/test-results
 
 ### Postman ###
 project_docs/postman/

@@ -1,0 +1,24 @@
+
+Run ./mvnw spotless:check
+  ./mvnw spotless:check
+  shell: /usr/bin/bash -e {0}
+  env:
+    FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.11-10/x64
+    JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.11-10/x64
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ------------------------< dk.ek:shift-happens >-------------------------
+[INFO] Building shift-quality-happens 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- spotless:2.44.4:check (default-cli) @ shift-happens ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Spotless.Java is keeping 125 files clean - 0 needs changes to be clean, 125 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  4.839 s
+[INFO] Finished at: 2026-05-28T11:13:31Z
+[INFO] ------------------------------------------------------------------------

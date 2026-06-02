@@ -86,7 +86,21 @@ class EmployeePasswordTest {
     }
 
     @ParameterizedTest(name = "Should validate length boundary for password: {0} chars -> {1}")
-    @CsvSource({"7, false", "8, true", "9, true", "63, true", "64, true", "65, false"})
+    @CsvSource({
+        "0, false",
+        "1, false",
+        "4, false", // Middle value
+        "6, false",
+        "7, false",
+        "8, true", // Minimum valid value
+        "9, true",
+        "30, true", // Middle value
+        "63, true",
+        "64, true", // Maximum valid value
+        "65, false",
+        "66, false",
+        "100, false"
+    })
     void should_validate_password_length_boundaries(int length, boolean expectedValid) {
         // §"3-Point BVA – Password Length"
         Employee e = valid();

@@ -3,12 +3,16 @@ package dk.ek.shift_happens.shiftswapapproval;
 import dk.ek.shift_happens.employee.Employee;
 import dk.ek.shift_happens.employee.EmployeeRepository;
 import dk.ek.shift_happens.employee.UserRole;
+import dk.ek.shift_happens.employeejobrole.EmployeeJobRole;
+import dk.ek.shift_happens.employeejobrole.EmployeeJobRoleRepository;
 import dk.ek.shift_happens.shift.Shift;
 import dk.ek.shift_happens.shift.ShiftRepository;
 import dk.ek.shift_happens.shift.ShiftService;
 import dk.ek.shift_happens.shiftassignment.ShiftAssignment;
 import dk.ek.shift_happens.shiftassignment.ShiftAssignmentRepository;
 import dk.ek.shift_happens.shiftassignment.ShiftAssignmentService;
+import dk.ek.shift_happens.shiftrequiredjobrole.ShiftRequiredJobRole;
+import dk.ek.shift_happens.shiftrequiredjobrole.ShiftRequiredJobRoleRepository;
 import dk.ek.shift_happens.shiftswap.ShiftSwap;
 import dk.ek.shift_happens.shiftswap.ShiftSwapRepository;
 import dk.ek.shift_happens.shiftswap.ShiftSwapService;
@@ -36,6 +40,8 @@ public class ShiftSwapApprovalService {
     private final ShiftRepository shiftRepository;
     private final EmployeeRepository employeeRepository;
     private final ShiftAssignmentService shiftAssignmentService;
+    private final ShiftRequiredJobRoleRepository shiftRequiredJobRoleRepository;
+    private final EmployeeJobRoleRepository employeeJobRoleRepository;
 
     public List<ShiftSwapApproval> findAll() {
         return shiftSwapApprovalRepository.findAll();
@@ -50,15 +56,7 @@ public class ShiftSwapApprovalService {
 
     @Transactional
     public ShiftSwapApproval approve(ShiftSwapApproval approval) {
-        if (approval.getShiftSwapId() == null || approval.getShiftSwapId() <= 0) {
-            throw new IllegalArgumentException("shiftSwapId is required and must be positive");
-        }
-        if (approval.getApproverEmployeeId() == null || approval.getApproverEmployeeId() <= 0) {
-            throw new IllegalArgumentException("approverEmployeeId is required and must be positive");
-        }
-        if (approval.getDecision() == null || approval.getDecision().isBlank()) {
-            throw new IllegalArgumentException("decision is required");
-        }
+        checkShiftSwapApproval(approval);
 
         String normalized = normaliseDecision(approval.getDecision());
 
@@ -66,29 +64,13 @@ public class ShiftSwapApprovalService {
                 .findById(approval.getShiftSwapId())
                 .orElseThrow(() -> new IllegalArgumentException("Shift swap not found"));
 
-        if (ShiftSwapService.STATUS_CANCELLED.equalsIgnoreCase(swap.getSwapStatus())) {
-            throw new IllegalArgumentException("Cannot approve a cancelled swap request");
-        }
-        if (ShiftSwapService.STATUS_DECLINED.equalsIgnoreCase(swap.getSwapStatus())) {
-            throw new IllegalArgumentException("Cannot approve a declined swap request");
-        }
-        if (!ShiftSwapService.STATUS_PENDING.equalsIgnoreCase(swap.getSwapStatus())) {
-            throw new IllegalArgumentException("Only pending swaps can be approved");
-        }
+        checkShiftSwapStatus(swap);
 
         Employee approver = employeeRepository
                 .findById(approval.getApproverEmployeeId())
                 .orElseThrow(() -> new IllegalArgumentException("Approver not found"));
 
-        UserRole role = approver.getUserRole();
-        if (role == null || (role != UserRole.Administrator && role != UserRole.Manager)) {
-            throw new IllegalArgumentException("Only Administrator or Manager can approve a swap");
-        }
-
-        if (approver.getEmployeeId().equals(swap.getEmployeeFromId())
-                || approver.getEmployeeId().equals(swap.getEmployeeToId())) {
-            throw new IllegalArgumentException("Approver cannot be a party to the swap");
-        }
+        checkEmployees(approver, swap);
 
         ShiftAssignment originalAssignment = shiftAssignmentRepository
                 .findById(swap.getOriginalShiftAssignmentId())
@@ -96,6 +78,18 @@ public class ShiftSwapApprovalService {
         Shift originalShift = shiftRepository
                 .findById(originalAssignment.getShiftId())
                 .orElseThrow(() -> new IllegalArgumentException("Original shift not found"));
+        // Check if shift requires job roles
+        List<ShiftRequiredJobRole> shiftRequires =
+                shiftRequiredJobRoleRepository.findByShiftId(originalShift.getShiftId());
+        if (shiftRequires.isEmpty()) {
+            List<EmployeeJobRole> employeeJobRoles = employeeJobRoleRepository.findByEmployeeId(swap.getEmployeeToId());
+            for (ShiftRequiredJobRole requiredJobRole : shiftRequires) {
+                if (!(employeeJobRoles.stream()
+                        .anyMatch(e -> e.getJobRoleId().equals(requiredJobRole.getJobRoleId())))) {
+                    throw new IllegalArgumentException("Employee does not have required job role for shift");
+                }
+            }
+        }
 
         if (ShiftService.STATUS_CANCELLED.equalsIgnoreCase(originalShift.getShiftStatus())) {
             throw new IllegalArgumentException("Cannot approve a swap for a cancelled shift");
@@ -130,6 +124,42 @@ public class ShiftSwapApprovalService {
 
         shiftSwapRepository.save(swap);
         return shiftSwapApprovalRepository.save(approval);
+    }
+
+    private static void checkEmployees(Employee approver, ShiftSwap swap) {
+        UserRole role = approver.getUserRole();
+        if (role == null || (role != UserRole.Administrator && role != UserRole.Manager)) {
+            throw new IllegalArgumentException("Only Administrator or Manager can approve a swap");
+        }
+
+        if (approver.getEmployeeId().equals(swap.getEmployeeFromId())
+                || approver.getEmployeeId().equals(swap.getEmployeeToId())) {
+            throw new IllegalArgumentException("Approver cannot be a party to the swap");
+        }
+    }
+
+    private static void checkShiftSwapStatus(ShiftSwap swap) {
+        if (ShiftSwapService.STATUS_CANCELLED.equalsIgnoreCase(swap.getSwapStatus())) {
+            throw new IllegalArgumentException("Cannot approve a cancelled swap request");
+        }
+        if (ShiftSwapService.STATUS_DECLINED.equalsIgnoreCase(swap.getSwapStatus())) {
+            throw new IllegalArgumentException("Cannot approve a declined swap request");
+        }
+        if (!ShiftSwapService.STATUS_PENDING.equalsIgnoreCase(swap.getSwapStatus())) {
+            throw new IllegalArgumentException("Only pending swaps can be approved");
+        }
+    }
+
+    private static void checkShiftSwapApproval(ShiftSwapApproval approval) {
+        if (approval.getShiftSwapId() == null || approval.getShiftSwapId() <= 0) {
+            throw new IllegalArgumentException("shiftSwapId is required and must be positive");
+        }
+        if (approval.getApproverEmployeeId() == null || approval.getApproverEmployeeId() <= 0) {
+            throw new IllegalArgumentException("approverEmployeeId is required and must be positive");
+        }
+        if (approval.getDecision() == null || approval.getDecision().isBlank()) {
+            throw new IllegalArgumentException("decision is required");
+        }
     }
 
     public Optional<ShiftSwapApproval> update(Integer id, ShiftSwapApproval details) {

@@ -90,7 +90,18 @@ class EmployeePhoneTest {
     }
 
     @ParameterizedTest(name = "BVA: local phone number length {0} -> valid={1}")
-    @CsvSource({"3, false", "4, true", "15, true", "16, false"})
+    @CsvSource({
+        "0, false",
+        "1, false",
+        "2, false",
+        "3, false",
+        "4, true", // Minimum valid value
+        "5, true",
+        "9, true", // Middle value
+        "14, true",
+        "15, true", // Maximum valid value
+        "16, false"
+    })
     void should_validate_local_phone_length_bva(int digits, boolean expectedValid) {
         // §"Phone number" BVA Local phone number length 4-15
         Employee e = valid();
@@ -103,7 +114,13 @@ class EmployeePhoneTest {
     }
 
     @ParameterizedTest(name = "BVA: international phone number total digits valid={1}")
-    @CsvSource({"'+998 12345678901', true", "'+998 123456789012', true", "'+998 1234567890123', false"})
+    @CsvSource({
+        "+9 12345678901, true",
+        "+99 12345678901, true",
+        "'+998 12345678901', true",
+        "'+998 123456789012', true",
+        "'+998 1234567890123', false"
+    })
     void should_validate_international_phone_total_digits_bva(String phone, boolean expectedValid) {
         // §"Phone number" BVA International number total digits 2-15
         Employee e = valid();
@@ -129,7 +146,23 @@ class EmployeePhoneTest {
     }
 
     @ParameterizedTest(name = "Additional cases: phone={0} -> valid={1}")
-    @CsvSource({"123 4567, false", "'+1 123', true", "'+45', false", "'+45 ', false"})
+    @CsvSource({
+        "'+451234', false", // Missing space after country code
+        "'+45 1234', true", // Space after country code
+        "'+45  1234', false", // Extra spaces after country code
+        "'45 1234', false", // No plus sign
+        "'+45 1234', true", // Plus sign
+        "'++45 1234', false", // Multiple plus signs
+        "'123 4567', false",
+        "'+1 123', true",
+        "'+45', false",
+        "'+45 ', false",
+        "'123 4567', false", // Local number with spaces
+        "'123  4567', false",
+        "'+1 12', false",
+        "'+1 123', true", // minimum valid international number
+        "'+1 1234', true",
+    })
     void should_validate_additional_phone_cases(String phone, boolean expectedValid) {
         // §"Phone number" BVA additional cases
         Employee e = valid();

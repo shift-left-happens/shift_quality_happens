@@ -1,0 +1,226 @@
+
+Run SonarSource/sonarqube-scan-action@v7
+Warning: Maven project detected. Sonar recommends running the 'org.sonarsource.scanner.maven:sonar-maven-plugin:sonar' goal during the build process instead of using this GitHub Action to get more accurate results.
+Installing Sonar Scanner CLI 8.0.1.6346 for linux-x64...
+Downloading from: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-8.0.1.6346-linux-x64.zip
+Warning: ⚠ Skipping GPG signature verification (not recommended)
+/usr/bin/unzip -o -q /home/runner/work/_temp/7d5f9b6c-316d-4413-bcfc-6198f9b19d89
+Sonar Scanner CLI cached to: /opt/hostedtoolcache/sonar-scanner-cli/8.0.1.6346/linux-x64
+/opt/hostedtoolcache/sonar-scanner-cli/8.0.1.6346/linux-x64/bin/sonar-scanner -Dsonar.projectBaseDir=.
+11:17:20.378 INFO  Scanner configuration file: /opt/hostedtoolcache/sonar-scanner-cli/8.0.1.6346/linux-x64/conf/sonar-scanner.properties
+11:17:20.381 INFO  Project root configuration file: /home/runner/work/shift_quality_happens/shift_quality_happens/sonar-project.properties
+11:17:20.397 INFO  SonarScanner CLI 8.0.1.6346
+11:17:20.403 INFO  Linux 6.17.0-1013-azure amd64
+11:17:23.658 INFO  Communicating with SonarQube Cloud
+11:17:23.659 INFO  JRE provisioning: os[linux], arch[x86_64]
+11:17:26.825 INFO  Starting SonarScanner Engine...
+11:17:26.825 INFO  Java 21.0.9 Eclipse Adoptium (64-bit)
+11:17:30.549 INFO  Load global settings
+11:17:31.065 INFO  Load global settings (done) | time=508ms
+11:17:31.148 INFO  Server id: 1BD809FA-AWHW8ct9-T_TB3XqouNu
+11:17:31.331 INFO  Loading required plugins
+11:17:31.331 INFO  Load plugins index
+11:17:31.477 INFO  Load plugins index (done) | time=147ms
+11:17:31.478 INFO  Load/download plugins
+11:17:32.186 INFO  Load/download plugins (done) | time=707ms
+11:17:32.379 INFO  Loaded core extensions: a3s, architecture, sca
+11:17:32.641 INFO  Process project properties
+11:17:32.663 INFO  Project key: shift-left-happens_shift_quality_happens
+11:17:32.664 INFO  Base dir: /home/runner/work/shift_quality_happens/shift_quality_happens
+11:17:32.664 INFO  Working dir: /home/runner/work/shift_quality_happens/shift_quality_happens/.scannerwork
+11:17:32.673 INFO  Load project settings for component key: 'shift-left-happens_shift_quality_happens'
+11:17:33.307 INFO  Load project settings for component key: 'shift-left-happens_shift_quality_happens' (done) | time=634ms
+11:17:33.321 INFO  Found an active CI vendor: 'Github Actions'
+11:17:33.729 INFO  Check ALM binding of project 'shift-left-happens_shift_quality_happens'
+11:17:34.029 INFO  Detected project binding: BOUND
+11:17:34.030 INFO  Check ALM binding of project 'shift-left-happens_shift_quality_happens' (done) | time=299ms
+11:17:34.033 INFO  Load branch configuration
+11:17:34.035 INFO  Github event: pull_request
+11:17:34.042 INFO  Auto-configuring pull request 57
+11:17:35.600 INFO  Load branch configuration (done) | time=1566ms
+11:17:35.603 INFO  Create analysis
+11:17:35.964 INFO  Pull request 57 for merge into main from pipeline-fix
+11:17:35.964 INFO  Create analysis (done) | time=360ms
+11:17:36.187 INFO  Load quality profiles
+11:17:36.708 INFO  Load quality profiles (done) | time=521ms
+11:17:36.874 INFO  Load active rules
+11:17:37.749 INFO  Load active rules (done) | time=875ms
+11:17:37.958 INFO  Organization key: shift-left-happens
+11:17:37.977 INFO  Preprocessing files...
+11:17:38.202 INFO  1 language detected in 125 preprocessed files (done) | time=224ms
+11:17:38.203 INFO  0 files ignored because of inclusion/exclusion patterns
+11:17:38.203 INFO  0 files ignored because of scm ignore settings
+11:17:39.028 INFO  Loading plugins for detected languages
+11:17:39.028 INFO  Load/download plugins
+11:17:39.869 INFO  Load/download plugins (done) | time=840ms
+11:17:40.004 ERROR [stderr] SLF4J(W): No SLF4J providers were found.
+11:17:40.005 ERROR [stderr] SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+11:17:40.005 ERROR [stderr] SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+11:17:40.137 INFO  Load project repositories
+11:17:40.439 INFO  Load project repositories (done) | time=301ms
+11:17:40.443 INFO  SCM collecting changed files in the branch
+11:17:40.465 INFO  Merge base sha1: 4fd74a91296220d1368601afac2e6e73e4d728ec
+11:17:40.594 INFO  SCM collecting changed files in the branch (done) | time=150ms
+11:17:40.613 INFO  Indexing files...
+11:17:40.615 INFO  Project configuration:
+11:17:40.615 INFO    Excluded sources: **/build-wrapper-dump.json
+11:17:40.632 INFO  125 files indexed (done) | time=15ms
+11:17:40.633 INFO  Quality profile for java: Sonar way
+11:17:40.633 INFO  ------------- Run sensors on module shift-left-happens_shift_quality_happens
+11:17:40.733 INFO  Load metrics repository
+11:17:40.852 INFO  Load metrics repository (done) | time=118ms
+11:17:40.869 INFO  Sensor cache enabled
+11:17:40.875 INFO  Load sensor cache
+11:17:42.339 INFO  Load sensor cache (615 KB) | time=1464ms
+11:17:43.721 INFO  Sensor JavaSensor [java]
+11:17:43.751 INFO  The Java analyzer is running in a context where unchanged files can be skipped. Full analysis is performed for changed files, optimized analysis for unchanged files.
+11:17:44.073 INFO  Server-side caching is enabled. The Java analyzer was able to leverage cached data from previous analyses for 99 out of 125 files. These files will not be parsed.
+11:17:44.074 INFO  Using ECJ batch to parse 21 Main java source files with batch size 209 KB.
+11:17:44.293 INFO  Starting batch processing.
+11:17:44.879 INFO  No boundary descriptors defined
+11:17:45.870 INFO  100% analyzed
+11:17:45.872 INFO  Batch processing: Done.
+11:17:45.872 INFO  Optimized analysis for 19 of 21 files.
+11:17:45.923 INFO  Using ECJ batch to parse 5 Test java source files with batch size 209 KB.
+11:17:45.925 INFO  Starting batch processing.
+11:17:46.491 INFO  100% analyzed
+11:17:46.492 INFO  Batch processing: Done.
+11:17:46.492 INFO  Did not optimize analysis for any files, performed a full analysis for all 5 files.
+11:17:46.493 WARN  Unresolved imports/types have been detected during analysis. Enable DEBUG mode to see them.
+11:17:46.494 WARN  Use of preview features have been detected during analysis. Enable DEBUG mode to see them.
+11:17:46.494 INFO  No "Generated" source files to scan.
+11:17:46.497 INFO  Sensor JavaSensor [java] (done) | time=2775ms
+11:17:46.498 INFO  Sensor JaCoCo XML Report Importer [jacoco]
+11:17:46.503 INFO  Importing 1 report(s). Turn your logs in debug mode in order to see the exhaustive list.
+11:17:46.576 INFO  Sensor JaCoCo XML Report Importer [jacoco] (done) | time=79ms
+11:17:46.579 INFO  Sensor IaC hadolint report Sensor [iac]
+11:17:46.579 INFO  Sensor IaC hadolint report Sensor [iac] (done) | time=0ms
+11:17:46.580 INFO  Sensor Java Config Sensor [iac]
+11:17:46.586 INFO  There are no files to be analyzed for the Java language
+11:17:46.586 INFO  Sensor Java Config Sensor [iac] (done) | time=8ms
+11:17:46.586 INFO  Sensor IaC Docker Sensor [iac]
+11:17:46.586 INFO  Sensor IaC Docker Sensor is restricted to changed files only
+11:17:46.588 INFO  There are no files to be analyzed for the Docker language
+11:17:46.588 INFO  Sensor IaC Docker Sensor [iac] (done) | time=1ms
+11:17:46.589 INFO  Sensor IaC GitHub Actions Sensor [iac]
+11:17:46.589 INFO  There are no files to be analyzed for the GitHub Actions language
+11:17:46.589 INFO  Sensor IaC GitHub Actions Sensor [iac] (done) | time=1ms
+11:17:46.589 INFO  Sensor IaC actionlint report Sensor [iac]
+11:17:46.589 INFO  Sensor IaC actionlint report Sensor [iac] (done) | time=0ms
+11:17:46.589 INFO  Sensor IaC Shell Sensor [iac]
+11:17:46.590 INFO  There are no files to be analyzed for the Shell language
+11:17:46.590 INFO  Sensor IaC Shell Sensor [iac] (done) | time=0ms
+11:17:46.590 INFO  Sensor ThymeLeaf template sensor [securityjavafrontend]
+11:17:46.592 INFO  Sensor ThymeLeaf template sensor [securityjavafrontend] (done) | time=1ms
+11:17:46.592 INFO  Sensor JavaAndroidConfigurationSensor [securityjavafrontend]
+11:17:46.592 INFO  Sensor JavaAndroidConfigurationSensor [securityjavafrontend] (done) | time=0ms
+11:17:46.592 INFO  Sensor JavaModuleSecuritySensor [securityjavafrontend]
+11:17:46.593 INFO  Sensor JavaModuleSecuritySensor [securityjavafrontend] (done) | time=0ms
+11:17:46.593 INFO  Sensor SurefireSensor [java]
+11:17:46.593 INFO  parsing [/home/runner/work/shift_quality_happens/shift_quality_happens/target/surefire-reports]
+11:17:46.594 INFO  Sensor SurefireSensor [java] (done) | time=1ms
+11:17:46.595 INFO  Sensor Java A3S Context Collector [javaa3scontextcollector]
+11:17:47.227 INFO  Sensor Java A3S Context Collector [javaa3scontextcollector] (done) | time=632ms
+11:17:47.227 INFO  Sensor DBD/Java IR Generation [dbdjavafrontend]
+11:17:47.367 INFO  Sensor DBD/Java IR Generation [dbdjavafrontend] (done) | time=139ms
+11:17:47.370 INFO  Sensor javabugs [dbd]
+11:17:47.724 INFO  Analyzing 734/1080 functions to detect bugs.
+11:17:48.532 INFO  Sensor javabugs [dbd] (done) | time=1162ms
+11:17:48.535 INFO  Sensor pythonbugs [dbd]
+11:17:48.542 INFO  No IR files have been included for analysis.
+11:17:48.545 INFO  Sensor pythonbugs [dbd] (done) | time=9ms
+11:17:48.546 INFO  Sensor EnterpriseTextAndSecretsSensor [textenterprise]
+11:17:48.546 INFO  Sensor EnterpriseTextAndSecretsSensor is restricted to changed files only
+11:17:48.549 INFO  Available processors: 4
+11:17:48.550 INFO  Using 4 threads for analysis.
+11:17:48.985 INFO  Start fetching files for the text and secrets analysis
+11:17:48.993 INFO  Using Git CLI to retrieve dirty files
+11:17:49.047 INFO  Retrieving language associated files and files included via "sonar.text.inclusions" that are tracked by git
+11:17:49.048 INFO  Starting the text and secrets analysis
+11:17:49.050 INFO  2 source files to be analyzed for the text and secrets analysis
+11:17:49.070 INFO  2/2 source files have been analyzed for the text and secrets analysis
+11:17:49.073 INFO  Start fetching files for the binary file analysis
+11:17:49.073 INFO  There are no files to be analyzed for the binary file analysis
+11:17:49.078 INFO  Sensor EnterpriseTextAndSecretsSensor [textenterprise] (done) | time=532ms
+11:17:49.080 INFO  Sensor JavaSecuritySensor [security]
+11:17:49.086 INFO  29 taint analysis rules enabled.
+11:17:49.375 INFO  Analyzing 653 UCFGs to detect vulnerabilities.
+11:17:51.152 INFO  Analyzing 2 new or changed file(s) (PR analysis).
+11:17:51.190 INFO  No entry points found.
+11:17:51.192 INFO  java security sensor: Begin: 2026-05-28T11:17:49.080031165Z, End: 2026-05-28T11:17:51.189935209Z, Duration: 00:00:02.109
+  Load type hierarchy and UCFGs: Begin: 2026-05-28T11:17:49.086091707Z, End: 2026-05-28T11:17:49.374739422Z, Duration: 00:00:00.288
+    Load type hierarchy: Begin: 2026-05-28T11:17:49.086109033Z, End: 2026-05-28T11:17:49.135974935Z, Duration: 00:00:00.049
+    Load UCFGs: Begin: 2026-05-28T11:17:49.136262727Z, End: 2026-05-28T11:17:49.374564800Z, Duration: 00:00:00.238
+  Check cache: Begin: 2026-05-28T11:17:49.374922317Z, End: 2026-05-28T11:17:49.376433214Z, Duration: 00:00:00.001
+    Load cache: Begin: 2026-05-28T11:17:49.375281315Z, End: 2026-05-28T11:17:49.375361936Z, Duration: 00:00:00.000
+  Create runtime call graph: Begin: 2026-05-28T11:17:49.376484060Z, End: 2026-05-28T11:17:49.452652462Z, Duration: 00:00:00.076
+    Variable Type Analysis #1: Begin: 2026-05-28T11:17:49.377034516Z, End: 2026-05-28T11:17:49.415039222Z, Duration: 00:00:00.038
+      Create runtime type propagation graph: Begin: 2026-05-28T11:17:49.377728447Z, End: 2026-05-28T11:17:49.404286661Z, Duration: 00:00:00.026
+      Run SCC (Tarjan) on 2748 nodes: Begin: 2026-05-28T11:17:49.404592440Z, End: 2026-05-28T11:17:49.409520092Z, Duration: 00:00:00.004
+      Propagate runtime types to strongly connected components: Begin: 2026-05-28T11:17:49.409622897Z, End: 2026-05-28T11:17:49.414985552Z, Duration: 00:00:00.005
+    Variable Type Analysis #2: Begin: 2026-05-28T11:17:49.417675588Z, End: 2026-05-28T11:17:49.451115606Z, Duration: 00:00:00.033
+      Create runtime type propagation graph: Begin: 2026-05-28T11:17:49.417679363Z, End: 2026-05-28T11:17:49.433018786Z, Duration: 00:00:00.015
+      Run SCC (Tarjan) on 2748 nodes: Begin: 2026-05-28T11:17:49.433204445Z, End: 2026-05-28T11:17:49.435279638Z, Duration: 00:00:00.002
+      Propagate runtime types to strongly connected components: Begin: 2026-05-28T11:17:49.435345767Z, End: 2026-05-28T11:17:49.451035837Z, Duration: 00:00:00.015
+  Load config: Begin: 2026-05-28T11:17:49.452711931Z, End: 2026-05-28T11:17:51.151402851Z, Duration: 00:00:01.698
+  Compute entry points: Begin: 2026-05-28T11:17:51.151591494Z, End: 2026-05-28T11:17:51.189089741Z, Duration: 00:00:00.037
+11:17:51.192 INFO  java security sensor peak memory (pre-GC, max allocation pressure): 453 MB
+11:17:51.192 INFO  java security sensor peak memory (post-GC, max live footprint): 391 MB
+11:17:51.192 INFO  Sensor JavaSecuritySensor [security] (done) | time=2115ms
+11:17:51.203 INFO  ------------- Run sensors on project
+11:17:51.334 INFO  Sensor JaCoCo Aggregate XML Report Importer [jacoco]
+11:17:51.335 INFO  Sensor JaCoCo Aggregate XML Report Importer [jacoco] (done) | time=0ms
+11:17:51.336 INFO  Sensor CveReachabilitySensor [cvereachability]
+11:17:51.336 INFO  Skipping CveReachabilitySensor
+11:17:51.336 INFO  Sensor CveReachabilitySensor [cvereachability] (done) | time=0ms
+11:17:51.336 INFO  Sensor javaSecurityContextCollectorSensor [securitya3scontextcollector]
+11:17:51.336 INFO  Sensor javaSecurityContextCollectorSensor [securitya3scontextcollector] (done) | time=0ms
+11:17:51.336 INFO  Sensor Java A3S Project Context Collector [javaa3scontextcollector]
+11:17:51.336 INFO  Sensor Java A3S Project Context Collector [javaa3scontextcollector] (done) | time=0ms
+11:17:51.336 INFO  Sensor JavaProjectSensor [java]
+11:17:51.340 INFO  Sensor JavaProjectSensor [java] (done) | time=3ms
+11:17:51.341 INFO  Sensor JavaArchitectureSensor [architecture]
+11:17:51.354 INFO  Found 1 potential Udg file location(s) for "java" in "/home/runner/work/shift_quality_happens/shift_quality_happens/.scannerwork"
+11:17:51.355 INFO  - /home/runner/work/shift_quality_happens/shift_quality_happens/.scannerwork/architecture/java
+11:17:51.369 INFO  Architecture analysis is enabled with the following features: legacy, discovery, flaws, smells, deviations, directives
+11:17:51.374 INFO  * Protobuf reading starting | memory total=492 | free=205 | used=286 (MB)
+11:17:51.374 INFO  * Reading SonarArchitecture UDG data from directory "/home/runner/work/shift_quality_happens/shift_quality_happens/.scannerwork/architecture/java"
+11:17:51.607 INFO  * Files successfully loaded: "125" out of "125"
+11:17:51.608 INFO  * Purging externals (components not scanned) from graphs
+11:17:51.614 INFO  * Purging excluded nodes from graphs
+11:17:51.617 INFO  * Protobuf reading complete | memory total=492 | free=173 | used=318 (MB)
+11:17:51.679 INFO  * Build architecture.graph.java.namespace_graph.default_perspective hierarchy graph complete (filtered=false) | memory total=492 | free=165 | used=326 (MB)
+11:17:51.699 INFO  * No intended architecture defined or detected, using an empty model
+11:17:51.712 INFO  No directives configured
+11:17:51.939 INFO  Sensor JavaArchitectureSensor [architecture] (done) | time=601ms
+11:17:51.940 INFO  Sensor Zero Coverage Sensor
+11:17:51.941 INFO  Sensor Zero Coverage Sensor (done) | time=1ms
+11:17:51.942 INFO  Sensor Java CPD Block Indexer
+11:17:52.059 INFO  Sensor Java CPD Block Indexer (done) | time=117ms
+11:17:52.059 INFO  Sensor Architecture Telemetry [architecture]
+11:17:52.059 INFO  Sensor Architecture Telemetry [architecture] (done) | time=0ms
+11:17:52.070 INFO  ------------- Gather SCA dependencies on project
+11:17:52.547 INFO  Dependency analysis skipped
+11:17:52.553 INFO  CPD Executor 46 files had no CPD blocks
+11:17:52.554 INFO  CPD Executor Calculating CPD for 59 files
+11:17:52.573 INFO  CPD Executor CPD calculation finished (done) | time=20ms
+11:17:52.577 INFO  SCM Publisher SCM provider for this project is: git
+11:17:52.577 INFO  SCM Publisher 2 source files to be analyzed
+11:17:52.705 INFO  SCM Publisher 2/2 source files have been analyzed (done) | time=127ms
+11:17:52.714 INFO  SCM revision ID 'b53b0d37ad90360e37b47bbcb9216d71ca0db4f6'
+11:17:52.778 INFO  SCM writing changed lines
+11:17:52.783 INFO  Merge base sha1: 4fd74a91296220d1368601afac2e6e73e4d728ec
+11:17:52.815 WARN  File '/home/runner/work/shift_quality_happens/shift_quality_happens/src/main/java/dk/ek/shift_happens/employeecontract/EmployeeContract.java' was detected as changed but without having changed lines
+11:17:52.815 INFO  SCM writing changed lines (done) | time=37ms
+11:17:55.663 INFO  Analysis report generated in 2951ms, dir size=384 KB
+11:17:55.730 INFO  Analysis report compressed in 66ms, zip size=126 KB
+11:17:56.148 INFO  Analysis report uploaded in 419ms
+11:17:56.149 INFO  ANALYSIS SUCCESSFUL, you can find the results at: https://sonarcloud.io/dashboard?id=shift-left-happens_shift_quality_happens&pullRequest=57
+11:17:56.150 INFO  Note that you will be able to access the updated dashboard once the server has processed the submitted analysis report
+11:17:56.150 INFO  More about the report processing at https://sonarcloud.io/api/ce/task?id=AZ5uTibZOI8617Z3eWs0
+11:17:58.427 INFO  Successfully sent architecture data
+11:17:58.428 INFO  ------------- Upload SCA dependency files
+11:17:58.607 INFO  Analysis total time: 26.229 s
+11:17:58.608 INFO  SonarScanner Engine completed successfully
+11:17:58.983 INFO  EXECUTION SUCCESS
+11:17:58.983 INFO  Total time: 38.608s

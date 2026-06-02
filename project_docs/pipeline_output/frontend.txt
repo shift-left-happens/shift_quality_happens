@@ -1,0 +1,104 @@
+Run npm run lint
+
+> shift-happens-frontend@0.0.1 lint
+> eslint .
+
+
+/home/runner/work/shift_quality_happens/shift_quality_happens/frontend/src/auth/AuthContext.tsx
+Warning:   19:14  warning  Fast refresh only works when a file only exports components. Move your React context(s) to a separate file  react-refresh/only-export-components
+
+/home/runner/work/shift_quality_happens/shift_quality_happens/frontend/src/pages/job-roles/JobRoleFormPage.tsx
+  32:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/runner/work/shift_quality_happens/shift_quality_happens/frontend/src/pages/job-roles/JobRoleFormPage.tsx:32:5
+  30 |     if (isNew || numericId === null) return;
+  31 |     let cancelled = false;
+> 32 |     setLoading(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  33 |     getJobRole(numericId)
+  34 |       .then((r) => {
+  35 |         if (cancelled) return;  react-hooks/set-state-in-effect
+
+/home/runner/work/shift_quality_happens/shift_quality_happens/frontend/src/pages/shift-assignments/ShiftAssignmentFormPage.tsx
+Warning:   97:6  warning  React Hook useEffect has a missing dependency: 'preselectShiftId'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/runner/work/shift_quality_happens/shift_quality_happens/frontend/src/pages/shift-swaps/ShiftSwapFormPage.tsx
+   92:33  warning  Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `user`, but the source dependencies were [assignments, shiftById, pendingAssignmentIds, isEmployee, user?.employeeId]. Inferred less specific property than source.
+
+/home/runner/work/shift_quality_happens/shift_quality_happens/frontend/src/pages/shift-swaps/ShiftSwapFormPage.tsx:92:33
+   90 |   // be cancelled, the shift must not have started yet, and no pending swap
+   91 |   // can already exist for it. Employees see only their own assignments.
+>  92 |   const myAssignments = useMemo(() => {
+      |                                 ^^^^^^^
+>  93 |     const now = Date.now();
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  94 |     return assignments.filter((a) => {
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 112 |     });
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 113 |   }, [assignments, shiftById, pendingAssignmentIds, isEmployee, user?.employeeId]);
+      | ^^^^ Could not preserve existing manual memoization
+  114 |
+  115 |   // Default to the first available assignment once data has loaded.
+  116 |   useEffect(() => {  react-hooks/preserve-manual-memoization
+   93:17  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/home/runner/work/shift_quality_happens/shift_quality_happens/frontend/src/pages/shift-swaps/ShiftSwapFormPage.tsx:93:17
+  91 |   // can already exist for it. Employees see only their own assignments.
+  92 |   const myAssignments = useMemo(() => {
+> 93 |     const now = Date.now();
+     |                 ^^^^^^^^^^ Cannot call impure function
+  94 |     return assignments.filter((a) => {
+  95 |       if (
+  96 |         isEmployee &&                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             react-hooks/purity
+  118:7   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/runner/work/shift_quality_happens/shift_quality_happens/frontend/src/pages/shift-swaps/ShiftSwapFormPage.tsx:118:7
+  116 |   useEffect(() => {
+  117 |     if (assignmentId === 0 && myAssignments.length > 0) {
+> 118 |       setAssignmentId(myAssignments[0].shiftAssignmentId);
+      |       ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  119 |     }
+  120 |   }, [assignmentId, myAssignments]);
+  121 |                                                                                                                                                                                                                                                                                 react-hooks/set-state-in-effect
+
+✖ 6 problems (0 errors, 6 warnings)
+
+4s
+Run npm run typecheck
+
+> shift-happens-frontend@0.0.1 typecheck
+> tsc -b --noEmit
+
+6s
+Run npm run build
+
+> shift-happens-frontend@0.0.1 build
+> tsc -b && vite build
+
+vite v6.4.2 building for production...
+transforming...
+✓ 70 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.40 kB │ gzip:  0.27 kB
+dist/assets/index-Cp8dKHLk.css   29.08 kB │ gzip:  6.26 kB
+dist/assets/index-Dpp9i_pZ.js   252.00 kB │ gzip: 72.57 kB
+✓ built in 1.59s

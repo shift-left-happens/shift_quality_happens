@@ -13,7 +13,6 @@ dist-ssr
 .idea
 
 # Playwright
-test-results
-playwright-report
+#playwright-report
 blob-report
 playwright/.cache

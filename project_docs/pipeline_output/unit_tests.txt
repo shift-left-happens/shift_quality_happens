@@ -1,0 +1,22 @@
+Run ./mvnw test
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ------------------------< dk.ek:shift-happens >-------------------------
+[INFO] Building shift-quality-happens 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 271, Failures: 0, Errors: 0, Skipped: 0
+[INFO]
+[INFO]
+[INFO] --- jacoco:0.8.13:report (report) @ shift-happens ---
+[INFO] Loading execution data file /home/runner/work/shift_quality_happens/shift_quality_happens/target/jacoco.exec
+[INFO] Analyzed bundle 'shift-quality-happens' with 66 classes
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  32.670 s
+[INFO] Finished at: 2026-05-28T11:14:40Z
+[INFO] ------------------------------------------------------------------------

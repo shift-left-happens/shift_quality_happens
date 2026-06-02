@@ -84,11 +84,33 @@ class EmployeeNameTest {
     }
 
     @ParameterizedTest(name = "Should validate length boundary for firstName: {0} chars -> {1}")
-    @CsvSource({"1, true", "100, true", "101, false"})
+    @CsvSource({
+        "0, false",
+        "1, true", // Minimum valid value
+        "2, true",
+        "50, true", // Middle value
+        "99, true",
+        "100, true", // Maximum valid value
+        "101, false"
+    })
     void should_validate_name_length_boundaries(int length, boolean expectedValid) {
         // §1 BVA — name length 1-100 is Valid
         Employee e = valid();
         e.setFirstName("A".repeat(length));
+        if (expectedValid) {
+            assertThat(service.save(e)).isNotNull();
+        } else {
+            assertThatThrownBy(() -> service.save(e)).isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    // Decision table tests
+    @ParameterizedTest(name = "Should validate business rules for firstName={0} -> {1}")
+    @CsvSource({"Jensen, true", "Jensen Jensen, true", "Jensen@, false", "Jensen1, false", ",false" // Empty string
+    })
+    void validate_business_rules(String name, boolean expectedValid) {
+        Employee e = valid();
+        e.setFirstName(name);
         if (expectedValid) {
             assertThat(service.save(e)).isNotNull();
         } else {

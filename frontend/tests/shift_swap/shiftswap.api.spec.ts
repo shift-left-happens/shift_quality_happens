@@ -168,19 +168,19 @@ test.describe.serial('Shift Swap API', () => {
       shiftId: shiftLifecycle,
       employeeId: empOwnerId,
       assignmentStatus: 'Assigned',
-      assignedDatetime: fmt(new Date()),
+      assignedDatetime: fmt(new Date(Date.now() - 10000)),
     });
     assignmentSS06Id = await createAssignmentFromPayload('ss06', {
       shiftId: shiftSS06,
       employeeId: empOwnerId,
       assignmentStatus: 'Assigned',
-      assignedDatetime: fmt(new Date()),
+      assignedDatetime: fmt(new Date(Date.now() - 10000)),
     });
     assignmentSS11Id = await createAssignmentFromPayload('ss11', {
       shiftId: shiftSS11,
       employeeId: empOwnerId,
       assignmentStatus: 'Assigned',
-      assignedDatetime: fmt(new Date()),
+      assignedDatetime: fmt(new Date(Date.now() - 10000)),
     });
 
     // --- Log in as test employees ---

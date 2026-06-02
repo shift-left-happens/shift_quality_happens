@@ -16,12 +16,12 @@ SET NAMES utf8mb4;
 -- Re-generate these hashes if you change the PASSWORD_PEPPER value.
 -- =========================================
 
--- Employee (role 2) — employee1@shift.dk
+-- Employee (role 2) — sofie.jensen@hospital.dk
 UPDATE employee
 SET login_password = '$2a$10$s53B7sTK0OeOrRP/VmrT6uZhMrmAOQXUxN/Rle/1aLnlgM4iobIx6'
 WHERE employee_id = 1;
 
--- Manager (role 3) — employee30@shift.dk
+-- Manager (role 3) — malthe.enevoldsen@hospital.dk
 UPDATE employee
 SET login_password = '$2a$10$s53B7sTK0OeOrRP/VmrT6uZhMrmAOQXUxN/Rle/1aLnlgM4iobIx6'
 WHERE employee_id = 30;

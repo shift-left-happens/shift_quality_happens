@@ -57,7 +57,7 @@ public class EmployeeValidator {
         }
         // ^(\d{4,15}|\+\d{1,3} \d{1,12})$
         // Note: total digits max 15. The regex \+\d{1,3} \d{1,12} ensures max 3+12 = 15 digits.
-        if (!phoneNumber.matches("^(\\d{4,15}|\\+\\d{1,3} \\d{1,12})$")) {
+        if (!phoneNumber.matches("^(\\d{4,15}|\\+\\d{1,3} \\d{3,12})$")) {
             throw new IllegalArgumentException("phone number is invalid");
         }
     }

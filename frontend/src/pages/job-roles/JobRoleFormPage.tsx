@@ -29,7 +29,6 @@ export default function JobRoleFormPage() {
   useEffect(() => {
     if (isNew || numericId === null) return;
     let cancelled = false;
-    setLoading(true);
     getJobRole(numericId)
       .then((r) => {
         if (cancelled) return;
