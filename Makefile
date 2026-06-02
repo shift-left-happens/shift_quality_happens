@@ -35,7 +35,7 @@ all-tests:
 	cd frontend && npx playwright test
 	@echo "Stopping stack..."
 
-# Development : DB runs in Docker, app runs locally via Maven
+# Development : DB runs in Docker, app runs locally via Maven 
 # Test        : Full stack (DB + app) runs in Docker on separate ports
 
 # ──────────────────────────────────────────────────────────────
