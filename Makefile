@@ -114,7 +114,7 @@ test-env-test:
 test-unit:
 	$(MVNW) test "-Dtest=**/*Test.java"
 
-## Run a single test class. Usage: make test-one CLASS=EmployeeServiceTest
+## Run a single test class. Usage: make test-one CLASS=EmployeeServiceTest 
 test-one:
 	$(MVNW) test -Dtest=$(CLASS)
 
