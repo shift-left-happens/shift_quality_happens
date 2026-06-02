@@ -1,9 +1,9 @@
-# Load .env variables
+#  Load .env variables
 include .env
 export
 # Windows-compatible command wrappers
 ifeq ($(OS),Windows_NT)
-MVNW := ./mvnw.cmd
+MVNW := mvnw.cmd
 OPEN := cmd /c start ""
 TEST_DB_ENV := set "DB_URL=jdbc:mysql://localhost:3309/shift_happens?serverTimezone=UTC" &&
 else
@@ -35,7 +35,7 @@ all-tests:
 	cd frontend && npx playwright test
 	@echo "Stopping stack..."
 
-# Development : DB runs in Docker, app runs locally via Maven
+# Development : DB runs in Docker, app runs locally via Maven 
 # Test        : Full stack (DB + app) runs in Docker on separate ports
 
 # ──────────────────────────────────────────────────────────────
@@ -114,7 +114,7 @@ test-env-test:
 test-unit:
 	$(MVNW) test "-Dtest=**/*Test.java"
 
-## Run a single test class. Usage: make test-one CLASS=EmployeeServiceTest
+## Run a single test class. Usage: make test-one CLASS=EmployeeServiceTest 
 test-one:
 	$(MVNW) test -Dtest=$(CLASS)
 
