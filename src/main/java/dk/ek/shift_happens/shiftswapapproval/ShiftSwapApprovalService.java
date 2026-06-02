@@ -81,7 +81,7 @@ public class ShiftSwapApprovalService {
         // Check if shift requires job roles
         List<ShiftRequiredJobRole> shiftRequires =
                 shiftRequiredJobRoleRepository.findByShiftId(originalShift.getShiftId());
-        if (shiftRequires.size() > 0) {
+        if (shiftRequires.isEmpty()) {
             List<EmployeeJobRole> employeeJobRoles = employeeJobRoleRepository.findByEmployeeId(swap.getEmployeeToId());
             for (ShiftRequiredJobRole requiredJobRole : shiftRequires) {
                 if (!(employeeJobRoles.stream()
